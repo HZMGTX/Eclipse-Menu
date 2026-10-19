@@ -1,0 +1,798 @@
+/*
+ * Eclipse Menu  Classes/Menu/ServerData.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
+ *
+ * Copyright (C) 2026  Poison Software
+ * Copyright (C) 2026  HZMGTX
+ * https://github.com/HZMGTX/Eclipse-Menu
+ *
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
+ * https://github.com/heycanihavethis/Poison
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+using GorillaNetworking;
+using MonoMod.Utils;
+using Photon.Pun;
+using Photon.Realtime;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Mods;
+using Eclipse.Utilities;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+using UnityEngine.Networking;
+using Valve.Newtonsoft.Json;
+using Valve.Newtonsoft.Json.Linq;
+
+namespace Eclipse.Classes.Menu
+{
+    public class ServerData : MonoBehaviour
+    {
+        #region Configuration
+        public static readonly bool ServerDataEnabled = true; // Disables Console and admin panel
+        public static bool DisableTelemetry = false; // Disables telemetry data being sent to the server
+
+        // Warning: These endpoints should not be modified unless hosting a custom server. Use with caution.
+        public const string ServerEndpoint = "https://www.menu.management";
+        public static readonly string ServerDataEndpoint = $"{ServerEndpoint}/serverdata";
+        public static readonly string ServerWebsocket = "wss://vbvbekoikimuvhqfzolt.supabase.co/functions/v1/friends-ws";
+
+        // Do not change this unless you are hosting unofficial files for Console
+        public const string AssetURL = "https://raw.githubusercontent.com/HZMGTX/Console/refs/heads/master/ServerData";
+
+        // A second list of administrators merged with ServerDataEndpoint's, for a menu whose
+        // own server keeps a separate one. Eclipse shares menu.management with Nova, so there is
+        // nothing to merge and the second request is skipped.
+        public static readonly string AdminDataEndpoint = "";
+
+        // The dictionary used to assign the admins only seen in your mod.
+        public static readonly Dictionary<string, string> LocalAdmins = new Dictionary<string, string>()
+        {
+            // { "Placeholder Admin UserID", "Placeholder Admin Name" },
+        };
+
+        public static void SetupAdminPanel(string playername) => // Method used to spawn admin panel
+            Main.SetupAdminPanel(playername);
+        #endregion
+
+        #region Server Data Code
+        private static ServerData instance;
+
+        private static readonly List<string> DetectedModsLabelled = new List<string>();
+
+        private static float DataLoadTime = -1f;
+        private static float ReloadTime = -1f;
+
+        private static int LoadAttempts;
+
+        private static bool BetaBuildWarning;
+        public static bool OutdatedVersion;
+
+        private static bool GivenAdminMods;
+        private static bool GivenPateronMods;
+
+        private static string LastPollAnswered;
+
+        private static string CurrentPoll = "What goes well with cheeseburgers?";
+        private static string OptionA = "Fries";
+        private static string OptionB = "Chips";
+
+        public void Awake()
+        {
+            instance = this;
+            DataLoadTime = Time.time + 5f;
+
+            NetworkSystem.Instance.OnJoinedRoomEvent += OnJoinRoom;
+
+            NetworkSystem.Instance.OnPlayerJoined += UpdatePlayerCount;
+            NetworkSystem.Instance.OnPlayerLeft += UpdatePlayerCount;
+
+            if (File.Exists($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt"))
+                LastPollAnswered = File.ReadAllText($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt");
+        }
+
+        public void Update()
+        {
+            if (DataLoadTime > 0f && Time.time > DataLoadTime && GorillaComputer.instance.isConnectedToMaster)
+            {
+                DataLoadTime = Time.time + 5f;
+
+                // A load still running is waited for, not counted as another failed attempt.
+                if (Refreshing)
+                    return;
+
+                LoadAttempts++;
+                if (LoadAttempts >= 3)
+                {
+                    Console.Log("Server data could not be loaded");
+                    DataLoadTime = -1f;
+                    return;
+                }
+
+                Console.Log("Attempting to load web data");
+                StartRefresh();
+            }
+
+            if (ReloadTime > 0f)
+            {
+                if (Time.time > ReloadTime)
+                {
+                    ReloadTime = Time.time + 30f;
+                    StartRefresh();
+                }
+            }
+            else
+            {
+                if (GorillaComputer.instance.isConnectedToMaster)
+                    ReloadTime = Time.time + 5f;
+            }
+
+            if (!(Time.time > DataSyncDelay) && NetworkSystem.Instance.InRoom) return;
+            // The room's own count, rather than building the sorted player list twice a frame.
+            if (NetworkSystem.Instance.InRoom && PhotonNetwork.CurrentRoom.PlayerCount != PlayerCount)
+            {
+                instance.StartCoroutine(PlayerDataSync(PhotonNetwork.CurrentRoom.Name, PhotonNetwork.CloudRegion));
+                NetworkSystem.Instance.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+            }
+
+            PlayerCount = NetworkSystem.Instance.InRoom ? PhotonNetwork.CurrentRoom.PlayerCount : -1;
+        }
+
+        private float refreshingSince = -1f;
+        private bool Refreshing => refreshingSince >= 0f && Time.time - refreshingSince < 60f;
+
+        // The first-load retries and the 30-second reload could both start a refresh while
+        // one was still running, loading and applying the same data twice over. A refresh that
+        // somehow never finishes stops blocking after a minute.
+        private void StartRefresh()
+        {
+            if (Refreshing)
+                return;
+
+            refreshingSince = Time.time;
+            instance.StartCoroutine(RefreshServerData());
+        }
+
+        private IEnumerator RefreshServerData()
+        {
+            try
+            {
+                yield return LoadServerData();
+                yield return GetEclipseCCU();
+                yield return GetReportData();
+            }
+            finally
+            {
+                refreshingSince = -1f;
+            }
+        }
+
+        public static void OnJoinRoom()
+        {
+            instance.StartCoroutine(TelemetryRequest(PhotonNetwork.CurrentRoom.Name, PhotonNetwork.NickName, PhotonNetwork.CloudRegion, PhotonNetwork.LocalPlayer.UserId, PhotonNetwork.CurrentRoom.IsVisible, PhotonNetwork.PlayerList.Length, NetworkSystem.Instance.GameModeString));
+            NetworkSystem.Instance.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+        }
+
+        public static void ShouldWeReport(Player player)
+        {
+            // A player who is leaving can come through without a Player or an id.
+            if (player?.UserId == null || !reportData.TryGetValue(player.UserId, out var entry))
+                return;
+
+            if (Administrators.ContainsKey(player.UserId))
+                return;
+
+            lock (entry.reportedIn)
+            {
+                if (!entry.reportedIn.Add(NetworkSystem.Instance.RoomName))
+                    return;
+
+                GorillaPlayerScoreboardLine.ReportPlayer(
+                    player.UserId,
+                    entry.ButtonType,
+                    player.NickName
+                );
+
+                if (Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
+                {
+                    NotificationManager.SendNotification(
+                        $"<color=grey>[</color><color=purple>ARS</color><color=grey>]</color> Player {player.NickName} (also known as {entry.KnownAs}) has been reported for {entry.Reason}. Added by {entry.Actor}",
+                        10000
+                    );
+                }
+            }
+        }
+
+        public static string CleanString(string input, int maxLength = 12)
+        {
+            input = new string(Array.FindAll((input ?? "").ToCharArray(), Utils.IsASCIILetterOrDigit));
+
+            if (input.Length > maxLength)
+                input = input[..maxLength];
+
+            input = input.ToUpper();
+            return input;
+        }
+
+        public static string NoASCIIStringCheck(string input, int maxLength = 12)
+        {
+            input ??= "";
+            if (input.Length > maxLength)
+                input = input[..maxLength];
+
+            input = input.ToUpper();
+            return input;
+        }
+
+        /// <remarks>
+        /// The formula is shared with every other Console client, which compare the
+        /// numbers they broadcast on load, so it stays as it is. What changed is that a
+        /// version that is missing, or carries a suffix such as "5.1.3hotfix", no longer
+        /// throws; the leading digits of each part are used, and anything unreadable is -1.
+        /// </remarks>
+        public static int VersionToNumber(string version)
+        {
+            string[] parts = (version ?? "").Split('.');
+            if (parts.Length != 3)
+                return -1; // Version must be in 'major.minor.patch' format
+
+            int[] numbers = new int[3];
+            for (int i = 0; i < 3; i++)
+            {
+                string digits = new string(parts[i].Trim().TakeWhile(char.IsDigit).ToArray());
+                if (!int.TryParse(digits, out numbers[i]))
+                    return -1;
+            }
+
+            return numbers[0] * 100 + numbers[1] * 10 + numbers[2];
+        }
+
+        public static readonly Dictionary<string, string> Administrators = new Dictionary<string, string>();
+        public static readonly List<string> SuperAdministrators = new List<string>();
+        public static readonly List<string> Owners = new List<string>();
+        /// <summary>
+        /// Rebuilds the administrator, super administrator and owner lists from this
+        /// server's data merged with <see cref="AdminDataEndpoint"/>.
+        /// </summary>
+        /// <remarks>
+        /// Every entry is checked rather than cast. A single row missing a field used to
+        /// throw partway through, abandoning the load and leaving nobody with a panel; now
+        /// that row is skipped and everyone else keeps theirs. The shared list failing to
+        /// load is not fatal either, since this server's own list still applies.
+        /// </remarks>
+        private static IEnumerator LoadAdministrators(JObject local)
+        {
+            JObject shared = null;
+            if (!string.IsNullOrEmpty(AdminDataEndpoint))
+            {
+                using (UnityWebRequest request = UnityWebRequest.Get(AdminDataEndpoint))
+                {
+                    yield return request.SendWebRequest();
+
+                    if (request.result == UnityWebRequest.Result.Success)
+                    {
+                        try
+                        {
+                            shared = JObject.Parse(request.downloadHandler.text);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.Log($"Shared administrator list was not valid JSON: {e.Message}");
+                        }
+                    }
+                    else
+                        Console.Log($"Could not load the shared administrator list: {request.error}");
+                }
+            }
+
+            Administrators.Clear();
+            SuperAdministrators.Clear();
+            Owners.Clear();
+
+            foreach (JObject source in new[] { local, shared })
+            {
+                if (source == null)
+                    continue;
+
+                foreach (JToken admin in source["admins"] as JArray ?? new JArray())
+                {
+                    if (!(admin is JObject entry))
+                        continue;
+
+                    string name = (string)entry["name"];
+                    string userId = (string)entry["user-id"];
+
+                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(userId))
+                        continue;
+
+                    Administrators[userId] = name;
+                }
+
+                foreach (JToken superAdmin in source["super-admins"] as JArray ?? new JArray())
+                {
+                    string name = superAdmin.ToString();
+                    if (!SuperAdministrators.Contains(name))
+                        SuperAdministrators.Add(name);
+                }
+
+                // Cleared above as well: these used to be appended on every reload, so the
+                // list grew by a full copy each minute.
+                foreach (JToken owner in source["owners"] as JArray ?? new JArray())
+                {
+                    string name = owner.ToString();
+                    if (!Owners.Contains(name))
+                        Owners.Add(name);
+                }
+            }
+
+            Administrators.AddRange(LocalAdmins);
+
+            // Give admin panel if on list
+            if (!GivenAdminMods && PhotonNetwork.LocalPlayer.UserId != null && Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out var administrator))
+            {
+                GivenAdminMods = true;
+                SetupAdminPanel(administrator);
+            }
+        }
+
+        private static bool releaseChecked;
+        public const string ReleaseEndpoint = "https://api.github.com/repos/HZMGTX/Eclipse-Menu/releases/latest";
+
+        // Compares this build with the newest Eclipse release on GitHub, once per session
+        private static IEnumerator CheckEclipseRelease()
+        {
+            using (UnityWebRequest request = UnityWebRequest.Get(ReleaseEndpoint))
+            {
+                request.SetRequestHeader("User-Agent", "EclipseMenu");
+                yield return request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                    yield break; // No release yet, or offline
+
+                string tag;
+                try
+                {
+                    tag = (string)JObject.Parse(request.downloadHandler.text)["tag_name"];
+                }
+                catch
+                {
+                    yield break;
+                }
+
+                if (string.IsNullOrEmpty(tag))
+                    yield break;
+
+                string version = tag.TrimStart('v', 'V');
+                if (VersionToNumber(version) > VersionToNumber(PluginInfo.Version) && !OutdatedVersion)
+                {
+                    OutdatedVersion = true;
+                    Console.Log("Version is outdated");
+                    Console.SendNotification($"<color=grey>[</color><color=red>OUTDATED</color><color=grey>]</color> A new version of Eclipse is out. Please update to version {version}.", 10000);
+                    Main.UpdatePrompt(version);
+                }
+            }
+        }
+
+        public static IEnumerator LoadServerData()
+        {
+            using (UnityWebRequest request = UnityWebRequest.Get(ServerDataEndpoint))
+            {
+                yield return request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Console.Log($"Failed to load server data:\nError: {request.error}\nResult: {request.result}\nResponse Code: {request.responseCode}\nBody (if any): {request.downloadHandler?.text}");
+                    yield break;
+                }
+
+                string json = request.downloadHandler.text;
+                DataLoadTime = -1f;
+
+                JObject data = JObject.Parse(json);
+
+                Main.serverLink = (string)data["discord-invite"];
+
+                // menu.management is shared with Nova and ii's menu, so its "motd", "min-version" and
+                // "menu-version" describe those menus, not Eclipse. Eclipse keeps its own MOTD and checks
+                // its own GitHub releases instead, and never blocks joining rooms over a version number.
+                bool shownPrompt = false;
+
+                if (PluginInfo.BetaBuild)
+                {
+                    if (!BetaBuildWarning)
+                    {
+                        BetaBuildWarning = true;
+                        Console.Log("User is on beta build");
+                        Console.SendNotification("<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> You are using a testing build of the menu. Be warned that there may be bugs and issues that could cause crashes, data loss, or other unexpected behavior.", 10000);
+                    }
+                }
+                else if (!releaseChecked)
+                {
+                    releaseChecked = true;
+                    instance.StartCoroutine(CheckEclipseRelease());
+                }
+
+                string minConsoleVersion = (string)data["min-console-version"];
+                if (VersionToNumber(Console.ConsoleVersion) >= VersionToNumber(minConsoleVersion))
+                    instance.StartCoroutine(LoadAdministrators(data));
+                else
+                    Console.Log("On extreme outdated version of Console, not loading administrators");
+
+                // Patreon members
+                if (PatreonManager.instance != null)
+                {
+                    PatreonManager.instance.PatreonMembers.Clear();
+                    JArray members = data["patreon"] as JArray ?? new JArray();
+                    foreach (var member in members)
+                    {
+                        string userId = member["user-id"]?.ToString();
+                        string tierName = member["tier"]?.ToString();
+                        string iconURL = member["photo"]?.ToString();
+                        if (string.IsNullOrEmpty(userId))
+                            continue;
+                        string colorHex = member["color"]?.ToString();
+
+                        Color color = (!string.IsNullOrEmpty(colorHex) && ColorUtility.TryParseHtmlString(colorHex, out var parsedColor))
+                            ? parsedColor
+                            : Color.white;
+
+                        PatreonManager.instance.PatreonMembers.Add(new PatreonManager.PatreonMembership(userId, tierName, iconURL, color));
+                    }
+                    PatreonManager.instance.MembersChanged();
+
+                    if (!GivenPateronMods && !string.IsNullOrEmpty(PhotonNetwork.LocalPlayer.UserId))
+                    {
+                        var membership = PatreonManager.instance.PatreonMembers.FirstOrDefault(m => m.UserId == PhotonNetwork.LocalPlayer.UserId);
+                        if (!string.IsNullOrEmpty(membership.UserId))
+                        {
+                            GivenPateronMods = true;
+                            PatreonManager.SetupPatreonMods(membership.TierName);
+                        }
+                    }
+                }
+
+                // Polls
+                CurrentPoll = (string)data["poll"];
+                OptionA = (string)data["option-a"];
+                OptionB = (string)data["option-b"];
+
+                if (!Bootstrapper.FirstLaunch && LastPollAnswered != CurrentPoll)
+                {
+                    if (!shownPrompt)
+                    {
+                        Main.Prompt(CurrentPoll, () => CoroutineManager.instance.StartCoroutine(SendVote("a-votes")), () => CoroutineManager.instance.StartCoroutine(SendVote("b-votes")), OptionA, OptionB);
+                        Console.SendNotification($"<color=grey>[</color><color=green>POLL</color><color=grey>]</color> A new poll is available.", 10000);
+                    }
+
+                    LastPollAnswered = CurrentPoll;
+                    File.WriteAllText($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt", CurrentPoll);
+                }
+
+                // Detected mod labels   
+                JArray detectedMods = data["detected-mods"] as JArray ?? new JArray();
+                foreach (var detectedMod in detectedMods)
+                {
+                    string detectedModName = detectedMod.ToString();
+                    if (DetectedModsLabelled.Contains(detectedModName)) continue;
+                    ButtonInfo button = Buttons.GetIndex(detectedModName);
+                    if (button != null)
+                    {
+                        string overlapText = button.overlapText ?? button.buttonText;
+
+                        button.overlapText = overlapText + " <color=grey>[</color><color=red>Disabled</color><color=grey>]</color>";
+                        if (!Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId ?? PlayFabAuthenticator.instance.GetPlayFabPlayerId(), out _))
+                        {
+                            button.isTogglable = false;
+                            button.SetEnabled(false);
+
+                            button.method = delegate { Console.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> This mod is currently disabled, as it is detected."); };
+                            button.enableMethod = button.method;
+                            button.disableMethod = button.method;
+                        }
+                    }
+                    DetectedModsLabelled.Add(detectedModName);
+                }
+
+                // April Fools. Each flag is read as on or off, so a later flag can no longer
+                // undo an earlier one, and a flag the server turns off is turned off here too.
+                JObject aprilFools = data["april_fools"] as JObject ?? new JObject();
+                bool Flag(string name) => aprilFools[name]?.Type == JTokenType.Boolean && (bool)aprilFools[name];
+
+                Main.annoyingMode = Flag("annoying");
+
+                List<ButtonInfo> mainButtons = Buttons.buttons[Buttons.GetCategory("Main")].ToList();
+                bool hasSex = mainButtons.Any(b => b.buttonText == "Sex");
+
+                if (Flag("sex") && !hasSex)
+                {
+                    mainButtons.Add(new ButtonInfo
+                    {
+                        buttonText = "Sex",
+                        method = Movement.PromptForSex,
+                        isTogglable = false,
+                        toolTip = "Sex"
+                    });
+                    Buttons.buttons[Buttons.GetCategory("Main")] = mainButtons.ToArray();
+
+                    AssetUtilities.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/achievement.ogg", "Audio/Menu/achievement.ogg", clip => clip.Play(Main.buttonClickVolume / 10f));
+                    NotificationManager.SendNotification($"<color=grey>[</color><color=#FFC0CB>SEX</color><color=grey>]</color> Sex mods have been enabled. Check the main page.", 10000);
+                }
+                else if (!Flag("sex") && hasSex)
+                    Buttons.buttons[Buttons.GetCategory("Main")] = mainButtons.Where(b => b.buttonText != "Sex").ToArray();
+            }
+
+            yield return null;
+        }
+
+        public static IEnumerator TelemetryRequest(string directory, string identity, string region, string userid, bool isPrivate, int playerCount, string gameMode)
+        {
+            if (DisableTelemetry)
+                yield break;
+
+            using UnityWebRequest request = new UnityWebRequest(ServerEndpoint + "/telemetry", "POST");
+
+            string json = JsonConvert.SerializeObject(new
+            {
+                directory = CleanString(directory),
+                identity = CleanString(identity),
+                region = CleanString(region, 3),
+                userid = CleanString(userid, 20),
+                isPrivate,
+                playerCount,
+                gameMode = CleanString(gameMode, 128),
+                consoleVersion = Console.ConsoleVersion,
+                menuName = Console.MenuName,
+                menuVersion = Console.MenuVersion
+            });
+
+            byte[] raw = Encoding.UTF8.GetBytes(json);
+
+            request.uploadHandler = new UploadHandlerRaw(raw);
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            request.downloadHandler = new DownloadHandlerBuffer();
+            yield return request.SendWebRequest();
+        }
+
+        private static float DataSyncDelay;
+        public static int PlayerCount;
+
+        public static void UpdatePlayerCount(NetPlayer Player)
+        {
+            NetworkSystem.Instance.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+            PlayerCount = -1;
+        }
+
+        public static bool IsPlayerSteam(VRRig Player)
+        {
+            string concat = Player.Cosmetics();
+            int customPropsCount = Player.Creator.GetPlayerRef().CustomProperties.Count;
+
+            return concat.Contains("S. FIRST LOGIN") ? true : concat.Contains("FIRST LOGIN") || customPropsCount >= 2;
+        }
+
+        public static IEnumerator PlayerDataSync(string directory, string region)
+        {
+            if (DisableTelemetry)
+                yield break;
+
+            DataSyncDelay = Time.time + 3f;
+            yield return new WaitForSeconds(3f);
+
+            if (!NetworkSystem.Instance.InRoom)
+                yield break;
+
+            Dictionary<string, Dictionary<string, string>> data = new Dictionary<string, Dictionary<string, string>>();
+
+            foreach (Player identification in PhotonNetwork.PlayerList)
+            {
+                // A rig that is not linked yet is skipped; it used to fall back to your own,
+                // sending your cosmetics and colour under someone else's id.
+                VRRig rig = identification.IsLocal ? VRRig.LocalRig : Console.GetVRRigFromPlayer(identification);
+                if (identification.UserId == null || rig == null)
+                    continue;
+
+                data[identification.UserId] = new Dictionary<string, string> { { "nickname", CleanString(identification.NickName) }, { "cosmetics", rig.Cosmetics() }, { "color", $"{Math.Round(rig.playerColor.r * 255)} {Math.Round(rig.playerColor.g * 255)} {Math.Round(rig.playerColor.b * 255)}" }, { "platform", IsPlayerSteam(rig) ? "STEAM" : "QUEST" } };
+            }
+
+            using UnityWebRequest request = new UnityWebRequest(ServerEndpoint + "/syncdata", "POST");
+
+            string json = JsonConvert.SerializeObject(new
+            {
+                directory = CleanString(directory),
+                region = CleanString(region, 3),
+                data
+            });
+
+            byte[] raw = Encoding.UTF8.GetBytes(json);
+
+            request.uploadHandler = new UploadHandlerRaw(raw);
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            request.downloadHandler = new DownloadHandlerBuffer();
+            yield return request.SendWebRequest();
+        }
+        #endregion
+
+        #region Menu Specific
+        public static IEnumerator ReportFailureMessage(string error)
+        {
+            if (DisableTelemetry)
+                yield break;
+
+            List<string> enabledMods = new List<string>();
+
+            int categoryIndex = 0;
+            foreach (ButtonInfo[] category in Buttons.buttons)
+            {
+                enabledMods.AddRange(from button in category where button.enabled && !Buttons.categoryNames[categoryIndex].Contains("Settings") select NoASCIIStringCheck(Main.NoRichtextTags(button.overlapText ?? button.buttonText), 128));
+
+                categoryIndex++;
+            }
+
+            AchievementManager.UnlockAchievement(new AchievementManager.Achievement
+            {
+                name = "Purgatory",
+                description = "Get banned with the menu.",
+                icon = "Images/Achievements/banned.png"
+            });
+
+            using UnityWebRequest request = new UnityWebRequest(ServerEndpoint + "/reportban", "POST");
+
+            string json = JsonConvert.SerializeObject(new
+            {
+                error = NoASCIIStringCheck(error, 512),
+                version = PluginInfo.Version,
+                data = enabledMods
+            });
+
+            byte[] raw = Encoding.UTF8.GetBytes(json);
+
+            request.uploadHandler = new UploadHandlerRaw(raw);
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            request.downloadHandler = new DownloadHandlerBuffer();
+            yield return request.SendWebRequest();
+        }
+
+        public static IEnumerator SendVote(string category)
+        {
+            using UnityWebRequest request = new UnityWebRequest($"{ServerEndpoint}/vote", "POST");
+
+            string json = JsonConvert.SerializeObject(new { option = category });
+
+            byte[] raw = Encoding.UTF8.GetBytes(json);
+
+            request.uploadHandler = new UploadHandlerRaw(raw);
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            request.downloadHandler = new DownloadHandlerBuffer();
+            yield return request.SendWebRequest();
+
+            if (request.result != UnityWebRequest.Result.Success) yield break;
+            try
+            {
+                string responseText = request.downloadHandler.text;
+                Dictionary<string, object> responseJson = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseText);
+
+                int avotes = Convert.ToInt32(responseJson["a-votes"]);
+                int bvotes = Convert.ToInt32(responseJson["b-votes"]);
+
+                int total = avotes + bvotes;
+
+                string result;
+                if (total > 0)
+                {
+                    double aPercent = (double)avotes / total * 100;
+                    double bPercent = (double)bvotes / total * 100;
+
+                    result = $"Total Votes: {total}\n{OptionA}: {aPercent:F2}%\n{OptionB}: {bPercent:F2}%";
+                }
+                else
+                    result = "No votes yet.";
+
+                Main.PromptSingle(result);
+            }
+            catch { }
+        }
+
+        public static int onlineUsers = 0;
+        private IEnumerator GetEclipseCCU()
+        {
+            using UnityWebRequest request = new UnityWebRequest($"{ServerEndpoint}/usercount", "GET")
+            {
+                downloadHandler = new DownloadHandlerBuffer()
+            };
+
+            yield return request.SendWebRequest();
+
+            if (request.result != UnityWebRequest.Result.Success)
+                yield break;
+            try
+            {
+                string responseText = request.downloadHandler.text;
+                JObject json = JObject.Parse(responseText);
+
+                onlineUsers = json["mods"]?["Eclipse"]?["users"]?.Value<int>() ?? 0;
+            }
+            catch { }
+        }
+
+        public static readonly Dictionary<string, ReportEntry> reportData = new Dictionary<string, ReportEntry>();
+        public class ReportEntry
+        {
+            public string KnownAs;
+            public string Reason;
+            public GorillaPlayerLineButton.ButtonType ButtonType;
+            public string Actor;
+            public HashSet<string> reportedIn = new HashSet<string>();
+        }
+
+        private IEnumerator GetReportData()
+        {
+            using UnityWebRequest request = UnityWebRequest.Get($"{ServerEndpoint}/reportdata");
+
+            yield return request.SendWebRequest();
+
+            if (request.result != UnityWebRequest.Result.Success)
+                yield break;
+
+            try
+            {
+                JObject json = JObject.Parse(request.downloadHandler.text);
+
+                // The rooms each player was already reported in are carried over. The list
+                // used to be cleared first, so nothing ever carried over and everyone listed
+                // was reported again on every refresh, every thirty seconds.
+                Dictionary<string, ReportEntry> previous = new Dictionary<string, ReportEntry>(reportData);
+                reportData.Clear();
+
+                if (json["report"] is JObject report)
+                {
+                    foreach (var item in report.Properties())
+                    {
+                        JObject value = item.Value as JObject;
+                        if (value == null) continue;
+
+                        ReportEntry entry = new ReportEntry
+                        {
+                            KnownAs = value["known-as"]?.ToString() ?? "Unknown",
+                            Reason = value["reason"]?.ToString() ?? "No reason found",
+                            ButtonType = Enum.TryParse(value["ButtonType"]?.ToString(), out GorillaPlayerLineButton.ButtonType buttonType) ? buttonType : GorillaPlayerLineButton.ButtonType.Cheating,
+                            Actor = value["actor"]?.ToString() ?? "Unknown"
+                        };
+
+                        if (previous.TryGetValue(item.Name, out var existing))
+                            entry.reportedIn = existing.reportedIn;
+
+                        reportData[item.Name] = entry;
+                    }
+                }
+                if (NetworkSystem.Instance.InRoom)
+                    NetworkSystem.Instance.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+            }
+            catch { }
+        }
+        #endregion
+    }
+}

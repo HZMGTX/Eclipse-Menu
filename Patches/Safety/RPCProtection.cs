@@ -1,0 +1,75 @@
+/*
+ * Eclipse Menu  Patches/Safety/RPCProtection.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
+ *
+ * Copyright (C) 2026  Poison Software
+ * Copyright (C) 2026  HZMGTX
+ * https://github.com/HZMGTX/Eclipse-Menu
+ *
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
+ * https://github.com/heycanihavethis/Poison
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+using ExitGames.Client.Photon;
+using HarmonyLib;
+using Photon.Pun;
+using Photon.Realtime;
+using UnityEngine;
+
+namespace Eclipse.Patches.Safety
+{
+    public class RPCProtection
+    {
+        [HarmonyPatch(typeof(LoadBalancingClient), nameof(LoadBalancingClient.OpRaiseEvent))]
+        public class OpRaiseEventPatch
+        {
+            public static bool enabled = true;
+            const int MaxRPCs = 500;
+            internal static float startTime = Time.unscaledTime;
+            internal static int rpcCount = 0;
+            private static bool Prefix(byte eventCode, object customEventContent, RaiseEventOptions raiseEventOptions, SendOptions sendOptions)
+            {
+                if (enabled)
+                {
+                    float currentTime = Time.unscaledTime;
+                    if (currentTime - startTime > 1f)
+                    {
+                        startTime = currentTime;
+                        rpcCount = 0;
+                    }
+                    rpcCount++;
+                    if (rpcCount > MaxRPCs)
+                    {
+                        if (eventCode == PunEvent.RPC && customEventContent is Hashtable rpcData)
+                        {
+                            // PUN stores the method name under key 3, or its RpcList index under key 5
+                            string rpcName = rpcData[(byte)3] as string;
+                            if (rpcName == null && rpcData[(byte)5] is byte shortcut && PhotonNetwork.PhotonServerSettings != null && shortcut < PhotonNetwork.PhotonServerSettings.RpcList.Count)
+                                rpcName = PhotonNetwork.PhotonServerSettings.RpcList[shortcut];
+
+                            Debug.LogWarning($"Blocked RPC {rpcName ?? "(unknown)"} as we are sending too much traffic over the network!");
+                        }
+                        else
+                            Debug.LogWarning($"Blocked event {eventCode} as we are sending too much traffic over the network!");
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+    }
+}

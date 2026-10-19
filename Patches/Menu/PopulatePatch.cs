@@ -1,0 +1,54 @@
+/*
+ * Eclipse Menu  Patches/Menu/PopulatePatch.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
+ *
+ * Copyright (C) 2026  Poison Software
+ * Copyright (C) 2026  HZMGTX
+ * https://github.com/HZMGTX/Eclipse-Menu
+ *
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
+ * https://github.com/heycanihavethis/Poison
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+using HarmonyLib;
+
+namespace Eclipse.Patches.Menu
+{
+    [HarmonyPatch(typeof(FriendCard), nameof(FriendCard.Populate), new[] { typeof(FriendBackendController.Friend), typeof(bool) })]
+    public class PopulatePatch
+    {
+        public static bool enabled;
+
+        public static void Postfix(FriendCard __instance, FriendBackendController.Friend friend)
+        {
+            if (enabled)
+            {
+                string roomId = friend?.Presence?.RoomId;
+                if (string.IsNullOrEmpty(roomId))
+                    return;
+
+                bool custom = roomId[0] == '@';
+
+                __instance.SetRoom((custom ? roomId[1..] : roomId).ToUpper());
+                __instance.SetZone((custom ? "CUSTOM" : friend.Presence.Zone ?? "").ToUpper());
+                __instance.joinable = true;
+
+                __instance.UpdateComponentStates();
+            }
+        }
+    }
+}
