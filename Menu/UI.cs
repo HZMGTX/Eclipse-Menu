@@ -1,8 +1,8 @@
 using GorillaNetworking;
 using Photon.Pun;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Managers;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,10 +12,10 @@ using UnityEngine;
 
 
 using UnityEngine.InputSystem;
-using static Nova.Menu.Main;
-using static Nova.Utilities.AssetUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.AssetUtilities;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     public partial class UI : MonoBehaviour
     {
@@ -138,7 +138,7 @@ namespace Nova.Menu
         private readonly Dictionary<string, Texture2D> icons = new Dictionary<string, Texture2D>();
         private readonly Dictionary<ButtonInfo, float> switches = new Dictionary<ButtonInfo, float>();
         private readonly Queue<Action> actions = new Queue<Action>();
-        private readonly string hidePath = Path.Combine(PluginInfo.BaseDirectory, "Nova_HideGUI.txt");
+        private readonly string hidePath = Path.Combine(PluginInfo.BaseDirectory, "Eclipse_HideGUI.txt");
 
         private GUIStyle titleStyle;
         private GUIStyle textStyle;
@@ -397,7 +397,7 @@ namespace Nova.Menu
         {
             switch (kind)
             {
-                case PanelLauncher: return "Nova";
+                case PanelLauncher: return "Eclipse";
                 case PanelCategory: return category;
                 case PanelFavorites: return "Favorites";
                 case PanelActive: return "Active";
@@ -1048,7 +1048,7 @@ namespace Nova.Menu
                 TintTexture(new Rect(rect.x, rect.y + 1, 22, 22), logoRecolor != null ? logoRecolor : logo,
                     logoRecolor != null ? Color.white : Color.Lerp(bright, accent, 0.6f));
             }
-            Label(new Rect(rect.x + 30, rect.y - 1, 120, 20), "Nova", titleStyle, bright);
+            Label(new Rect(rect.x + 30, rect.y - 1, 120, 20), "Eclipse", titleStyle, bright);
             Label(new Rect(rect.x + 30, rect.y + 16, 120, 14), "v" + PluginInfo.Version, smallStyle, muted);
         }
 
@@ -1458,7 +1458,7 @@ namespace Nova.Menu
             Box(new Rect(sx - 260, sy - 165, 1080, 700), new Color(0, 0, 0, 0.6f), 0);
             Box(new Rect(sx, sy, 560, 365), border, 8);
             Box(new Rect(sx + 1, sy + 1, 558, 363), panel, 7);
-            Label(new Rect(sx + 26, sy + 22, 490, 28), "Nova", titleStyle);
+            Label(new Rect(sx + 26, sy + 22, 490, 28), "Eclipse", titleStyle);
             if (!ReferenceEquals(prompt.Message, promptMessageSource))
             {
                 promptMessageSource = prompt.Message;
@@ -1707,7 +1707,7 @@ namespace Nova.Menu
             status = text;
             statusUntil = Time.unscaledTime + 5;
             motions.Remove(new MotionKey("status"));
-            NotificationManager.SendNotification("<color=grey>[</color><color=#" + ColorUtility.ToHtmlStringRGB(accent) + ">Nova</color><color=grey>]</color> " + text);
+            NotificationManager.SendNotification("<color=grey>[</color><color=#" + ColorUtility.ToHtmlStringRGB(accent) + ">Eclipse</color><color=grey>]</color> " + text);
         }
 
         public void DebugPrint(string text)

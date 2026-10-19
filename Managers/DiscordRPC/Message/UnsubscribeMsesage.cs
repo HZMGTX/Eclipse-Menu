@@ -1,6 +1,6 @@
-﻿using Nova.Managers.DiscordRPC.RPC.Payload;
+﻿using Eclipse.Managers.DiscordRPC.RPC.Payload;
 
-namespace Nova.Managers.DiscordRPC.Message
+namespace Eclipse.Managers.DiscordRPC.Message
 {
     /// <summary>
     /// Called as validation of a subscribe

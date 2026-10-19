@@ -1,9 +1,11 @@
 /*
- * Nova Menu  Mods/ModChecker.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/ModChecker.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
+ *
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,19 +22,19 @@
  */
 
 using GorillaNetworking;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Console = Nova.Classes.Menu.Console;
+using Console = Eclipse.Classes.Menu.Console;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     /// <summary>
     /// Shows what every other player in the room is running.

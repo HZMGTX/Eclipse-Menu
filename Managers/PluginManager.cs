@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Managers/PluginManager.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Managers/PluginManager.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -23,8 +24,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Nova.Classes.Menu;
-using Nova.Menu;
+using Eclipse.Classes.Menu;
+using Eclipse.Menu;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -34,10 +35,10 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Networking;
-using static Nova.Menu.Main;
-using static Nova.Utilities.FileUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.FileUtilities;
 
-namespace Nova.Managers
+namespace Eclipse.Managers
 {
     public class PluginManager
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     internal sealed class Scroll
     {

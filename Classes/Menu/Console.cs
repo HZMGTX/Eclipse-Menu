@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Classes/Menu/Console.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Classes/Menu/Console.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,10 +32,10 @@ using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Mods;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Mods;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -55,16 +56,16 @@ using UnityEngine.Video;
 using JoinType = GorillaNetworking.JoinType;
 using Random = UnityEngine.Random;
 
-namespace Nova.Classes.Menu
+namespace Eclipse.Classes.Menu
 {
 
     public class Console : MonoBehaviour
     {
         #region Configuration
 #if LEGAL || LEGAL_DEBUG
-        public static readonly string MenuName = "nova_legal";
+        public static readonly string MenuName = "eclipse_legal";
 #else
-        public static readonly string MenuName = "nova";
+        public static readonly string MenuName = "eclipse";
 #endif
         public static readonly string MenuVersion = PluginInfo.Version;
 
@@ -257,7 +258,7 @@ namespace Nova.Classes.Menu
             PlayerGameEvents.MiscEvent(LoadVersionEventKey, ServerData.VersionToNumber(ConsoleVersion));
             PlayerGameEvents.OnMiscEvent += NoOverlapEvents;
 
-            string ConsoleGUID = "Nova_Console";
+            string ConsoleGUID = "Eclipse_Console";
             GameObject ConsoleObject = GameObject.Find(ConsoleGUID) ?? new GameObject(ConsoleGUID);
             ConsoleObject.AddComponent<Console>();
 
@@ -746,6 +747,9 @@ namespace Nova.Classes.Menu
 
         private static readonly Dictionary<string, Color> menuColors = new Dictionary<string, Color> {
             { "Nova", new Color32(118, 6, 252, 128) },
+            { "nova", new Color32(118, 6, 252, 128) },
+            { "Eclipse", new Color32(255, 159, 67, 128) },
+            { "eclipse", new Color32(255, 159, 67, 128) },
             { "stupid", new Color32(155, 89, 182, 255) },
             { "symex", new Color32(138, 43, 226, 255) },
             { "colossal", new Color32(204, 0, 255, 255) },

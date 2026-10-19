@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Nova.Managers.DiscordRPC.Converters
+namespace Eclipse.Managers.DiscordRPC.Converters
 {
     internal class EnumValueAttribute : Attribute
     {

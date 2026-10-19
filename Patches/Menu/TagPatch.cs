@@ -1,12 +1,13 @@
 ﻿/*
- * Nova Menu  Patches/Menu/TagPatch.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Patches/Menu/TagPatch.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,15 +26,15 @@
 
 using GorillaGameModes;
 using HarmonyLib;
-using Nova.Extensions;
-using Nova.Menu;
+using Eclipse.Extensions;
+using Eclipse.Menu;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static Nova.Utilities.AssetUtilities;
-using static Nova.Utilities.GameModeUtilities;
+using static Eclipse.Utilities.AssetUtilities;
+using static Eclipse.Utilities.GameModeUtilities;
 
-namespace Nova.Patches.Menu
+namespace Eclipse.Patches.Menu
 {
     [HarmonyPatch(typeof(GameMode), nameof(GameMode.ReportTag))]
     public class TagPatch

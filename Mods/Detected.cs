@@ -1,12 +1,13 @@
 ﻿/*
- * Nova Menu  Mods/Detected.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Detected.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,18 +29,18 @@ using GorillaGameModes;
 using GorillaNetworking;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Nova.Menu.Main;
-using static Nova.Utilities.AssetUtilities;
-using static Nova.Utilities.RigUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.AssetUtilities;
+using static Eclipse.Utilities.RigUtilities;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     public static class Detected
     {
@@ -802,7 +803,7 @@ namespace Nova.Mods
 
         }
 
-        public static string name = "Nova";
+        public static string name = "Eclipse";
 
         public static void PromptNameChange() =>
             Prompt("Would you like to set a name?", () => PromptSingleText("Please enter the name you'd like to use:", () => name = keyboardInput, "Done"));

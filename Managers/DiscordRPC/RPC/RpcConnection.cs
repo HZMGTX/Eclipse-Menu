@@ -1,16 +1,16 @@
-﻿using Nova.Managers.DiscordRPC.Events;
-using Nova.Managers.DiscordRPC.Helper;
-using Nova.Managers.DiscordRPC.IO;
-using Nova.Managers.DiscordRPC.Logging;
-using Nova.Managers.DiscordRPC.Message;
-using Nova.Managers.DiscordRPC.RPC.Commands;
-using Nova.Managers.DiscordRPC.RPC.Payload;
+﻿using Eclipse.Managers.DiscordRPC.Events;
+using Eclipse.Managers.DiscordRPC.Helper;
+using Eclipse.Managers.DiscordRPC.IO;
+using Eclipse.Managers.DiscordRPC.Logging;
+using Eclipse.Managers.DiscordRPC.Message;
+using Eclipse.Managers.DiscordRPC.RPC.Commands;
+using Eclipse.Managers.DiscordRPC.RPC.Payload;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using Valve.Newtonsoft.Json;
 
-namespace Nova.Managers.DiscordRPC.RPC
+namespace Eclipse.Managers.DiscordRPC.RPC
 {
     /// <summary>
     /// Communicates between the client and discord through RPC

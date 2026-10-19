@@ -1,12 +1,13 @@
 ﻿/*
- * Nova Menu  Classes/Mods/VirtualStumpAd.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Classes/Mods/VirtualStumpAd.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,9 +28,9 @@ using GorillaExtensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Video;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 
-namespace Nova.Classes.Mods
+namespace Eclipse.Classes.Mods
 {
     public class VirtualStumpAd : MonoBehaviour
     {
@@ -140,7 +141,7 @@ namespace Nova.Classes.Mods
                 if (featuredMapText != null && !replacedMapText)
                 {
                     oldText = featuredMapText.text;
-                    featuredMapText.text = "<b><color=#7C00FA>Nova Menu</color></b>";
+                    featuredMapText.text = "<b><color=#7C00FA>Eclipse Menu</color></b>";
                     MapInfoText.SetActive(true);
                     replacedMapText = true;
 
@@ -170,7 +171,7 @@ namespace Nova.Classes.Mods
 
                 videoPlayer = featuredMapImage.GetOrAddComponent<VideoPlayer>();
                 videoPlayer.audioOutputMode = VideoAudioOutputMode.None;
-                videoPlayer.url = $"{PluginInfo.ServerResourcePath}/Videos/vstump-video.mp4";
+                videoPlayer.url = $"{PluginInfo.SharedResourcePath}/Videos/vstump-video.mp4";
 
                 RenderTexture rt = new RenderTexture(512, 512, 0);
                 videoPlayer.targetTexture = rt;

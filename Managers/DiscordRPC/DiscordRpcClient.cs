@@ -1,13 +1,13 @@
-﻿using Nova.Managers.DiscordRPC.Events;
-using Nova.Managers.DiscordRPC.Exceptions;
-using Nova.Managers.DiscordRPC.IO;
-using Nova.Managers.DiscordRPC.Logging;
-using Nova.Managers.DiscordRPC.Message;
-using Nova.Managers.DiscordRPC.RPC;
-using Nova.Managers.DiscordRPC.RPC.Commands;
+﻿using Eclipse.Managers.DiscordRPC.Events;
+using Eclipse.Managers.DiscordRPC.Exceptions;
+using Eclipse.Managers.DiscordRPC.IO;
+using Eclipse.Managers.DiscordRPC.Logging;
+using Eclipse.Managers.DiscordRPC.Message;
+using Eclipse.Managers.DiscordRPC.RPC;
+using Eclipse.Managers.DiscordRPC.RPC.Commands;
 using System;
 
-namespace Nova.Managers.DiscordRPC
+namespace Eclipse.Managers.DiscordRPC
 {
 
     /// <summary>

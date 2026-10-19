@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Managers/CustomBoardManager.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Managers/CustomBoardManager.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,16 +25,16 @@
  */
 
 using GorillaNetworking;
-using Nova.Extensions;
+using Eclipse.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 
-namespace Nova.Managers
+namespace Eclipse.Managers
 {
     public class CustomBoardManager : MonoBehaviour
     {
@@ -189,7 +190,7 @@ namespace Nova.Managers
         public static string motdTemplate = "You are using build {0}. This menu was created by Poison Software. " +
         "This menu is completely free and open sourced, if you paid for this menu you have been scammed. " +
         "There are a total of <b>{1}</b> mods on this menu. " +
-        "<color=red>Nova is not responsible for any bans using this menu.</color> " +
+        "<color=red>Eclipse is not responsible for any bans using this menu.</color> " +
         "If you get banned while using this, it's your responsibility.\n\nCurrent menu status: <b>Loading...</b>\nMade with <3 by the community.\n\n<alpha=128>{2} {0} {3}<alpha=255>";
 
         public Material forestMaterial;

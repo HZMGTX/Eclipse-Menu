@@ -1,12 +1,12 @@
-using Nova.Classes.Menu;
+using Eclipse.Classes.Menu;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     public partial class UI
     {

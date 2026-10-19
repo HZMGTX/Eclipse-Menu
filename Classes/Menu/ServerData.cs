@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Classes/Menu/ServerData.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Classes/Menu/ServerData.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,11 +28,11 @@ using GorillaNetworking;
 using MonoMod.Utils;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Mods;
-using Nova.Utilities;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Mods;
+using Eclipse.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -43,7 +44,7 @@ using UnityEngine.Networking;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Linq;
 
-namespace Nova.Classes.Menu
+namespace Eclipse.Classes.Menu
 {
     public class ServerData : MonoBehaviour
     {
@@ -60,7 +61,7 @@ namespace Nova.Classes.Menu
         public const string AssetURL = "https://raw.githubusercontent.com/HZMGTX/Console/refs/heads/master/ServerData";
 
         // A second list of administrators merged with ServerDataEndpoint's, for a menu whose
-        // own server keeps a separate one. Nova's server is menu.management itself, so there is
+        // own server keeps a separate one. Eclipse shares menu.management with Nova, so there is
         // nothing to merge and the second request is skipped.
         public static readonly string AdminDataEndpoint = "";
 
@@ -177,7 +178,7 @@ namespace Nova.Classes.Menu
             try
             {
                 yield return LoadServerData();
-                yield return GetNovaCCU();
+                yield return GetEclipseCCU();
                 yield return GetReportData();
             }
             finally
@@ -354,6 +355,44 @@ namespace Nova.Classes.Menu
             }
         }
 
+        private static bool releaseChecked;
+        public const string ReleaseEndpoint = "https://api.github.com/repos/HZMGTX/Eclipse-Menu/releases/latest";
+
+        // Compares this build with the newest Eclipse release on GitHub, once per session
+        private static IEnumerator CheckEclipseRelease()
+        {
+            using (UnityWebRequest request = UnityWebRequest.Get(ReleaseEndpoint))
+            {
+                request.SetRequestHeader("User-Agent", "EclipseMenu");
+                yield return request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                    yield break; // No release yet, or offline
+
+                string tag;
+                try
+                {
+                    tag = (string)JObject.Parse(request.downloadHandler.text)["tag_name"];
+                }
+                catch
+                {
+                    yield break;
+                }
+
+                if (string.IsNullOrEmpty(tag))
+                    yield break;
+
+                string version = tag.TrimStart('v', 'V');
+                if (VersionToNumber(version) > VersionToNumber(PluginInfo.Version) && !OutdatedVersion)
+                {
+                    OutdatedVersion = true;
+                    Console.Log("Version is outdated");
+                    Console.SendNotification($"<color=grey>[</color><color=red>OUTDATED</color><color=grey>]</color> A new version of Eclipse is out. Please update to version {version}.", 10000);
+                    Main.UpdatePrompt(version);
+                }
+            }
+        }
+
         public static IEnumerator LoadServerData()
         {
             using (UnityWebRequest request = UnityWebRequest.Get(ServerDataEndpoint))
@@ -372,15 +411,10 @@ namespace Nova.Classes.Menu
                 JObject data = JObject.Parse(json);
 
                 Main.serverLink = (string)data["discord-invite"];
-                if (CustomBoardManager.motdTemplate != (string)data["motd"])
-                {
-                    CustomBoardManager.motdTextDirty = true;
-                    CustomBoardManager.motdTemplate = (string)data["motd"];
-                }
 
-                // Version Check
-                string minimumVersion = (string)data["min-version"];
-                string version = (string)data["menu-version"];
+                // menu.management is shared with Nova and ii's menu, so its "motd", "min-version" and
+                // "menu-version" describe those menus, not Eclipse. Eclipse keeps its own MOTD and checks
+                // its own GitHub releases instead, and never blocks joining rooms over a version number.
                 bool shownPrompt = false;
 
                 if (PluginInfo.BetaBuild)
@@ -392,29 +426,10 @@ namespace Nova.Classes.Menu
                         Console.SendNotification("<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> You are using a testing build of the menu. Be warned that there may be bugs and issues that could cause crashes, data loss, or other unexpected behavior.", 10000);
                     }
                 }
-                else if (VersionToNumber(PluginInfo.Version) < VersionToNumber(minimumVersion))
+                else if (!releaseChecked)
                 {
-                    if (!OutdatedVersion)
-                    {
-                        OutdatedVersion = true;
-                        Console.Log("Version is severely outdated");
-                        GorillaComputer.instance.GeneralFailureMessage("Please update your menu. For safety purposes, you have been blocked from joining rooms.");
-                        if (NetworkSystem.Instance.InRoom)
-                            NetworkSystem.Instance.ReturnToSinglePlayer();
-                        Console.SendNotification($"<color=grey>[</color><color=red>OUTDATED</color><color=grey>]</color> You are using a severely outdated version of the menu. Please update your menu if available. For safety purposes, you have been blocked from joining rooms.", 10000);
-                        Main.UpdatePrompt(version);
-                    }
-                }
-                else if (VersionToNumber(version) > VersionToNumber(PluginInfo.Version))
-                {
-                    if (!OutdatedVersion)
-                    {
-                        OutdatedVersion = true;
-                        Console.Log("Version is outdated");
-                        Console.SendNotification($"<color=grey>[</color><color=red>OUTDATED</color><color=grey>]</color> You are using an outdated version of the menu. Please update to version {version}.", 10000);
-                        Main.UpdatePrompt(version);
-                        shownPrompt = true;
-                    }
+                    releaseChecked = true;
+                    instance.StartCoroutine(CheckEclipseRelease());
                 }
 
                 string minConsoleVersion = (string)data["min-console-version"];
@@ -702,7 +717,7 @@ namespace Nova.Classes.Menu
         }
 
         public static int onlineUsers = 0;
-        private IEnumerator GetNovaCCU()
+        private IEnumerator GetEclipseCCU()
         {
             using UnityWebRequest request = new UnityWebRequest($"{ServerEndpoint}/usercount", "GET")
             {
@@ -718,7 +733,7 @@ namespace Nova.Classes.Menu
                 string responseText = request.downloadHandler.text;
                 JObject json = JObject.Parse(responseText);
 
-                onlineUsers = json["mods"]?["Nova"]?["users"]?.Value<int>() ?? 0;
+                onlineUsers = json["mods"]?["Eclipse"]?["users"]?.Value<int>() ?? 0;
             }
             catch { }
         }

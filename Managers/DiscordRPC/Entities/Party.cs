@@ -1,8 +1,8 @@
-﻿using Nova.Managers.DiscordRPC.Helper;
+﻿using Eclipse.Managers.DiscordRPC.Helper;
 using System;
 using Valve.Newtonsoft.Json;
 
-namespace Nova.Managers.DiscordRPC
+namespace Eclipse.Managers.DiscordRPC
 {
     /// <summary>
     /// Structure representing the part the player is in.

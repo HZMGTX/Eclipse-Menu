@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/Safety.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Safety.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,22 +31,22 @@ using GorillaTagScripts;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Patches.Menu;
-using Nova.Patches.Safety;
-using Nova.Utilities;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Patches.Menu;
+using Eclipse.Patches.Safety;
+using Eclipse.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using static Nova.Menu.Main;
-using static Nova.Utilities.RigUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.RigUtilities;
 using Random = UnityEngine.Random;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     public static class Safety
     {
@@ -470,7 +471,7 @@ namespace Nova.Mods
                         catch { LogManager.Log("Failed to log player"); }
 
                         text += "\n====================================\n";
-                        text += "Text file generated with Nova Menu";
+                        text += "Text file generated with Eclipse Menu";
                         string fileName = $"{PluginInfo.BaseDirectory}/" + player.NickName + " - Anti Moderator.txt";
 
                         File.WriteAllText(fileName, text);
@@ -521,7 +522,7 @@ namespace Nova.Mods
                         catch { LogManager.Log("Failed to log player"); }
 
                         text += "\n====================================\n";
-                        text += "Text file generated with Nova Menu";
+                        text += "Text file generated with Eclipse Menu";
                         string fileName = $"{PluginInfo.BaseDirectory}/" + player.NickName + " - Anti Content Creator.txt";
 
                         File.WriteAllText(fileName, text);
@@ -695,7 +696,7 @@ namespace Nova.Mods
 
         public static void ChangeIdentityCustom()
         {
-            string[] names = { "Nova", "me" };
+            string[] names = { "Eclipse", "me" };
             Color[] colors = { new Color32(255, 128, 0, 255), Color.white };
 
             string fileName = $"{PluginInfo.BaseDirectory}/CustomIdentities.txt";
@@ -706,7 +707,7 @@ namespace Nova.Mods
                 colors = data[1].Split(";").Select(HexToColor).ToArray();
             }
             else
-                File.WriteAllText(fileName, "Nova;me\n9b59b6;ffffff");
+                File.WriteAllText(fileName, "Eclipse;me\n9b59b6;ffffff");
 
             string name = names[Random.Range(0, names.Length)];
             Color color = colors[Random.Range(0, colors.Length)];

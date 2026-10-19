@@ -1,12 +1,13 @@
 ﻿/*
- * Nova Menu  Mods/Important.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Important.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,13 +30,13 @@ using GorillaNetworking;
 using GorillaTagScripts;
 using HarmonyLib;
 using Photon.Pun;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Managers.DiscordRPC;
-using Nova.Menu;
-using Nova.Patches.Menu;
-using Nova.Utilities;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Managers.DiscordRPC;
+using Eclipse.Menu;
+using Eclipse.Patches.Menu;
+using Eclipse.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -55,13 +56,13 @@ using UnityEngine.TextCore;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 using Valve.Newtonsoft.Json;
-using static Nova.Menu.Main;
-using static Nova.Utilities.AssetUtilities;
-using static Nova.Utilities.RandomUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.AssetUtilities;
+using static Eclipse.Utilities.RandomUtilities;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Object = UnityEngine.Object;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     public static class Important
     {
@@ -338,7 +339,7 @@ namespace Nova.Mods
                 .Aggregate("", (current, line) => current + (Environment.NewLine + "echo      " + line));
 
             string restartScript = @"@echo off
-title Nova Menu - Restarting Gorilla Tag
+title Eclipse Menu - Restarting Gorilla Tag
 color 5
 
 cls
@@ -417,7 +418,7 @@ exit";
                     Assets = new Managers.DiscordRPC.Assets
                     {
                         LargeImageKey = "cone",
-                        LargeImageText = "Nova Menu",
+                        LargeImageText = "Eclipse Menu",
                         SmallImageKey = inRoom ? "online" : "offline",
                         SmallImageText = inRoom ? "Online" : "Offline"
                     },
@@ -435,7 +436,7 @@ exit";
                         new Button
                         {
                             Label = "Download",
-                            Url = "https://github.com/HZMGTX/Nova/"
+                            Url = "https://github.com/HZMGTX/Eclipse-Menu/"
                         }
                     }
                 });
@@ -465,7 +466,7 @@ exit";
 
         private static IEnumerator DownloadIntegrationProgram()
         {
-            // Fetched from Nova's own releases. It used to come from an account the project
+            // Fetched from Nova's releases, which ship the QuickSong helper. It used to come from an account the project
             // does not own, which could have served any program to every user.
             using UnityWebRequest request = UnityWebRequest.Get("https://github.com/HZMGTX/Nova/releases/latest/download/QuickSong.exe");
             yield return request.SendWebRequest();
@@ -591,7 +592,7 @@ exit";
                 if (_mediaSpriteSheet == null)
                 {
                     _mediaSpriteSheet = ScriptableObject.CreateInstance<TMP_SpriteAsset>();
-                    _mediaSpriteSheet.name = "Nova_SpriteSheet";
+                    _mediaSpriteSheet.name = "Eclipse_SpriteSheet";
 
                     var textureList = new List<Texture2D>();
                     var spriteDataList = new List<(string name, int index)>();
@@ -685,7 +686,7 @@ exit";
 
                 if (mediaText == null)
                 {
-                    GameObject textHolder = new GameObject("Nova_MediaText");
+                    GameObject textHolder = new GameObject("Eclipse_MediaText");
 
                     TextMeshPro text = textHolder.GetOrAddComponent<TextMeshPro>();
                     text.color = Color.white;

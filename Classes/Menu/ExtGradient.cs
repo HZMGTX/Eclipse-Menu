@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Classes/Menu/ExtGradient.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Classes/Menu/ExtGradient.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,14 +24,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Nova.Extensions;
-using Nova.Menu;
+using Eclipse.Extensions;
+using Eclipse.Menu;
 using System;
 using System.Linq;
 using UnityEngine;
-using static Nova.Utilities.RandomUtilities;
+using static Eclipse.Utilities.RandomUtilities;
 
-namespace Nova.Classes.Menu
+namespace Eclipse.Classes.Menu
 {
     public class ExtGradient
     {

@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Utilities/GameModeUtilities.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Utilities/GameModeUtilities.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,7 +30,7 @@ using Photon.Pun;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Nova.Utilities
+namespace Eclipse.Utilities
 {
     public class GameModeUtilities
     {

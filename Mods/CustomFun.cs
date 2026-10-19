@@ -1,9 +1,11 @@
 /*
- * Nova Menu  Mods/CustomFun.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/CustomFun.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
+ *
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,19 +22,19 @@
  */
 
 using GorillaLocomotion;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Utilities;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Utilities;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 using Random = UnityEngine.Random;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     /// <summary>The second set of Custom Mods: toys, art, critters and mini-games.</summary>
     /// <remarks>
@@ -60,7 +62,7 @@ namespace Nova.Mods
             }
 
             if (jetFlame == null)
-                jetFlame = MakeParticles("Nova_JetFlame", null, system =>
+                jetFlame = MakeParticles("Eclipse_JetFlame", null, system =>
                 {
                     var main = system.main;
                     main.loop = true;
@@ -138,7 +140,7 @@ namespace Nova.Mods
             Ensure(ref balloon, PrimitiveType.Sphere, Color.red);
             if (balloonString == null)
             {
-                balloonString = MakeLine("Nova_BalloonString", 0.005f);
+                balloonString = MakeLine("Eclipse_BalloonString", 0.005f);
                 balloonString.startColor = balloonString.endColor = Color.white;
             }
 
@@ -239,7 +241,7 @@ namespace Nova.Mods
                     strokes.RemoveAt(0);
                 }
 
-                currentStroke = MakeLine("Nova_PaintStroke", 0.012f * Scale);
+                currentStroke = MakeLine("Eclipse_PaintStroke", 0.012f * Scale);
                 currentStroke.numCapVertices = 4;
                 currentStroke.numCornerVertices = 2;
                 currentStroke.startColor = currentStroke.endColor = MyColor;
@@ -278,7 +280,7 @@ namespace Nova.Mods
 
             if (laser == null)
             {
-                laser = MakeLine("Nova_Laser", 0.004f);
+                laser = MakeLine("Eclipse_Laser", 0.004f);
                 laser.startColor = laser.endColor = new Color(1f, 0.1f, 0.1f, 0.8f);
             }
 
@@ -311,7 +313,7 @@ namespace Nova.Mods
         {
             if (flashlight == null)
             {
-                flashlight = new GameObject("Nova_Flashlight").AddComponent<Light>();
+                flashlight = new GameObject("Eclipse_Flashlight").AddComponent<Light>();
                 flashlight.type = LightType.Spot;
                 flashlight.spotAngle = 45f;
                 flashlight.intensity = 2.5f;
@@ -497,7 +499,7 @@ namespace Nova.Mods
             }
 
             if (rain == null)
-                rain = MakeParticles("Nova_Rain", null, system =>
+                rain = MakeParticles("Eclipse_Rain", null, system =>
                 {
                     var main = system.main;
                     main.loop = true;
@@ -536,7 +538,7 @@ namespace Nova.Mods
         public static void FireflySwarm()
         {
             if (fireflies == null)
-                fireflies = MakeParticles("Nova_Fireflies", null, system =>
+                fireflies = MakeParticles("Eclipse_Fireflies", null, system =>
                 {
                     var main = system.main;
                     main.loop = true;
@@ -622,7 +624,7 @@ namespace Nova.Mods
         {
             if (speedLines == null)
             {
-                speedLines = MakeParticles("Nova_SpeedLines", null, system =>
+                speedLines = MakeParticles("Eclipse_SpeedLines", null, system =>
                 {
                     var main = system.main;
                     main.loop = true;
@@ -877,7 +879,7 @@ namespace Nova.Mods
 
             if (coinText == null)
             {
-                coinText = MakeWristText("Nova_CoinHunt", new Color(1f, 0.85f, 0.2f));
+                coinText = MakeWristText("Eclipse_CoinHunt", new Color(1f, 0.85f, 0.2f));
                 coinScore = 0;
                 coinText.SafeSetText($"Coins: 0\n<size=70%>Best: {coinBest}</size>");
             }
@@ -948,14 +950,14 @@ namespace Nova.Mods
 
             if (targetText == null)
             {
-                targetText = MakeWristText("Nova_TargetPractice", new Color(1f, 0.4f, 0.4f));
+                targetText = MakeWristText("Eclipse_TargetPractice", new Color(1f, 0.4f, 0.4f));
                 targetScore = 0;
                 targetText.SafeSetText($"Targets: 0\n<size=70%>Best: {targetBest}</size>");
             }
 
             if (aimLine == null)
             {
-                aimLine = MakeLine("Nova_AimLine", 0.004f);
+                aimLine = MakeLine("Eclipse_AimLine", 0.004f);
                 aimLine.startColor = new Color(1f, 1f, 1f, 0.6f);
                 aimLine.endColor = new Color(1f, 1f, 1f, 0f);
             }

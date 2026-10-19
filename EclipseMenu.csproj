@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>Nova Menu</AssemblyName>
+    <AssemblyName>Eclipse Menu</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     
     <TargetFramework>netstandard2.1</TargetFramework>
@@ -19,19 +19,19 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Legal'">
-    <AssemblyName>Nova Menu Legal</AssemblyName>
+    <AssemblyName>Eclipse Menu Legal</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Legal Debug'">
-    <AssemblyName>Nova Menu Legal Debug</AssemblyName>
+    <AssemblyName>Eclipse Menu Legal Debug</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'LEGAL_DEBUG'">
-    <AssemblyName>Nova Menu Legal Debug</AssemblyName>
+    <AssemblyName>Eclipse Menu Legal Debug</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'DEBUG' Or '$(Configuration)' == 'Debug'">
-    <AssemblyName>Nova Menu Debug</AssemblyName>
+    <AssemblyName>Eclipse Menu Debug</AssemblyName>
   </PropertyGroup>
   
   <PropertyGroup> 

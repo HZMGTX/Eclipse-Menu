@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/ConsoleAdmin.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/ConsoleAdmin.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,8 +24,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Nova.Classes.Menu;
-using Nova.Extensions;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
@@ -32,11 +33,11 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using static Nova.Menu.Main;
-using static Nova.Utilities.RigUtilities;
-using Console = Nova.Classes.Menu.Console;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.RigUtilities;
+using Console = Eclipse.Classes.Menu.Console;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     /// <summary>
     /// Admin mods for commands Console already understands but nothing in the menu sent.
@@ -153,7 +154,7 @@ namespace Nova.Mods
 
                     if (!rankTags.TryGetValue(rig, out TextMeshPro tag) || tag == null)
                     {
-                        tag = new GameObject("Nova_AdminRankTag").AddComponent<TextMeshPro>();
+                        tag = new GameObject("Eclipse_AdminRankTag").AddComponent<TextMeshPro>();
                         tag.fontSize = 4.8f;
                         tag.alignment = TextAlignmentOptions.Center;
                         rankTags[rig] = tag;

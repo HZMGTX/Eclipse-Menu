@@ -1,7 +1,7 @@
-﻿using Nova.Managers.DiscordRPC.Converters;
+﻿using Eclipse.Managers.DiscordRPC.Converters;
 using System;
 
-namespace Nova.Managers.DiscordRPC.RPC.Payload
+namespace Eclipse.Managers.DiscordRPC.RPC.Payload
 {
     /// <summary>
     /// The possible commands that can be sent and received by the server.

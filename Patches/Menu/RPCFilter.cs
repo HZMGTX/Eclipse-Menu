@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Patches/Menu/RPCFilter.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Patches/Menu/RPCFilter.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,11 +27,11 @@
 using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Managers;
+using Eclipse.Managers;
 using System;
 using System.Collections.Generic;
 
-namespace Nova.Patches.Menu
+namespace Eclipse.Patches.Menu
 {
     [HarmonyPatch(typeof(PhotonNetwork), nameof(PhotonNetwork.RPC), typeof(PhotonView), typeof(string), typeof(RpcTarget), typeof(Player), typeof(bool), typeof(object[]))]
     public class RPCFilter

@@ -1,7 +1,7 @@
-﻿using Nova.Managers.DiscordRPC.Converters;
+﻿using Eclipse.Managers.DiscordRPC.Converters;
 using Valve.Newtonsoft.Json;
 
-namespace Nova.Managers.DiscordRPC.RPC.Payload
+namespace Eclipse.Managers.DiscordRPC.RPC.Payload
 {
     /// <summary>
     /// Base Payload that is received by both client and server

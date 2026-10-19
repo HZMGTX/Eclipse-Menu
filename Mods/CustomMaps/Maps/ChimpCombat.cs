@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/CustomMaps/Maps/ChimpCombat.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/CustomMaps/Maps/ChimpCombat.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,18 +27,18 @@
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Managers;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Nova.Extensions.VRRigExtensions;
-using static Nova.Menu.Main;
-using static Nova.Mods.CustomMaps.Manager;
-using static Nova.Utilities.RigUtilities;
+using static Eclipse.Extensions.VRRigExtensions;
+using static Eclipse.Menu.Main;
+using static Eclipse.Mods.CustomMaps.Manager;
+using static Eclipse.Utilities.RigUtilities;
 
-namespace Nova.Mods.CustomMaps.Maps
+namespace Eclipse.Mods.CustomMaps.Maps
 {
     public class ChimpCombat : CustomMap
     {

@@ -5,17 +5,17 @@
 ---
 
 <p align="center">
-	<a href="https://github.com/HZMGTX/Nova/releases"><img src="https://img.shields.io/github/v/release/HZMGTX/Nova?label=version&style=for-the-badge"></a>
-	<a href="https://github.com/HZMGTX/Nova/releases/latest"><img src="https://img.shields.io/github/downloads/HZMGTX/Nova/latest?style=for-the-badge"></a>
+	<a href="https://github.com/HZMGTX/Eclipse-Menu/releases"><img src="https://img.shields.io/github/v/release/HZMGTX/Nova?label=version&style=for-the-badge"></a>
+	<a href="https://github.com/HZMGTX/Eclipse-Menu/releases/latest"><img src="https://img.shields.io/github/downloads/HZMGTX/Nova/latest?style=for-the-badge"></a>
 	<a href="https://discord.gg/EFTCVQe8Gx"><img src="https://img.shields.io/badge/discord-join-blueviolet?style=for-the-badge&logo=discord"></a>
 </p>
 
 ---
 
-# Nova Menu  
+# Eclipse Menu  
 <sub>Maintained by [HZMGTX](https://github.com/HZMGTX). Built on [Poison Menu](https://github.com/heycanihavethis/Poison) (formerly Seralyth Menu), itself forked from ii's Stupid Menu.</sub>
 
-Nova Menu is a **feature-packed** mod menu for Gorilla Tag, built by the community, for the community. Whether you just want mods, are a developer, or anything inbetween, this menu has you covered. Designed to be **as useful as possible**, it includes a variety of features and options that let you customize your modding experience to your heart’s content.  
+Eclipse Menu is a **feature-packed** mod menu for Gorilla Tag, built by the community, for the community. Whether you just want mods, are a developer, or anything inbetween, this menu has you covered. Designed to be **as useful as possible**, it includes a variety of features and options that let you customize your modding experience to your heart’s content.  
 
 <details>
   <summary><b>💡 Why open-source?</b></summary>
@@ -46,13 +46,13 @@ Let's bring back the collaboration of modding. No paywalls, no secrets, no malwa
 <details>
   <summary><b>💾 Installation</b></summary>
 	
-1. **Download** the latest release **[here](https://github.com/HZMGTX/Nova/releases/latest)**
-2. **Drag & Drop** `Nova Menu.dll` into your plugins folder  
+1. **Download** the latest release **[here](https://github.com/HZMGTX/Eclipse-Menu/releases/latest)**
+2. **Drag & Drop** `Eclipse Menu.dll` into your plugins folder  
 3. **Launch** Gorilla Tag and enjoy!
 
 **🧱 From Source Code (for developers!)**
 
-1. Download the source code **[here](https://github.com/HZMGTX/Nova/releases/latest)**
+1. Download the source code **[here](https://github.com/HZMGTX/Eclipse-Menu/releases/latest)**
 2. Edit `Directory.Build.props` and update `<GamePath>` if your Gorilla Tag is in a custom spot
 3. Build the project with `Ctrl + Shift + B`<Br>
 ✅ The DLL will automatically go into your Gorilla Tag plugins folder
@@ -120,10 +120,10 @@ Donation links have not been set up yet. *(Maintainer: add your own here.)*
 > Menu sends requests to https://lazypy.ro for many TTS voices.<br>
 > Menu connects to wss://vbvbekoikimuvhqfzolt.supabase.co (the menu.management relay) for friend system and administrative purposes.<br>
 > Menu downloads Console assets from https://github.com/HZMGTX/Console.<br>
-> Questions about how this data is used go to [GitHub issues](https://github.com/HZMGTX/Nova/issues).<br>
+> Questions about how this data is used go to [GitHub issues](https://github.com/HZMGTX/Eclipse-Menu/issues).<br>
 > The donate, search, star and speak symbols are provided from [Icons8](https://icons8.com).
 
-> Nova Menu  README.md<br>
+> Eclipse Menu  README.md<br>
 > A community driven mod menu for Gorilla Tag with over 1000+ mods
 >
 > Copyright (C) 2026  Poison Software

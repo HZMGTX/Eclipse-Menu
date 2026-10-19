@@ -1,4 +1,4 @@
-﻿namespace Nova.Managers.DiscordRPC
+﻿namespace Eclipse.Managers.DiscordRPC
 {
     /// <summary>
     /// Rich Presence activity type

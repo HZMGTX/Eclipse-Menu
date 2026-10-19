@@ -1,4 +1,4 @@
-﻿namespace Nova.Managers.DiscordRPC.Logging
+﻿namespace Eclipse.Managers.DiscordRPC.Logging
 {
     /// <summary>
     /// Logs the outputs to a file

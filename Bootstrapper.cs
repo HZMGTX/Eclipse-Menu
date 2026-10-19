@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Bootstrapper.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Bootstrapper.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,18 +23,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-using Nova.Classes.Menu;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Patches;
-using Nova.Patches.Menu;
+using Eclipse.Classes.Menu;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Patches;
+using Eclipse.Patches.Menu;
 using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
 using UnityEngine;
 
-namespace Nova
+namespace Eclipse
 {
     internal static class Bootstrapper
     {
@@ -47,6 +48,14 @@ namespace Nova
         {
             if (initialized) return;
             initialized = true;
+
+            // A second guard for loaders without BepInIncompatibility (MelonLoader, injectors)
+            if (NovaLoaded())
+            {
+                LogManager.LogError("Eclipse Menu was not started because Nova Menu is also installed. They patch the same game code, so remove one of them.");
+                return;
+            }
+
             FirstLaunch = !Directory.Exists(PluginInfo.BaseDirectory);
             string[] existingDirectories =
             {
@@ -69,23 +78,35 @@ namespace Nova
                     Directory.CreateDirectory(target);
             }
             PatchHandler.PatchAll(true);
-            if (File.Exists($"{PluginInfo.BaseDirectory}/Nova_Preferences.txt"))
+            if (File.Exists($"{PluginInfo.BaseDirectory}/Eclipse_Preferences.txt"))
             {
-                if (File.ReadAllLines($"{PluginInfo.BaseDirectory}/Nova_Preferences.txt")[0]
+                if (File.ReadAllLines($"{PluginInfo.BaseDirectory}/Eclipse_Preferences.txt")[0]
                     .Split(";;")
                     .Contains("Accept TOS"))
                 {
                     TOSPatches.enabled = true;
                 }
             }
-            if (File.Exists($"{PluginInfo.BaseDirectory}/Nova_DisableTelemetry.txt"))
+            if (File.Exists($"{PluginInfo.BaseDirectory}/Eclipse_DisableTelemetry.txt"))
                 ServerData.DisableTelemetry = true;
             GorillaTagger.OnPlayerSpawned(LoadMenu);
         }
+        private static bool NovaLoaded()
+        {
+            foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                string name = assembly.GetName().Name;
+                if (name != null && name.StartsWith("Nova Menu", StringComparison.Ordinal))
+                    return true;
+            }
+
+            return false;
+        }
+
         private static void LoadMenu()
         {
             PatchHandler.PatchAll();
-            Loader = new GameObject("Nova_Loader");
+            Loader = new GameObject("Eclipse_Loader");
             CoroutineManager coroutineManager = Loader.AddComponent<CoroutineManager>();
             Loader.AddComponent<NotificationManager>();
             Loader.AddComponent<CustomBoardManager>();

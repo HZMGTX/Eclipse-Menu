@@ -1,4 +1,4 @@
-﻿namespace Nova.Managers.DiscordRPC.Message
+﻿namespace Eclipse.Managers.DiscordRPC.Message
 {
     /// <summary>
     /// Failed to establish any connection with discord. Discord is potentially not running?

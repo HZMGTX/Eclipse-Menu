@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Managers/AIManager.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Managers/AIManager.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,9 +25,9 @@
  */
 
 using Valve.Newtonsoft.Json;
-using Nova.Classes.Menu;
-using Nova.Menu;
-using Nova.Mods;
+using Eclipse.Classes.Menu;
+using Eclipse.Menu;
+using Eclipse.Mods;
 using System;
 using System.Collections;
 using System.IO;
@@ -34,19 +35,19 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Networking;
-using static Nova.Utilities.AssetUtilities;
+using static Eclipse.Utilities.AssetUtilities;
 
-namespace Nova.Managers
+namespace Eclipse.Managers
 {
     public class AIManager
     {
-        public static string SystemPrompt = @"NAME: Nova's Voice Assistant
+        public static string SystemPrompt = @"NAME: Eclipse's Voice Assistant
         MENU VERSION: {2}
         MOD COUNT: {0}
 
-        You are a voice assistant for a Gorilla Tag mod menu called ""Nova Menu"". You are not Nova, but represent the menu.
-        GitHub: https://github.com/HZMGTX/Nova
-        Nova's Discord Server: {1}
+        You are a voice assistant for a Gorilla Tag mod menu called ""Eclipse Menu"". You are not Eclipse itself, but represent the menu.
+        GitHub: https://github.com/HZMGTX/Eclipse-Menu
+        Eclipse's Discord Server: {1}
 
         Speak using simple 7th grade vocabulary. Limit all responses to 2 sentences and 300 characters. No emojis, em-dashes, markdown, or questions. Do not advertise other menus, mods, or AI unless asked.
 
@@ -91,7 +92,7 @@ namespace Nova.Managers
             try
             {
                 string systemPrompt = SystemPrompt;
-                string filePath = $"{PluginInfo.BaseDirectory}/Nova_SystemPrompt.txt";
+                string filePath = $"{PluginInfo.BaseDirectory}/Eclipse_SystemPrompt.txt";
                 if (!File.Exists(filePath))
                     File.WriteAllText(filePath, SystemPrompt);
                 else if (customPrompt)

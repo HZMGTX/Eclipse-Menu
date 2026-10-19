@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/Sound.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Sound.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,22 +29,22 @@ using GorillaLocomotion;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Patches.Menu;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Patches.Menu;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using static Nova.Menu.Main;
-using static Nova.Utilities.AssetUtilities;
-using static Nova.Utilities.FileUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.AssetUtilities;
+using static Eclipse.Utilities.FileUtilities;
 using Random = UnityEngine.Random;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     public static class Sound
     {
@@ -249,7 +250,7 @@ namespace Nova.Mods
                 {
                     index++;
                     string[] Data = audio.Split(";");
-                    soundbuttons.Add(new ButtonInfo { buttonText = "SoundboardDownload" + index, overlapText = Data[0], method = () => DownloadSound(Data[0], $"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/Soundboard/Sounds/{Data[1]}"), isTogglable = false, toolTip = "Downloads " + Data[0] + " to your sound library." });
+                    soundbuttons.Add(new ButtonInfo { buttonText = "SoundboardDownload" + index, overlapText = Data[0], method = () => DownloadSound(Data[0], $"{PluginInfo.SharedResourcePath}/Audio/Mods/Fun/Soundboard/Sounds/{Data[1]}"), isTogglable = false, toolTip = "Downloads " + Data[0] + " to your sound library." });
                 }
             }
             Buttons.buttons[Buttons.GetCategory("Sound Library")] = soundbuttons.ToArray();

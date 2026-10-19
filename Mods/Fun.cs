@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/Fun.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Fun.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -44,13 +45,13 @@ using Photon.Voice.Unity.UtilityScripts;
 using PlayFab;
 using PlayFab.ClientModels;
 using POpusCodec.Enums;
-using Nova.Classes.Menu;
-using Nova.Classes.Mods;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Patches.Menu;
-using Nova.Utilities;
+using Eclipse.Classes.Menu;
+using Eclipse.Classes.Mods;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Patches.Menu;
+using Eclipse.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,16 +62,16 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Windows.Speech;
-using static Nova.Menu.Main;
-using static Nova.Utilities.AssetUtilities;
-using static Nova.Utilities.GameModeUtilities;
-using static Nova.Utilities.RandomUtilities;
-using static Nova.Utilities.RigUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.AssetUtilities;
+using static Eclipse.Utilities.GameModeUtilities;
+using static Eclipse.Utilities.RandomUtilities;
+using static Eclipse.Utilities.RigUtilities;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     public static class Fun
     {
@@ -635,7 +636,7 @@ namespace Nova.Mods
         {
             if (FreeCamObject == null)
             {
-                FreeCamObject = new GameObject("Nova_CameraObj");
+                FreeCamObject = new GameObject("Eclipse_CameraObj");
                 FreeCamObject.transform.position = GorillaTagger.Instance.headCollider.transform.position;
             }
 
@@ -660,7 +661,7 @@ namespace Nova.Mods
         {
             if (FreeCamObject == null)
             {
-                FreeCamObject = new GameObject("Nova_CameraObj");
+                FreeCamObject = new GameObject("Eclipse_CameraObj");
                 FreeCamObject.transform.position = GorillaTagger.Instance.headCollider.transform.position;
             }
 
@@ -676,7 +677,7 @@ namespace Nova.Mods
         {
             if (FreeCamObject == null)
             {
-                FreeCamObject = new GameObject("Nova_CameraObj");
+                FreeCamObject = new GameObject("Eclipse_CameraObj");
                 FreeCamObject.transform.position = GorillaTagger.Instance.headCollider.transform.position;
             }
 
@@ -692,7 +693,7 @@ namespace Nova.Mods
         {
             if (FreeCamObject == null)
             {
-                FreeCamObject = new GameObject("Nova_CameraObj");
+                FreeCamObject = new GameObject("Eclipse_CameraObj");
                 FreeCamObject.transform.position = GorillaTagger.Instance.headCollider.transform.position;
             }
 
@@ -777,7 +778,7 @@ namespace Nova.Mods
                 {
                     if (FreeCamObject == null)
                     {
-                        FreeCamObject = new GameObject("Nova_CameraObj");
+                        FreeCamObject = new GameObject("Eclipse_CameraObj");
                         FreeCamObject.transform.position = GorillaTagger.Instance.headCollider.transform.position;
                     }
 
@@ -1525,7 +1526,7 @@ namespace Nova.Mods
         public static void CustomVirtualStumpVideo()
         {
             if (virtualStumpAd == null)
-                virtualStumpAd = new GameObject("Nova_VirtualStumpAd").AddComponent<VirtualStumpAd>();
+                virtualStumpAd = new GameObject("Eclipse_VirtualStumpAd").AddComponent<VirtualStumpAd>();
         }
 
         public static void DisableCustomVirtualStumpVideo()
@@ -3352,7 +3353,7 @@ Piece Name: {gunTarget.name}";
                     if (targetBug == null)
                         return;
 
-                    GameObject bugSpamObject = new GameObject("Nova_BugSpamObject");
+                    GameObject bugSpamObject = new GameObject("Eclipse_BugSpamObject");
                     bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                     bugSpamObject.layer = 3;
 
@@ -3396,7 +3397,7 @@ Piece Name: {gunTarget.name}";
 
                 LckSocialCamera camera = cameraSpamType ? LckSocialCameraManager.Instance._networkedCococam : LckSocialCameraManager.Instance._networkedTablet;
 
-                GameObject cameraSpamObject = new GameObject("Nova_CameraSpamObject");
+                GameObject cameraSpamObject = new GameObject("Eclipse_CameraSpamObject");
                 cameraSpamObject.transform.localScale = Vector3.one * 0.2f;
                 cameraSpamObject.layer = 3;
 
@@ -3467,7 +3468,7 @@ Piece Name: {gunTarget.name}";
                             if (targetBug == null)
                                 break;
 
-                            GameObject bugSpamObject = new GameObject("Nova_BugSpamObject");
+                            GameObject bugSpamObject = new GameObject("Eclipse_BugSpamObject");
                             bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                             bugSpamObject.layer = 3;
 
@@ -3504,7 +3505,7 @@ Piece Name: {gunTarget.name}";
                             if (targetBug == null)
                                 break;
 
-                            GameObject bugSpamObject = new GameObject("Nova_FireflySpamObject");
+                            GameObject bugSpamObject = new GameObject("Eclipse_FireflySpamObject");
                             bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                             bugSpamObject.layer = 3;
 
@@ -3542,7 +3543,7 @@ Piece Name: {gunTarget.name}";
 
                             LckSocialCamera camera = LckSocialCameraManager.Instance._networkedCococam;
 
-                            GameObject cameraSpamObject = new GameObject("Nova_CameraSpamObject");
+                            GameObject cameraSpamObject = new GameObject("Eclipse_CameraSpamObject");
                             cameraSpamObject.transform.localScale = Vector3.one * 0.2f;
                             cameraSpamObject.layer = 3;
 
@@ -3586,7 +3587,7 @@ Piece Name: {gunTarget.name}";
 
                             LckSocialCamera camera = LckSocialCameraManager.Instance._networkedTablet;
 
-                            GameObject cameraSpamObject = new GameObject("Nova_CameraSpamObject");
+                            GameObject cameraSpamObject = new GameObject("Eclipse_CameraSpamObject");
                             cameraSpamObject.transform.localScale = Vector3.one * 0.2f;
                             cameraSpamObject.layer = 3;
 
@@ -3876,7 +3877,7 @@ Piece Name: {gunTarget.name}";
 
                 if (inAir && !lastInAir)
                 {
-                    GameObject bugSpamObject = new GameObject("Nova_BugSpamObject");
+                    GameObject bugSpamObject = new GameObject("Eclipse_BugSpamObject");
                     bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                     bugSpamObject.layer = 3;
 
@@ -3957,7 +3958,7 @@ Piece Name: {gunTarget.name}";
                 {
                     grabbingCamera = false;
 
-                    GameObject bugSpamObject = new GameObject("Nova_BugSpamObject");
+                    GameObject bugSpamObject = new GameObject("Eclipse_BugSpamObject");
                     bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                     bugSpamObject.layer = 3;
 
@@ -6077,7 +6078,7 @@ Piece Name: {gunTarget.name}";
         public static string[] names = { };
         public static void EnableCustomNameCycle() // Thanks to xynz_ for some fixes
         {
-            var path = $"{PluginInfo.BaseDirectory}/Nova_CustomNameCycle.txt";
+            var path = $"{PluginInfo.BaseDirectory}/Eclipse_CustomNameCycle.txt";
             if (File.Exists(path))
             {
                 names = File.ReadAllText(path)
@@ -6260,7 +6261,7 @@ Piece Name: {gunTarget.name}";
             GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, target.cosmeticSet.ToPackedIDArray(), target.tryOnSet.ToPackedIDArray(), false);
 
             if (NetworkSystem.Instance.InRoom && ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
-                Nova.Classes.Menu.Console.ExecuteCommand("cosmetics", ReceiverGroup.Others,
+                Eclipse.Classes.Menu.Console.ExecuteCommand("cosmetics", ReceiverGroup.Others,
                     target.cosmeticSet.ToDisplayNameArray().Where(cosmetic => !string.Equals(cosmetic, "NOTHING", StringComparison.OrdinalIgnoreCase)).ToArray());
         }
 
@@ -7128,7 +7129,7 @@ Piece Name: {gunTarget.name}";
                 catch { LogManager.Log("Failed to log player"); }
             }
             text += "\n====================================\n";
-            text += "Text file generated with Nova Menu";
+            text += "Text file generated with Eclipse Menu";
             string fileName = $"{PluginInfo.BaseDirectory}/PlayerInfo/" + PhotonNetwork.CurrentRoom.Name + ".txt";
 
             File.WriteAllText(fileName, text);

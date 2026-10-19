@@ -6,7 +6,7 @@ using UnityEngine;
 
 
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     public partial class UI
     {

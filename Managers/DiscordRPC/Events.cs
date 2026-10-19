@@ -1,6 +1,6 @@
-﻿using Nova.Managers.DiscordRPC.Message;
+﻿using Eclipse.Managers.DiscordRPC.Message;
 
-namespace Nova.Managers.DiscordRPC.Events
+namespace Eclipse.Managers.DiscordRPC.Events
 {
     /// <summary>
     /// Called when the Discord Client is ready to send and receive messages.

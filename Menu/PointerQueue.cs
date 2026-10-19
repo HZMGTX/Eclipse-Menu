@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     internal sealed class PointerQueue<T>
     {

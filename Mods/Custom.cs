@@ -1,9 +1,11 @@
 /*
- * Nova Menu  Mods/Custom.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Custom.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
+ *
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,21 +22,21 @@
  */
 
 using GorillaLocomotion;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Utilities;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
-    /// <summary>Nova's own mods, gathered in the Custom Mods category.</summary>
+    /// <summary>The custom mods carried over from Nova, gathered in the Custom Mods category.</summary>
     /// <remarks>
     /// Everything here acts on you alone: how you move, and things only you see. The
     /// class is split over four files; this one holds the shared helpers and the first
@@ -276,7 +278,7 @@ namespace Nova.Mods
             ref ParticleSystem system = ref falling ? ref fallingSparks : ref floatingSparks;
             if (system == null)
             {
-                system = MakeParticles(falling ? "Nova_FallingSparks" : "Nova_FloatingSparks", null, particles =>
+                system = MakeParticles(falling ? "Eclipse_FallingSparks" : "Eclipse_FloatingSparks", null, particles =>
                 {
                     var main = particles.main;
                     main.loop = true;
@@ -399,7 +401,7 @@ namespace Nova.Mods
             }
 
             if (rope == null)
-                rope = MakeLine("Nova_Rope", 0.025f);
+                rope = MakeLine("Eclipse_Rope", 0.025f);
 
             rope.enabled = true;
             rope.startWidth = rope.endWidth = 0.025f * scale;
@@ -570,7 +572,7 @@ namespace Nova.Mods
         private static ParticleSystem leftSparkles, rightSparkles;
 
         private static ParticleSystem Sparkles(Transform hand) =>
-            MakeParticles("Nova_Sparkles", hand, system =>
+            MakeParticles("Eclipse_Sparkles", hand, system =>
             {
                 var main = system.main;
                 main.loop = true;
@@ -760,7 +762,7 @@ namespace Nova.Mods
         {
             if (aura == null)
             {
-                aura = new GameObject("Nova_GlowAura").AddComponent<Light>();
+                aura = new GameObject("Eclipse_GlowAura").AddComponent<Light>();
                 aura.type = LightType.Point;
                 aura.intensity = 2f;
             }
@@ -783,7 +785,7 @@ namespace Nova.Mods
         public static void PersonalSnow()
         {
             if (snow == null)
-                snow = MakeParticles("Nova_Snow", null, system =>
+                snow = MakeParticles("Eclipse_Snow", null, system =>
                 {
                     var main = system.main;
                     main.loop = true;
@@ -828,7 +830,7 @@ namespace Nova.Mods
         {
             if (watch == null)
             {
-                watch = MakeWristText("Nova_WristWatch", Color.white);
+                watch = MakeWristText("Eclipse_WristWatch", Color.white);
                 watchNextText = 0f;
             }
 
@@ -873,7 +875,7 @@ namespace Nova.Mods
             }
 
             if (stopwatchText == null)
-                stopwatchText = MakeWristText("Nova_Stopwatch", Color.white);
+                stopwatchText = MakeWristText("Eclipse_Stopwatch", Color.white);
 
             // Hundredths can't be read at a glance anyway; twenty updates a second is plenty.
             if (Time.time >= stopwatchNextText)

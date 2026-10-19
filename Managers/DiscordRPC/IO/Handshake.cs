@@ -1,6 +1,6 @@
 ﻿using Valve.Newtonsoft.Json;
 
-namespace Nova.Managers.DiscordRPC.IO
+namespace Eclipse.Managers.DiscordRPC.IO
 {
     internal class Handshake
     {

@@ -1,9 +1,11 @@
 /*
- * Nova Menu  Mods/CustomMore.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/CustomMore.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
+ *
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +22,17 @@
  */
 
 using GorillaLocomotion;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Utilities;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Utilities;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     /// <summary>The third set of Custom Mods: more games, a pet, hats, scenery, music and tools.</summary>
     public static partial class Custom
@@ -101,7 +103,7 @@ namespace Nova.Mods
 
             if (hoopText == null)
             {
-                hoopText = MakeWristText("Nova_Basketball", new Color(1f, 0.6f, 0.2f));
+                hoopText = MakeWristText("Eclipse_Basketball", new Color(1f, 0.6f, 0.2f));
                 hoopScore = 0;
                 hoopText.SafeSetText($"Hoops: 0\n<size=70%>Best: {hoopBest}</size>");
             }
@@ -165,7 +167,7 @@ namespace Nova.Mods
 
             if (reactionText == null)
             {
-                reactionText = MakeWristText("Nova_ReactionTest", Color.white);
+                reactionText = MakeWristText("Eclipse_ReactionTest", Color.white);
                 reactionText.SafeSetText("Get ready...");
                 reactionState = Reaction.Shown;
                 reactionAt = now;
@@ -257,7 +259,7 @@ namespace Nova.Mods
 
             if (moleText == null)
             {
-                moleText = MakeWristText("Nova_WhackAMole", new Color(0.9f, 0.7f, 0.4f));
+                moleText = MakeWristText("Eclipse_WhackAMole", new Color(0.9f, 0.7f, 0.4f));
                 moleScore = 0;
                 moleText.SafeSetText($"Moles: 0\n<size=70%>Best: {moleBest}</size>");
             }
@@ -470,7 +472,7 @@ namespace Nova.Mods
                 logB.Object.transform.SetPositionAndRotation(at + Vector3.up * (0.04f * scale), Quaternion.Euler(0f, -45f, 0f));
                 logA.Object.transform.localScale = logB.Object.transform.localScale = new Vector3(0.08f, 0.08f, 0.5f) * scale;
 
-                fire = MakeParticles("Nova_Campfire", null, system =>
+                fire = MakeParticles("Eclipse_Campfire", null, system =>
                 {
                     var main = system.main;
                     main.loop = true;
@@ -530,7 +532,7 @@ namespace Nova.Mods
             fountainBase.Object.transform.position = at + Vector3.up * (0.1f * scale);
             fountainBase.Object.transform.localScale = new Vector3(0.6f, 0.1f, 0.6f) * scale;
 
-            fountain = MakeParticles("Nova_Fountain", null, system =>
+            fountain = MakeParticles("Eclipse_Fountain", null, system =>
             {
                 var main = system.main;
                 main.loop = true;
@@ -694,7 +696,7 @@ namespace Nova.Mods
         {
             if (meteors == null)
             {
-                meteors = MakeParticles("Nova_Meteors", null, system =>
+                meteors = MakeParticles("Eclipse_Meteors", null, system =>
                 {
                     var main = system.main;
                     main.loop = true;
@@ -800,7 +802,7 @@ namespace Nova.Mods
                 samples[i] = envelope * (Mathf.Sin(2f * Mathf.PI * 261.63f * t) * 0.6f + Mathf.Sin(2f * Mathf.PI * 523.25f * t) * 0.25f + Mathf.Sin(2f * Mathf.PI * 784.88f * t) * 0.1f);
             }
 
-            pianoClip = AudioClip.Create("Nova_PianoNote", samples.Length, 1, rate, false);
+            pianoClip = AudioClip.Create("Eclipse_PianoNote", samples.Length, 1, rate, false);
             pianoClip.SetData(samples, 0);
             return pianoClip;
         }
@@ -814,7 +816,7 @@ namespace Nova.Mods
             for (int i = 0; i < pianoVoices.Length; i++)
                 if (pianoVoices[i] == null)
                 {
-                    pianoVoices[i] = new GameObject("Nova_PianoVoice").AddComponent<AudioSource>();
+                    pianoVoices[i] = new GameObject("Eclipse_PianoVoice").AddComponent<AudioSource>();
                     pianoVoices[i].spatialBlend = 0f;
                     pianoVoices[i].volume = 0.4f;
                     pianoVoices[i].playOnAwake = false;

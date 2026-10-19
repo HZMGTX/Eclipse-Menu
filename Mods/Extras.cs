@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/Extras.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Extras.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,14 +26,14 @@
 
 using GorillaLocomotion;
 using GorillaTag.Rendering;
-using Nova.Patches.Menu;
-using Nova.Utilities;
+using Eclipse.Patches.Menu;
+using Eclipse.Utilities;
 using UnityEngine;
 using UnityEngine.Rendering;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 using Object = UnityEngine.Object;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     /// <summary>Movement, fun and visual mods added alongside the originals.</summary>
     public static class Extras
@@ -274,7 +275,7 @@ namespace Nova.Mods
 
         private static GameObject Trail(Transform hand)
         {
-            GameObject holder = new GameObject("NovaHandTrail");
+            GameObject holder = new GameObject("EclipseHandTrail");
             holder.transform.SetParent(hand, false);
 
             TrailRenderer trail = holder.AddComponent<TrailRenderer>();
@@ -368,7 +369,7 @@ namespace Nova.Mods
             if (headlamp != null)
                 return;
 
-            headlamp = new GameObject("NovaHeadlamp");
+            headlamp = new GameObject("EclipseHeadlamp");
             headlamp.transform.SetParent(GorillaTagger.Instance.headCollider.transform, false);
 
             Light lamp = headlamp.AddComponent<Light>();

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     internal sealed class Wii : IDisposable
     {

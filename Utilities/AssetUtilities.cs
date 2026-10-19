@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Utilities/AssetUtilities.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Utilities/AssetUtilities.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,7 +24,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Nova.Managers;
+using Eclipse.Managers;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -32,16 +33,16 @@ using System.Net;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Networking;
-using static Nova.Utilities.FileUtilities;
+using static Eclipse.Utilities.FileUtilities;
 
-namespace Nova.Utilities
+namespace Eclipse.Utilities
 {
     public class AssetUtilities
     {
         private static AssetBundle assetBundle;
         private static void LoadAssetBundle()
         {
-            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.novamenu");
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.eclipsemenu");
             if (stream != null)
                 assetBundle = AssetBundle.LoadFromStream(stream);
             else

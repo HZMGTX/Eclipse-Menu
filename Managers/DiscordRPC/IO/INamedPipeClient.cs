@@ -1,7 +1,7 @@
-﻿using Nova.Managers.DiscordRPC.Logging;
+﻿using Eclipse.Managers.DiscordRPC.Logging;
 using System;
 
-namespace Nova.Managers.DiscordRPC.IO
+namespace Eclipse.Managers.DiscordRPC.IO
 {
     /// <summary>
     /// Pipe Client used to communicate with Discord.

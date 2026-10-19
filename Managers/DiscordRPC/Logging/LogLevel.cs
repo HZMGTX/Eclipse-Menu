@@ -1,4 +1,4 @@
-﻿namespace Nova.Managers.DiscordRPC.Logging
+﻿namespace Eclipse.Managers.DiscordRPC.Logging
 {
     /// <summary>
     /// Level of logging to use.

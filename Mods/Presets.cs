@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/Presets.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Presets.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,20 +24,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Nova.Classes.Menu;
-using Nova.Managers;
+using Eclipse.Classes.Menu;
+using Eclipse.Managers;
 using System;
 using System.IO;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     public static class Presets
     {
         // Sets a cycle button the same way the menu does, so the value shows on the button and is saved.
         private static void SetSetting(string buttonName, int value)
         {
-            ButtonInfo button = Nova.Menu.Buttons.GetIndex(buttonName);
+            ButtonInfo button = Eclipse.Menu.Buttons.GetIndex(buttonName);
             if (button == null)
                 return;
 
@@ -50,7 +51,7 @@ namespace Nova.Mods
         {
             foreach (string mod in mods)
             {
-                ButtonInfo button = Nova.Menu.Buttons.GetIndex(mod);
+                ButtonInfo button = Eclipse.Menu.Buttons.GetIndex(mod);
                 if (button != null && !button.enabled)
                     Toggle(mod);
             }

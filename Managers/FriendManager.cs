@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Managers/FriendManager.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Managers/FriendManager.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,11 +30,11 @@ using GorillaLocomotion;
 using GorillaNetworking;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Menu;
-using Nova.Mods;
-using Nova.Utilities;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Menu;
+using Eclipse.Mods;
+using Eclipse.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -50,12 +51,12 @@ using UnityEngine.Networking;
 using UnityEngine.Rendering;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Linq;
-using static Nova.Menu.Main;
-using static Nova.Utilities.AssetUtilities;
-using static Nova.Utilities.RigUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.AssetUtilities;
+using static Eclipse.Utilities.RigUtilities;
 using JoinType = GorillaNetworking.JoinType;
 
-namespace Nova.Managers
+namespace Eclipse.Managers
 {
     public class FriendManager : MonoBehaviour
     {
@@ -259,7 +260,7 @@ namespace Nova.Managers
                         if (rightJoystickClick && !joystickMenu)
                         {
                             if (pingObject == null)
-                                pingObject = new GameObject("Nova_PingLine");
+                                pingObject = new GameObject("Eclipse_PingLine");
 
                             Color targetColor = VRRig.LocalRig.playerColor;
                             targetColor.a = 0.15f;
@@ -547,7 +548,7 @@ namespace Nova.Managers
                                 head.transform.localScale = Vector3.one * 0.3f;
                                 head.GetComponent<Renderer>().material.color = senderRig.playerColor;
 
-                                GameObject nametag = new GameObject("Nova_Nametag");
+                                GameObject nametag = new GameObject("Eclipse_Nametag");
                                 nametag.transform.SetParent(head.transform);
                                 nametag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
                                 nametag.transform.localPosition = new Vector3(0f, 0.8f, 0f);

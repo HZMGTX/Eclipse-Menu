@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Menu/Main.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Menu/Main.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,14 +32,14 @@ using GorillaTagScripts;
 using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Classes.Menu;
-using Nova.Classes.Mods;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Mods;
-using Nova.Patches;
-using Nova.Patches.Menu;
-using Nova.Utilities;
+using Eclipse.Classes.Menu;
+using Eclipse.Classes.Mods;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Mods;
+using Eclipse.Patches;
+using Eclipse.Patches.Menu;
+using Eclipse.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,17 +62,17 @@ using UnityEngine.XR;
 using Valve.Newtonsoft.Json;
 using Valve.VR;
 using WebSocketSharp;
-using static Nova.Utilities.AssetUtilities;
-using static Nova.Utilities.FileUtilities;
-using static Nova.Utilities.RandomUtilities;
-using ButtonCollider = Nova.Classes.Menu.ButtonCollider;
+using static Eclipse.Utilities.AssetUtilities;
+using static Eclipse.Utilities.FileUtilities;
+using static Eclipse.Utilities.RandomUtilities;
+using ButtonCollider = Eclipse.Classes.Menu.ButtonCollider;
 using CommonUsages = UnityEngine.XR.CommonUsages;
-using Console = Nova.Classes.Menu.Console;
+using Console = Eclipse.Classes.Menu.Console;
 using JoinType = GorillaNetworking.JoinType;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     [HarmonyPatch(typeof(GTPlayer), nameof(GTPlayer.LateUpdate))]
     public class Main : MonoBehaviour
@@ -96,9 +97,9 @@ namespace Nova.Menu
             //if (Plugin.FirstLaunch)
             //    Prompt("It seems like this is your first time using the menu. Would you like to watch a quick tutorial to get to know how to use it?", Settings.ShowTutorial);
             //else
-            //    acceptedDonations = File.Exists($"{PluginInfo.BaseDirectory}/Nova_HideDonationButton.txt");
+            //    acceptedDonations = File.Exists($"{PluginInfo.BaseDirectory}/Eclipse_HideDonationButton.txt");
             if (!Bootstrapper.FirstLaunch)
-                acceptedDonations = File.Exists($"{PluginInfo.BaseDirectory}/Nova_HideDonationButton.txt");
+                acceptedDonations = File.Exists($"{PluginInfo.BaseDirectory}/Eclipse_HideDonationButton.txt");
 
             NetworkSystem.Instance.OnJoinedRoomEvent += OnJoinRoom;
             NetworkSystem.Instance.OnReturnedToSinglePlayer += OnLeaveRoom;
@@ -1998,7 +1999,7 @@ namespace Nova.Menu
             {
                 if (buttonSpriteSheet != null) return buttonSpriteSheet;
                 buttonSpriteSheet = ScriptableObject.CreateInstance<TMP_SpriteAsset>();
-                buttonSpriteSheet.name = "Nova_SpriteSheet";
+                buttonSpriteSheet.name = "Eclipse_SpriteSheet";
 
                 var textureList = new List<Texture2D>();
                 var spriteDataList = new List<(string name, int index)>();
@@ -2513,10 +2514,10 @@ namespace Nova.Menu
                     case 61:
                         if (videoPlayer == null)
                         {
-                            videoPlayer = new GameObject("Nova_VideoPlayer").AddComponent<VideoPlayer>();
+                            videoPlayer = new GameObject("Eclipse_VideoPlayer").AddComponent<VideoPlayer>();
                             videoPlayer.playOnAwake = true;
                             videoPlayer.isLooping = true;
-                            videoPlayer.url = $"{PluginInfo.ServerResourcePath}/Videos/Themes/badapple.mp4";
+                            videoPlayer.url = $"{PluginInfo.SharedResourcePath}/Videos/Themes/badapple.mp4";
 
                             RenderTexture rt = new RenderTexture(192, 144, 0);
                             rt.Create();
@@ -2573,7 +2574,7 @@ namespace Nova.Menu
                     }
                 }.AddComponent<TextMeshPro>();
                 title.font = activeFont;
-                title.text = translate ? "Nova" : "<b>Nova</b>";
+                title.text = translate ? "Eclipse" : "<b>Eclipse</b>";
 
                 if (doCustomName)
                     title.text = customMenuName;
@@ -2616,7 +2617,7 @@ namespace Nova.Menu
 
                 if (animatedTitle)
                 {
-                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Nova Menu";
+                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Eclipse Menu";
                     int length = (int)Mathf.PingPong(Time.time / 0.25f, targetString.Length);
                     title.text = length > 0 ? targetString[..length] : "";
                 }
@@ -3086,7 +3087,7 @@ namespace Nova.Menu
                 {
                     titleNameSource = customMenuName;
                     titleUsedCustom = doCustomName;
-                    titleTarget = doCustomName ? NoRichtextTags(customMenuName) : "Nova Menu";
+                    titleTarget = doCustomName ? NoRichtextTags(customMenuName) : "Eclipse Menu";
                     titleShownLength = -1;
                 }
 
@@ -3692,7 +3693,7 @@ namespace Nova.Menu
                     case "webm":
                     case "mov":
                         {
-                            promptVideoPlayer = new GameObject("Nova_PromptVideoPlayer").AddComponent<VideoPlayer>();
+                            promptVideoPlayer = new GameObject("Eclipse_PromptVideoPlayer").AddComponent<VideoPlayer>();
                             promptVideoPlayer.playOnAwake = true;
                             promptVideoPlayer.isLooping = true;
                             promptVideoPlayer.url = promptImageUrl;
@@ -4517,7 +4518,7 @@ namespace Nova.Menu
             if (disableGunLine) return (Ray, GunPointer);
             if (GunLine == null)
             {
-                GameObject line = new GameObject("Nova_GunLine");
+                GameObject line = new GameObject("Eclipse_GunLine");
                 GunLine = line.AddComponent<LineRenderer>();
             }
 
@@ -7080,9 +7081,9 @@ jgs \_   _/ |Oo\
         public static string customMenuName = "Your Text Here";
         public static readonly string menuName =
 #if LEGAL
-            "<b>Nova</b> Legal";
+            "<b>Eclipse</b> Legal";
 #else
-            "<b>Nova</b> Menu";
+            "<b>Eclipse</b> Menu";
 #endif
         public static bool doCustomMenuBackground;
         public static bool menuTrail;

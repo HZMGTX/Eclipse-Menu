@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Nova.Managers.DiscordRPC.Logging
+namespace Eclipse.Managers.DiscordRPC.Logging
 {
     public class DiscordLogManager : ILogger
     {

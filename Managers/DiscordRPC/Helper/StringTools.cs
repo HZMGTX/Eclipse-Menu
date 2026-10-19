@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text;
 
-namespace Nova.Managers.DiscordRPC.Helper
+namespace Eclipse.Managers.DiscordRPC.Helper
 {
     /// <summary>
     /// Collectin of helpful string extensions

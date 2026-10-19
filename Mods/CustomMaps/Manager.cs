@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/CustomMaps/Manager.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/CustomMaps/Manager.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,10 +25,10 @@
  */
 
 using GorillaTagScripts.VirtualStumpCustomMaps;
-using Nova.Classes.Menu;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Utilities;
+using Eclipse.Classes.Menu;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,7 +36,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Nova.Mods.CustomMaps
+namespace Eclipse.Mods.CustomMaps
 {
     public static class Manager
     {

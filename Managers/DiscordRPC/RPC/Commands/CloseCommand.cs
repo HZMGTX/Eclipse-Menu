@@ -1,7 +1,7 @@
-﻿using Nova.Managers.DiscordRPC.RPC.Payload;
+﻿using Eclipse.Managers.DiscordRPC.RPC.Payload;
 using Valve.Newtonsoft.Json;
 
-namespace Nova.Managers.DiscordRPC.RPC.Commands
+namespace Eclipse.Managers.DiscordRPC.RPC.Commands
 {
     internal class CloseCommand : ICommand
     {

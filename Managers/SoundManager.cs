@@ -1,12 +1,13 @@
 ﻿/*
- * Nova Menu  Managers/SoundManager.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Managers/SoundManager.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,14 +24,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 using Photon.Pun;
-using Nova.Menu;
+using Eclipse.Menu;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static Nova.Menu.Main;
-using static Nova.Utilities.AssetUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.AssetUtilities;
 
-namespace Nova.Managers
+namespace Eclipse.Managers
 {
     public class SoundManager
     {

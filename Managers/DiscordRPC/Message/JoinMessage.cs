@@ -1,6 +1,6 @@
 ﻿using Valve.Newtonsoft.Json;
 
-namespace Nova.Managers.DiscordRPC.Message
+namespace Eclipse.Managers.DiscordRPC.Message
 {
     /// <summary>
     /// Called when the Discord Client wishes for this process to join a game. D -> C.

@@ -1,6 +1,6 @@
-﻿using Nova.Managers.DiscordRPC.Converters;
+﻿using Eclipse.Managers.DiscordRPC.Converters;
 
-namespace Nova.Managers.DiscordRPC.RPC.Payload
+namespace Eclipse.Managers.DiscordRPC.RPC.Payload
 {
     /// <summary>
     /// See https://discordapp.com/developers/docs/topics/rpc#rpc-server-payloads-rpc-events for documentation

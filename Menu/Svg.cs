@@ -6,7 +6,7 @@ using System.Xml;
 using System.Xml.Linq;
 using UnityEngine;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     public static class Svg
     {

@@ -1,6 +1,6 @@
 ﻿using Valve.Newtonsoft.Json;
 
-namespace Nova.Managers.DiscordRPC.RPC.Payload
+namespace Eclipse.Managers.DiscordRPC.RPC.Payload
 {
     internal class ClosePayload : IPayload
     {

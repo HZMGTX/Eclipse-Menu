@@ -1,12 +1,13 @@
 ﻿/*
- * Nova Menu  PluginInfo.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  PluginInfo.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -23,24 +24,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace Nova
+namespace Eclipse
 {
     public class PluginInfo
     {
-        public const string GUID = "org.nova.gorillatag.novamenu";
-        public const string Name = "Nova Menu";
-        public const string Description = "Community powered mod menu for Gorilla Tag.";
-        public const string BuildTimestamp = "2026-10-08T07:12:10Z";
-        public const string Version = "5.1.3";
+        public const string GUID = "org.eclipse.gorillatag.eclipsemenu";
+        public const string Name = "Eclipse Menu";
+        public const string Description = "A brand-new mod menu for Gorilla Tag, remade from Nova Menu.";
+        public const string BuildTimestamp = "2026-10-19T06:09:14Z";
+        public const string Version = "1.0.0";
 
         public const string BaseDirectory =
 #if LEGAL || LEGAL_DEBUG
-            "NovaMenu/Legal";
+            "EclipseMenu/Legal";
 #else
-            "NovaMenu";
+            "EclipseMenu";
 #endif
-        public const string ClientResourcePath = "NovaMenu.Resources.Client";
-        public const string ServerResourcePath = "https://raw.githubusercontent.com/HZMGTX/Nova/master/Resources/Server";
+        public const string ClientResourcePath = "EclipseMenu.Resources.Client";
+        public const string ServerResourcePath = "https://raw.githubusercontent.com/HZMGTX/Eclipse-Menu/main/Resources/Server";
+
+        // The soundboard sounds and the tutorial videos are large, so Eclipse keeps loading them from Nova's repo
+        public const string SharedResourcePath = "https://raw.githubusercontent.com/HZMGTX/Nova/master/Resources/Server";
+
+        // Nova and Eclipse patch the same game methods and share network events, so they never load together
+        public const string NovaGUID = "org.nova.gorillatag.novamenu";
         public const string ServerAPI = "https://www.menu.management";
         public const string Logo = @"um";
 

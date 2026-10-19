@@ -1,12 +1,13 @@
 ﻿/*
- * Nova Menu  Mods/Preferences.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Preferences.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,9 +25,9 @@
  */
 
 using Photon.Pun;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Mods;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Mods;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -35,14 +36,14 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 
-namespace Nova.Classes.Menu
+namespace Eclipse.Classes.Menu
 {
     public static class Preferences
     {
-        private const string FileName = "Nova_Preferences.json";
-        private const string LegacyFileName = "Nova_Preferences.txt";
+        private const string FileName = "Eclipse_Preferences.json";
+        private const string LegacyFileName = "Eclipse_Preferences.txt";
         internal static bool DisableAutoSave = false;
 
         private const int MinWriteIntervalMs = 250;
@@ -376,7 +377,7 @@ namespace Nova.Classes.Menu
             MaybePromptSeralythMigration();
         }
 
-        private static string SeralythPath => Path.Combine(Nova.Utilities.FileUtilities.GetGamePath(), "SeralythMenu", "Seralyth_Preferences.json");
+        private static string SeralythPath => Path.Combine(Eclipse.Utilities.FileUtilities.GetGamePath(), "SeralythMenu", "Seralyth_Preferences.json");
 
         public static bool HasSeralythSettings()
         {

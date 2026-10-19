@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Patches/Menu/FirePatch.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Patches/Menu/FirePatch.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,13 +25,13 @@
  */
 
 using HarmonyLib;
-using Nova.Extensions;
+using Eclipse.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Nova.Utilities.GameModeUtilities;
+using static Eclipse.Utilities.GameModeUtilities;
 
-namespace Nova.Patches.Menu
+namespace Eclipse.Patches.Menu
 {
     [HarmonyPatch(typeof(SIGadgetChargeBlaster), nameof(SIGadgetChargeBlaster.FireProjectile))]
     public class FirePatch

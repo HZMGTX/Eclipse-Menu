@@ -1,4 +1,4 @@
-﻿namespace Nova.Managers.DiscordRPC.Message
+﻿namespace Eclipse.Managers.DiscordRPC.Message
 {
     /// <summary>
     /// Called when the IPC has closed.

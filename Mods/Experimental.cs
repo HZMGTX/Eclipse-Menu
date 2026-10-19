@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/Experimental.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Experimental.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,12 +30,12 @@ using GorillaNetworking;
 using GorillaTagScripts.VirtualStumpCustomMaps;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Patches.Menu;
-using Nova.Utilities;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Patches.Menu;
+using Eclipse.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -44,14 +45,14 @@ using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using static Nova.Menu.Main;
-using static Nova.Utilities.RandomUtilities;
-using static Nova.Utilities.RigUtilities;
-using Console = Nova.Classes.Menu.Console;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.RandomUtilities;
+using static Eclipse.Utilities.RigUtilities;
+using Console = Eclipse.Classes.Menu.Console;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     public static class Experimental
     {
@@ -147,7 +148,7 @@ namespace Nova.Mods
                 i++;
             }
             text += "\n====================================\n";
-            text += "Text file generated with Nova Menu";
+            text += "Text file generated with Eclipse Menu";
             string fileName = $"{PluginInfo.BaseDirectory}/SoundData.txt";
 
             File.WriteAllText(fileName, text);
@@ -169,7 +170,7 @@ namespace Nova.Mods
                 catch { LogManager.Log("Failed to log hat"); }
             }
             text += "\n====================================\n";
-            text += "Text file generated with Nova Menu";
+            text += "Text file generated with Eclipse Menu";
             string fileName = $"{PluginInfo.BaseDirectory}/CosmeticData.txt";
 
             File.WriteAllText(fileName, text);
@@ -212,7 +213,7 @@ namespace Nova.Mods
                 i++;
             }
             text += "\n====================================\n";
-            text += "Text file generated with Nova Menu";
+            text += "Text file generated with Eclipse Menu";
             string fileName = $"{PluginInfo.BaseDirectory}/RPCData.txt";
 
             File.WriteAllText(fileName, text);
@@ -1308,7 +1309,7 @@ namespace Nova.Mods
                                 VRRig vrrig = GetVRRigFromPlayer(sender);
                                 if (!nametags.TryGetValue(vrrig, out var textMesh))
                                 {
-                                    GameObject go = new GameObject("Nova_MenuUserNametag");
+                                    GameObject go = new GameObject("Eclipse_MenuUserNametag");
                                     go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
                                     textMesh = go.AddComponent<TextMeshPro>();
                                     textMesh.fontSize = 4.8f;

@@ -1,9 +1,11 @@
 /*
- * Nova Menu  Mods/CustomExtra.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/CustomExtra.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
+ *
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,18 +22,18 @@
  */
 
 using GorillaLocomotion;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Utilities;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Utilities;
 using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     /// <summary>The fourth set of Custom Mods: fishing, Simon Says, parkour, drums, a dragon and the sky.</summary>
     public static partial class Custom
@@ -83,7 +85,7 @@ namespace Nova.Mods
             AudioSource voice = voices[nextSharedVoice];
             if (voice == null)
             {
-                voice = voices[nextSharedVoice] = new GameObject("Nova_CustomVoice").AddComponent<AudioSource>();
+                voice = voices[nextSharedVoice] = new GameObject("Eclipse_CustomVoice").AddComponent<AudioSource>();
                 voice.spatialBlend = 0f;
                 voice.playOnAwake = false;
                 Object.DontDestroyOnLoad(voice.gameObject);
@@ -171,14 +173,14 @@ namespace Nova.Mods
 
             if (fishingLine == null)
             {
-                fishingLine = MakeLine("Nova_FishingLine", 0.002f);
+                fishingLine = MakeLine("Eclipse_FishingLine", 0.002f);
                 fishingLine.positionCount = 3;
                 fishingLine.startColor = fishingLine.endColor = new Color(1f, 1f, 1f, 0.7f);
             }
 
             if (fishText == null)
             {
-                fishText = MakeWristText("Nova_Fishing", new Color(0.5f, 0.85f, 1f));
+                fishText = MakeWristText("Eclipse_Fishing", new Color(0.5f, 0.85f, 1f));
                 ShowCatches(null);
             }
 
@@ -397,7 +399,7 @@ namespace Nova.Mods
             }
 
             if (simonText == null)
-                simonText = MakeWristText("Nova_SimonSays", Color.white);
+                simonText = MakeWristText("Eclipse_SimonSays", Color.white);
 
             Vector3 right = Vector3.Cross(Vector3.up, simonFacing);
             float reach = 0.1f * scale;
@@ -564,7 +566,7 @@ namespace Nova.Mods
             Vector3 head = Head.position;
 
             if (ringText == null)
-                ringText = MakeWristText("Nova_ParkourRings", new Color(0.4f, 1f, 0.9f));
+                ringText = MakeWristText("Eclipse_ParkourRings", new Color(0.4f, 1f, 0.9f));
 
             bool finished = courseRing >= CourseRings;
             if (courseRing < 0 || (finished && now - courseFinished > 3f) || (!finished && TooFar(courseCentres[courseRing], 25f)))
@@ -728,7 +730,7 @@ namespace Nova.Mods
 
             if (dummyText == null)
             {
-                dummyText = MakeWristText("Nova_TrainingDummy", Color.white);
+                dummyText = MakeWristText("Eclipse_TrainingDummy", Color.white);
                 dummyText.SafeSetText("Punch me!");
                 dummyCombo = 0;
             }
@@ -926,7 +928,7 @@ namespace Nova.Mods
 
             // Hi-hat: the difference between neighbouring noise samples, which keeps only the hiss.
             float lastNoise = 0f;
-            AudioClip hat = Make("Nova_HiHat", 0.1f, t =>
+            AudioClip hat = Make("Eclipse_HiHat", 0.1f, t =>
             {
                 float n = Noise();
                 float hiss = n - lastNoise;
@@ -934,19 +936,19 @@ namespace Nova.Mods
                 return hiss * 0.35f * Mathf.Exp(-t * 55f);
             });
 
-            AudioClip snare = Make("Nova_Snare", 0.25f, t =>
+            AudioClip snare = Make("Eclipse_Snare", 0.25f, t =>
                 Noise() * 0.6f * Mathf.Exp(-t * 18f) + Mathf.Sin(2f * Mathf.PI * 190f * t) * 0.45f * Mathf.Exp(-t * 25f));
 
             // Toms and kicks fall in pitch as they ring, so their phase is summed as they go.
             float tomPhase = 0f;
-            AudioClip tom = Make("Nova_Tom", 0.4f, t =>
+            AudioClip tom = Make("Eclipse_Tom", 0.4f, t =>
             {
                 tomPhase += 2f * Mathf.PI * (110f + 70f * Mathf.Exp(-t * 12f)) / rate;
                 return Mathf.Sin(tomPhase) * 0.8f * Mathf.Exp(-t * 8f);
             });
 
             float kickPhase = 0f;
-            AudioClip kick = Make("Nova_Kick", 0.45f, t =>
+            AudioClip kick = Make("Eclipse_Kick", 0.45f, t =>
             {
                 kickPhase += 2f * Mathf.PI * (48f + 120f * Mathf.Exp(-t * 30f)) / rate;
                 return Mathf.Sin(kickPhase) * Mathf.Exp(-t * 7f);
@@ -1269,7 +1271,7 @@ namespace Nova.Mods
             for (int i = 0; i < ArcBands; i++)
                 if (arcBands[i] == null)
                 {
-                    arcBands[i] = MakeLine("Nova_RainbowArc", 0.6f);
+                    arcBands[i] = MakeLine("Eclipse_RainbowArc", 0.6f);
                     arcBands[i].positionCount = ArcPoints;
 
                     // The ends fade into the ground instead of stopping sharply.
@@ -1320,7 +1322,7 @@ namespace Nova.Mods
             for (int i = 0; i < AuroraRibbons; i++)
                 if (aurora[i] == null)
                 {
-                    aurora[i] = MakeLine("Nova_NorthernLights", 5f);
+                    aurora[i] = MakeLine("Eclipse_NorthernLights", 5f);
                     aurora[i].positionCount = AuroraPoints;
 
                     Gradient glow = new Gradient();
@@ -1368,7 +1370,7 @@ namespace Nova.Mods
                 DestroyParticles(ref holeDisk);
                 holeAt = Head.position + LookFlat() * (4f * scale) + Vector3.up * (0.5f * scale);
 
-                holeDisk = MakeParticles("Nova_BlackHole", null, system =>
+                holeDisk = MakeParticles("Eclipse_BlackHole", null, system =>
                 {
                     var main = system.main;
                     main.loop = true;
@@ -1445,7 +1447,7 @@ namespace Nova.Mods
         {
             if (statsText == null)
             {
-                statsText = MakeWristText("Nova_WristStats", new Color(0.7f, 1f, 0.6f));
+                statsText = MakeWristText("Eclipse_WristStats", new Color(0.7f, 1f, 0.6f));
                 statsNextText = 0f;
             }
 

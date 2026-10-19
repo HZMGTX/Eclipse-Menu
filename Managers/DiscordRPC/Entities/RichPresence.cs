@@ -1,10 +1,10 @@
-using Nova.Managers.DiscordRPC.Exceptions;
-using Nova.Managers.DiscordRPC.Helper;
+using Eclipse.Managers.DiscordRPC.Exceptions;
+using Eclipse.Managers.DiscordRPC.Helper;
 using System;
 using System.Text;
 using Valve.Newtonsoft.Json;
 
-namespace Nova.Managers.DiscordRPC
+namespace Eclipse.Managers.DiscordRPC
 {
     /// <summary>
     /// The base rich presence structure

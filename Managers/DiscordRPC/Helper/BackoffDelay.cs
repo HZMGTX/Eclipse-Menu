@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Nova.Managers.DiscordRPC.Helper
+namespace Eclipse.Managers.DiscordRPC.Helper
 {
 
     internal class BackoffDelay

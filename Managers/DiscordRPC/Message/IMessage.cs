@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Nova.Managers.DiscordRPC.Message
+namespace Eclipse.Managers.DiscordRPC.Message
 {
     /// <summary>
     /// Messages received from discord.

@@ -1,4 +1,4 @@
-using Nova.Classes.Menu;
+using Eclipse.Classes.Menu;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     public class Hud : MonoBehaviour
     {
@@ -240,7 +240,7 @@ namespace Nova.Menu
         void Build()
         {
             if (root != null) return;
-            root = new GameObject("NovaHud");
+            root = new GameObject("EclipseHud");
             root.transform.SetParent(transform, false);
             overlayMaterial = BuildOverlayMaterial();
             BuildWatermark();
@@ -658,7 +658,7 @@ namespace Nova.Menu
             rect.sizeDelta = new Vector2(640f, 80f);
             watermark.transform.localScale = Vector3.one * WindowScale;
 
-            watermarkTitle = WatermarkText(rect, "Nova", new Vector2(-250f, 6f), new Vector2(440f, 34f), 30, TextAlignmentOptions.Left, theme.bright);
+            watermarkTitle = WatermarkText(rect, "Eclipse", new Vector2(-250f, 6f), new Vector2(440f, 34f), 30, TextAlignmentOptions.Left, theme.bright);
             watermarkSub = WatermarkText(rect, "v" + PluginInfo.Version, new Vector2(-250f, -16f), new Vector2(440f, 14f), 11, TextAlignmentOptions.Left, theme.muted);
             watermarkStat = WatermarkText(rect, "", new Vector2(230f, 0f), new Vector2(220f, 34f), 16, TextAlignmentOptions.Right, theme.muted);
         }
@@ -822,7 +822,7 @@ namespace Nova.Menu
         Window BuildSidebar(List<Leaf> leaves)
         {
             Theme theme = CurrentTheme();
-            Window window = BuildShell("Nova", true, GetState(SidebarKey), leaves.Count, theme.rowHeight, theme, out RectTransform content);
+            Window window = BuildShell("Eclipse", true, GetState(SidebarKey), leaves.Count, theme.rowHeight, theme, out RectTransform content);
             window.state.yaw = SideYaw;
             window.state.pitch = SidePitch;
             window.state.placed = true;
@@ -1204,8 +1204,8 @@ namespace Nova.Menu
 
         void BuildLaser()
         {
-            laser = NewLaser("NovaLaser");
-            pointer = NewPointer("NovaPointer", out pointerOuter, out pointerInner, out pointerPulse);
+            laser = NewLaser("EclipseLaser");
+            pointer = NewPointer("EclipsePointer", out pointerOuter, out pointerInner, out pointerPulse);
             pointer.SetActive(false);
         }
 
@@ -1745,7 +1745,7 @@ namespace Nova.Menu
 
             // Not while typing, where a J is just a letter.
             if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.jKey.wasPressedThisFrame
-                && GUIUtility.keyboardControl == 0 && !Nova.Menu.Main.inTextInput)
+                && GUIUtility.keyboardControl == 0 && !Eclipse.Menu.Main.inTextInput)
                 Recenter();
 
             openAmount = Mathf.MoveTowards(openAmount, open ? 1f : 0f, Time.unscaledDeltaTime * (open ? 7f : 9f));

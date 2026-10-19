@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/ConsoleAssets.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/ConsoleAssets.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,9 +25,9 @@
  */
 
 using Photon.Realtime;
-using Nova.Classes.Menu;
-using Nova.Managers;
-using Nova.Menu;
+using Eclipse.Classes.Menu;
+using Eclipse.Managers;
+using Eclipse.Menu;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -36,10 +37,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
 using Valve.Newtonsoft.Json.Linq;
-using static Nova.Menu.Main;
-using Console = Nova.Classes.Menu.Console;
+using static Eclipse.Menu.Main;
+using Console = Eclipse.Classes.Menu.Console;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     /// <summary>
     /// Browses the asset bundles Console hosts and spawns them into the room.

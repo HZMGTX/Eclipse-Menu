@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/Advantages.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Advantages.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,19 +29,19 @@ using GorillaGameModes;
 using GorillaLocomotion;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Patches.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Patches.Menu;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Nova.Menu.Main;
-using static Nova.Utilities.GameModeUtilities;
-using static Nova.Utilities.RandomUtilities;
-using static Nova.Utilities.RigUtilities;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.GameModeUtilities;
+using static Eclipse.Utilities.RandomUtilities;
+using static Eclipse.Utilities.RigUtilities;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     public static class Advantages
     {

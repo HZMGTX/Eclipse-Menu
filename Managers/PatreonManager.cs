@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Managers/PatreonManager.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Managers/PatreonManager.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,11 +27,11 @@
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Menu;
-using Nova.Mods;
-using Nova.Utilities;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Menu;
+using Eclipse.Mods;
+using Eclipse.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -41,10 +42,10 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
-using static Nova.Utilities.AssetUtilities;
-using static Nova.Utilities.RigUtilities;
+using static Eclipse.Utilities.AssetUtilities;
+using static Eclipse.Utilities.RigUtilities;
 
-namespace Nova.Managers
+namespace Eclipse.Managers
 {
     public class PatreonManager : MonoBehaviour
     {
@@ -201,7 +202,7 @@ namespace Nova.Managers
             iconUrls[playerRig] = membership.IconURL;
             ApplyIcon(own, membership.IconURL, $"Images/Patreon/{player.UserId}.{FileUtilities.GetFileExtension(membership.IconURL)}");
 
-            GameObject go = new GameObject("Nova_Nametag");
+            GameObject go = new GameObject("Eclipse_Nametag");
             go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
             TextMeshPro textMesh = go.AddComponent<TextMeshPro>();
             textMesh.fontSize = 4.8f;

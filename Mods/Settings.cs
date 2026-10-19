@@ -1,12 +1,13 @@
 /*
- * Nova Menu  Mods/Settings.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Mods/Settings.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Poison Software
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
  *
- * Modified from Poison Menu (formerly Seralyth Menu)
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova),
+ * which was modified from Poison Menu (formerly Seralyth Menu)
  * https://github.com/heycanihavethis/Poison
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,12 +28,12 @@ using GorillaExtensions;
 using GorillaLocomotion;
 using Photon.Pun;
 using Photon.Realtime;
-using Nova.Classes.Menu;
-using Nova.Extensions;
-using Nova.Managers;
-using Nova.Menu;
-using Nova.Patches.Menu;
-using Nova.Utilities;
+using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
+using Eclipse.Managers;
+using Eclipse.Menu;
+using Eclipse.Patches.Menu;
+using Eclipse.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -48,14 +49,14 @@ using UnityEngine.UI;
 using UnityEngine.Video;
 using UnityEngine.Windows.Speech;
 using UnityEngine.XR;
-using static Nova.Menu.Main;
-using static Nova.Utilities.AssetUtilities;
-using static Nova.Utilities.RigUtilities;
-using Console = Nova.Classes.Menu.Console;
+using static Eclipse.Menu.Main;
+using static Eclipse.Utilities.AssetUtilities;
+using static Eclipse.Utilities.RigUtilities;
+using Console = Eclipse.Classes.Menu.Console;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Nova.Mods
+namespace Eclipse.Mods
 {
     public static class Settings
     {
@@ -250,7 +251,7 @@ namespace Nova.Mods
             }
 
             VideoPlayer videoPlayer = TutorialObject.transform.Find("Video").GetComponent<VideoPlayer>();
-            videoPlayer.url = $"{PluginInfo.ServerResourcePath}/Videos/Tutorial/tutorial-{videoName}.mp4";
+            videoPlayer.url = $"{PluginInfo.SharedResourcePath}/Videos/Tutorial/tutorial-{videoName}.mp4";
             videoPlayer.isLooping = true;
 
             videoPlayer.AddComponent<TutorialButton>().buttonType = TutorialButton.ButtonType.Pause;
@@ -269,7 +270,7 @@ namespace Nova.Mods
 
             if (TutorialSelector == null)
             {
-                TutorialSelector = new GameObject("Nova_TutorialSelector").AddComponent<LineRenderer>();
+                TutorialSelector = new GameObject("Eclipse_TutorialSelector").AddComponent<LineRenderer>();
                 TutorialSelector.material.shader = Shader.Find("Sprites/Default");
 
                 TutorialSelector.startWidth = 0.01f;
@@ -343,7 +344,7 @@ namespace Nova.Mods
             string version = PluginInfo.Version;
             if (PluginInfo.BetaBuild) version = "<color=blue>Beta</color> " + version;
             Buttons.AddButton(category, new ButtonInfo { buttonText = "Exit Info Screen", method = () => Toggle("Info Screen"), isTogglable = false, toolTip = "Returns you back to the main page." });
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugMenuName", overlapText = "<color=grey><b>Nova Menu </b></color>" + version, label = true });
+            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugMenuName", overlapText = "<color=grey><b>Eclipse Menu </b></color>" + version, label = true });
             Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugColor", overlapText = "Loading...", label = true });
             Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugName", overlapText = "Loading...", label = true });
             Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugId", overlapText = "Loading...", label = true });
@@ -749,7 +750,7 @@ namespace Nova.Mods
 
             CleanupSpectateCamera();
 
-            spectateCameraObject = new GameObject("Nova_SpectateCamera");
+            spectateCameraObject = new GameObject("Eclipse_SpectateCamera");
             spectateRenderTexture = new RenderTexture(512, 512, 16);
             spectateCameraObject.AddComponent<Camera>().targetTexture = spectateRenderTexture;
             spectateCameraObject.transform.SetParent(rig.headMesh.transform, false);
@@ -943,7 +944,7 @@ namespace Nova.Mods
                             logoLines += Environment.NewLine + @" ""    " + line + @" """;
 
                         string updateScript = @"@echo off
-title Nova Menu Updater
+title Eclipse Menu Updater
 color 5
 setlocal
 
@@ -960,7 +961,7 @@ set ""MODS_PATH=%BASE_DIR%Mods""
 
 set ""MENU_FILE=""
 
-for %%F in (""%PLUGIN_PATH%\*Nova*Menu*.dll"" ""%MODS_PATH%\*Nova*Menu*.dll"") do (
+for %%F in (""%PLUGIN_PATH%\*Eclipse*Menu*.dll"" ""%MODS_PATH%\*Eclipse*Menu*.dll"") do (
     if exist ""%%~fF"" (
         set ""MENU_FILE=%%~fF""
         goto update
@@ -973,17 +974,17 @@ goto restart
 :update
 echo Found menu file: ""%MENU_FILE%""
 
-rem Release assets are uploaded as ""Nova Menu.dll"", which GitHub serves as Nova.Menu.dll.
-set ""DOWNLOAD_NAME=Nova.Menu""
+rem Release assets are uploaded as ""Eclipse Menu.dll"", which GitHub serves as Eclipse.Menu.dll.
+set ""DOWNLOAD_NAME=Eclipse.Menu""
 echo %MENU_FILE% | find /I ""Legal"" >nul
-if %ERRORLEVEL%==0 set ""DOWNLOAD_NAME=Nova.Menu.Legal""
+if %ERRORLEVEL%==0 set ""DOWNLOAD_NAME=Eclipse.Menu.Legal""
 
 echo Downloading latest release of %DOWNLOAD_NAME%...
 
 rem Downloaded beside the menu rather than over it: -f stops a 404 page being saved as
 rem the DLL, and the running game still holds the old file open.
 curl -f -L -o ""%MENU_FILE%.new"" ^
-""https://github.com/HZMGTX/Nova/releases/latest/download/%DOWNLOAD_NAME%.dll""
+""https://github.com/HZMGTX/Eclipse-Menu/releases/latest/download/%DOWNLOAD_NAME%.dll""
 if errorlevel 1 (
     echo Download failed, keeping your current menu.
     if exist ""%MENU_FILE%.new"" del ""%MENU_FILE%.new""
@@ -1033,7 +1034,7 @@ MODS_PATH=""$BASE_DIR/Mods""
 
 MENU_FILE=""""
 
-for f in ""$PLUGIN_PATH""/*Nova*Menu*.dll ""$MODS_PATH""/*Nova*Menu*.dll; do
+for f in ""$PLUGIN_PATH""/*Eclipse*Menu*.dll ""$MODS_PATH""/*Eclipse*Menu*.dll; do
     if [ -f ""$f"" ]; then
         MENU_FILE=""$f""
         break
@@ -1045,17 +1046,17 @@ if [ -z ""$MENU_FILE"" ]; then
 else
     echo ""Found menu file: $MENU_FILE""
 
-    # Release assets are uploaded as ""Nova Menu.dll"", which GitHub serves as Nova.Menu.dll.
-    DOWNLOAD_NAME=""Nova.Menu""
+    # Release assets are uploaded as ""Eclipse Menu.dll"", which GitHub serves as Eclipse.Menu.dll.
+    DOWNLOAD_NAME=""Eclipse.Menu""
     if echo ""$MENU_FILE"" | grep -qi ""Legal""; then
-        DOWNLOAD_NAME=""Nova.Menu.Legal""
+        DOWNLOAD_NAME=""Eclipse.Menu.Legal""
     fi
 
     echo ""Downloading latest release of $DOWNLOAD_NAME...""
     # Downloaded beside the menu rather than over it: -f stops a 404 page being saved as
     # the DLL, and the running game still holds the old file open.
     if curl -f -L -o ""$MENU_FILE.new"" \
-    ""https://github.com/HZMGTX/Nova/releases/latest/download/${DOWNLOAD_NAME}.dll""; then
+    ""https://github.com/HZMGTX/Eclipse-Menu/releases/latest/download/${DOWNLOAD_NAME}.dll""; then
         PENDING=""$MENU_FILE.new""
     else
         echo ""Download failed, keeping your current menu.""
@@ -1183,7 +1184,7 @@ exit 0";
         {
             new ThemeDefinition
             {
-                Name = "Nova",
+                Name = "Classic Green",
                 Background = () => new ExtGradient
                 {
                     colors = ExtGradient.GetSolidGradient(new Color32(6, 252, 118, 128))
@@ -4169,9 +4170,9 @@ exit 0";
             static void Apply()
             {
                 doCustomName = true;
-                if (!File.Exists($"{PluginInfo.BaseDirectory}/Nova_CustomMenuName.txt"))
-                    File.WriteAllText($"{PluginInfo.BaseDirectory}/Nova_CustomMenuName.txt", "Your Text Here");
-                customMenuName = File.ReadAllText($"{PluginInfo.BaseDirectory}/Nova_CustomMenuName.txt");
+                if (!File.Exists($"{PluginInfo.BaseDirectory}/Eclipse_CustomMenuName.txt"))
+                    File.WriteAllText($"{PluginInfo.BaseDirectory}/Eclipse_CustomMenuName.txt", "Your Text Here");
+                customMenuName = File.ReadAllText($"{PluginInfo.BaseDirectory}/Eclipse_CustomMenuName.txt");
             }
 
             // Applied on every enable (including when preferences load at startup); only the prompt waits.
@@ -4183,9 +4184,9 @@ exit 0";
                 {
                     PromptSingleText("What would you like to set the menu name to?", () =>
                     {
-                        File.WriteAllText($"{PluginInfo.BaseDirectory}/Nova_CustomMenuName.txt", keyboardInput);
+                        File.WriteAllText($"{PluginInfo.BaseDirectory}/Eclipse_CustomMenuName.txt", keyboardInput);
                         Apply();
-                        PromptSingle("You can always change this again by re-enabling the mod or changing it in the NovaMenu folder! (located in the Gorilla Tag installation folder)");
+                        PromptSingle("You can always change this again by re-enabling the mod or changing it in the EclipseMenu folder! (located in the Gorilla Tag installation folder)");
                     });
                 }, Apply);
             }
@@ -4208,13 +4209,13 @@ exit 0";
 
         private static KeywordRecognizer mainPhrases;
         private static KeywordRecognizer modPhrases;
-        private static string[] keyWords = { "jarvis", "Nova", "seralith", "sarolith", "siri", "google", "alexa", "dummy", "computer", "stinky", "silly", "stupid", "console", "go go gadget", "monika", "wikipedia", "gideon", "a i", "ai", "a.i", "chat gpt", "chatgpt", "grok", "grock", "groq", "garmin" };
+        private static string[] keyWords = { "jarvis", "eclipse", "seralith", "sarolith", "siri", "google", "alexa", "dummy", "computer", "stinky", "silly", "stupid", "console", "go go gadget", "monika", "wikipedia", "gideon", "a i", "ai", "a.i", "chat gpt", "chatgpt", "grok", "grock", "groq", "garmin" };
         private static readonly string[] cancelKeywords = { "nevermind", "cancel", "never mind", "stop", "i hate you", "die" };
         public static void VoiceRecognitionOn()
         {
-            if (!File.Exists($"{PluginInfo.BaseDirectory}/Nova_Keywords.txt"))
-                File.WriteAllLines($"{PluginInfo.BaseDirectory}/Nova_Keywords.txt", keyWords);
-            keyWords = File.ReadAllLines($"{PluginInfo.BaseDirectory}/Nova_Keywords.txt");
+            if (!File.Exists($"{PluginInfo.BaseDirectory}/Eclipse_Keywords.txt"))
+                File.WriteAllLines($"{PluginInfo.BaseDirectory}/Eclipse_Keywords.txt", keyWords);
+            keyWords = File.ReadAllLines($"{PluginInfo.BaseDirectory}/Eclipse_Keywords.txt");
             mainPhrases?.Dispose();
             mainPhrases = new KeywordRecognizer(keyWords);
             mainPhrases.OnPhraseRecognized += ModRecognition;
@@ -4408,9 +4409,9 @@ exit 0";
             else if (PhraseRecognitionSystem.Status != SpeechSystemStatus.Stopped)
                 PromptSingle("You can not use AI Assistant while you have another voice-related mod on.", KeepOtherVoiceMod, "Ok");
 
-            if (!File.Exists($"{PluginInfo.BaseDirectory}/Nova_Keywords.txt"))
-                File.WriteAllLines($"{PluginInfo.BaseDirectory}/Nova_Keywords.txt", keyWords);
-            keyWords = File.ReadAllLines($"{PluginInfo.BaseDirectory}/Nova_Keywords.txt");
+            if (!File.Exists($"{PluginInfo.BaseDirectory}/Eclipse_Keywords.txt"))
+                File.WriteAllLines($"{PluginInfo.BaseDirectory}/Eclipse_Keywords.txt", keyWords);
+            keyWords = File.ReadAllLines($"{PluginInfo.BaseDirectory}/Eclipse_Keywords.txt");
 
             // Also wait for the Voice Commands prompt to be answered, so krec never starts alongside it
             while (mod.enabled && (vc.enabled || PhraseRecognitionSystem.Status != SpeechSystemStatus.Stopped))
@@ -5033,7 +5034,7 @@ exit 0";
 
                 if (clickGuiLine == null)
                 {
-                    clickGuiLine = new GameObject("Nova_ClickGUILine")
+                    clickGuiLine = new GameObject("Eclipse_ClickGUILine")
                         .GetOrAddComponent<LineRenderer>();
 
                     clickGuiLine.material = new Material(Shader.Find("GUI/Text Shader"));
@@ -5184,7 +5185,7 @@ exit 0";
                 {
                     if (selectObject == null)
                     {
-                        selectObject = new GameObject("Nova_PingLine");
+                        selectObject = new GameObject("Eclipse_PingLine");
 
                         if (pingLineMaterial == null)
                             pingLineMaterial = new Material(Shader.Find("GUI/Text Shader"));
@@ -5367,14 +5368,14 @@ exit 0";
 
         public static void ResetVoiceCommandsKeywords()
         {
-            if (!File.Exists($"{PluginInfo.BaseDirectory}/Nova_Keywords.txt"))
-                File.WriteAllLines($"{PluginInfo.BaseDirectory}/Nova_Keywords.txt", keyWords);
+            if (!File.Exists($"{PluginInfo.BaseDirectory}/Eclipse_Keywords.txt"))
+                File.WriteAllLines($"{PluginInfo.BaseDirectory}/Eclipse_Keywords.txt", keyWords);
         }
 
         public static void ResetSystemPrompt()
         {
-            if (!File.Exists($"{PluginInfo.BaseDirectory}/Nova_SystemPrompt.txt"))
-                File.WriteAllText($"{PluginInfo.BaseDirectory}/Nova_SystemPrompt.txt", AIManager.SystemPrompt);
+            if (!File.Exists($"{PluginInfo.BaseDirectory}/Eclipse_SystemPrompt.txt"))
+                File.WriteAllText($"{PluginInfo.BaseDirectory}/Eclipse_SystemPrompt.txt", AIManager.SystemPrompt);
         }
 
         // Several Apply* callbacks don't keep their index field current, so save what the button has selected.
@@ -5955,7 +5956,7 @@ exit 0";
 
         public static void LoadPCControls()
         {
-            string fileName = $"{PluginInfo.BaseDirectory}/Nova_PCControls.txt";
+            string fileName = $"{PluginInfo.BaseDirectory}/Eclipse_PCControls.txt";
 
             if (File.Exists(fileName))
             {

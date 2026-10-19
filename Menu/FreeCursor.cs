@@ -1,9 +1,11 @@
 /*
- * Nova Menu  Menu/FreeCursor.cs
- * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ * Eclipse Menu  Menu/FreeCursor.cs
+ * A brand-new mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  HZMGTX
- * https://github.com/HZMGTX/Nova
+ * https://github.com/HZMGTX/Eclipse-Menu
+ *
+ * Remade from Nova Menu (https://github.com/HZMGTX/Nova)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +24,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     /// <summary>Frees the mouse for whichever menus need it, and puts it back as it was once none do.</summary>
     /// <remarks>

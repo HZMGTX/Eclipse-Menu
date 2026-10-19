@@ -1,6 +1,6 @@
-﻿using Nova.Managers.DiscordRPC.RPC.Payload;
+﻿using Eclipse.Managers.DiscordRPC.RPC.Payload;
 
-namespace Nova.Managers.DiscordRPC.RPC.Commands
+namespace Eclipse.Managers.DiscordRPC.RPC.Commands
 {
     internal interface ICommand
     {

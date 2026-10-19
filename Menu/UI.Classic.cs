@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Nova.Classes.Menu;
+using Eclipse.Classes.Menu;
 using UnityEngine;
-using static Nova.Menu.Main;
+using static Eclipse.Menu.Main;
 
-namespace Nova.Menu
+namespace Eclipse.Menu
 {
     public partial class UI
     {
@@ -220,7 +220,7 @@ namespace Nova.Menu
             const float left = ContentLeft;
             Fill(new Rect(0, 0, width, height), Color.black, 2);
             Fill(new Rect(0, 0, rail, height), cardColor, 2);
-            FitLabel(new Rect(8, 14, rail - 16, 26), "Nova", headingStyle, textColor);
+            FitLabel(new Rect(8, 14, rail - 16, 26), "Eclipse", headingStyle, textColor);
             FitLabel(new Rect(8, 40, rail - 16, 22), "v" + PluginInfo.Version, versionStyle, textColor);
 
             bool enabled = GUI.enabled;
