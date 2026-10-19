@@ -489,12 +489,12 @@ namespace Eclipse.Menu
             UI ui = UI.Instance;
             Theme theme = new Theme
             {
-                background = ui != null ? ui.BackgroundColor : new Color(0.055f, 0.066f, 0.09f),
-                panel = ui != null ? ui.PanelColor : new Color(0.086f, 0.1f, 0.14f),
-                border = ui != null ? ui.BorderColor : (Color)new Color32(43, 47, 60, 255),
-                accent = ui != null ? ui.AccentColor : (Color)new Color32(158, 139, 255, 255),
-                bright = ui != null ? ui.BrightColor : (Color)new Color32(235, 237, 245, 255),
-                muted = ui != null ? ui.MutedColor : (Color)new Color32(144, 151, 169, 255),
+                background = ui != null ? ui.BackgroundColor : new Color(0.051f, 0.043f, 0.102f),
+                panel = ui != null ? ui.PanelColor : new Color(0.106f, 0.078f, 0.2f),
+                border = ui != null ? ui.BorderColor : (Color)new Color32(54, 42, 92, 255),
+                accent = ui != null ? ui.AccentColor : (Color)new Color32(255, 159, 67, 255),
+                bright = ui != null ? ui.BrightColor : (Color)new Color32(230, 224, 255, 255),
+                muted = ui != null ? ui.MutedColor : (Color)new Color32(150, 140, 185, 255),
                 opacity = ui != null ? ui.UiOpacity : 1f,
                 accentAmount = ui != null ? ui.UiAccentAmount : 1f,
                 rounding = ui != null ? ui.UiRounding : 1f,

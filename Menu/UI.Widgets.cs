@@ -116,10 +116,10 @@ namespace Eclipse.Menu
 
         private void UpdateTheme()
         {
-            Color baseColor = new Color(0.055f, 0.066f, 0.09f, backgroundBaseAlpha);
-            Color button = new Color(0.086f, 0.1f, 0.14f, panelBaseAlpha);
-            Color highlight = new Color32(158, 139, 255, 255);
-            Color text = new Color32(235, 237, 245, 255);
+            Color baseColor = new Color(0.051f, 0.043f, 0.102f, backgroundBaseAlpha);
+            Color button = new Color(0.106f, 0.078f, 0.2f, panelBaseAlpha);
+            Color highlight = new Color32(255, 159, 67, 255);
+            Color text = new Color32(230, 224, 255, 255);
             if (options.syncTheme)
             {
                 baseColor = Darken(ThemeColor(menuBackgroundColor), 0.1f);

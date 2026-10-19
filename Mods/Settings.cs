@@ -3435,7 +3435,56 @@ exit 0";
                     }
                 }
             },
+
+            // Eclipse's own themes. Kept at the end so the older themes keep their numbers.
+            SpaceTheme("Eclipse", Hex("FF9F43"), Hex("FFD166"), Hex("0D0B1A"), Hex("1B1433"), Hex("2A2145"), Hex("FFD166"), Hex("FF6B6B"), Hex("E6E0FF"), Hex("1A1033")),
+            SpaceTheme("Solar Corona", Hex("FFC857"), Hex("FF8C42"), Hex("1A0F05"), Hex("2B1608"), Hex("3A2310"), Hex("FFE29A"), Hex("FF8C42"), Hex("FFF1DC"), Hex("2B1608")),
+            SpaceTheme("Blood Moon", Hex("E74C3C"), Hex("FF6F61"), Hex("12060A"), Hex("260B12"), Hex("3B1219"), Hex("FF8A80"), Hex("C0392B"), Hex("FFD9D6"), Hex("FFFFFF")),
+            SpaceTheme("Lunar Silver", Hex("DDE6ED"), Hex("AEBCC8"), Hex("14171C"), Hex("22272E"), Hex("2E343D"), Hex("FFFFFF"), Hex("AEBCC8"), Hex("E8EEF2"), Hex("14171C")),
+            SpaceTheme("Aurora Night", Hex("2EE59D"), Hex("38B6FF"), Hex("061A1A"), Hex("0B2730"), Hex("12343B"), Hex("7CFFCB"), Hex("38B6FF"), Hex("D8FFF0"), Hex("061A1A")),
+            SpaceTheme("Nebula Pink", Hex("FF6AD5"), Hex("C774E8"), Hex("1A0B1F"), Hex("2D1036"), Hex("3D1A47"), Hex("FFB3EC"), Hex("AD8CFF"), Hex("FFE3F8"), Hex("2D1036")),
+            SpaceTheme("Deep Space", Hex("4361EE"), Hex("4CC9F0"), Hex("05060F"), Hex("0B1026"), Hex("151B3B"), Hex("4CC9F0"), Hex("7209B7"), Hex("DDE3FF"), Hex("FFFFFF")),
+            SpaceTheme("Starlight", Hex("FFF3B0"), Hex("FFD6A5"), Hex("0F1020"), Hex("1D1F3A"), Hex("282A4D"), Hex("FFFFFF"), Hex("FFF3B0"), Hex("F5F3FF"), Hex("1D1F3A")),
+            SpaceTheme("Comet Ice", Hex("9BF6FF"), Hex("A0C4FF"), Hex("07141C"), Hex("0E2433"), Hex("163447"), Hex("E0FBFF"), Hex("9BF6FF"), Hex("E6FAFF"), Hex("07141C")),
+            SpaceTheme("Supernova", Hex("FFD23F"), Hex("FF5E5B"), Hex("12091F"), Hex("24103A"), Hex("331A4F"), Hex("FFD23F"), Hex("EE4266"), Hex("FFF0E5"), Hex("24103A")),
         };
+
+        /// <summary>Index of the "Eclipse" theme, the menu's default.</summary>
+        public const int EclipseThemeIndex = 65;
+
+        private static Color32 Hex(string hex, byte alpha = 255)
+        {
+            uint v = Convert.ToUInt32(hex, 16);
+            return new Color32((byte)(v >> 16), (byte)(v >> 8), (byte)v, alpha);
+        }
+
+        /// <summary>
+        /// A space theme: an accent pair for the pointer and enabled buttons, a dark panel gradient,
+        /// a disabled-button color, a title gradient, and text colors for disabled and enabled buttons.
+        /// </summary>
+        private static ThemeDefinition SpaceTheme(string name, Color32 accentA, Color32 accentB, Color32 panelA, Color32 panelB, Color32 off, Color32 titleA, Color32 titleB, Color32 text, Color32 onText)
+        {
+            Color32 panelTopA = new Color32(panelA.r, panelA.g, panelA.b, 235);
+            Color32 panelTopB = new Color32(panelB.r, panelB.g, panelB.b, 235);
+            Color32 offB = Color32.Lerp(off, panelB, 0.35f);
+            return new ThemeDefinition
+            {
+                Name = name,
+                Background = () => new ExtGradient { colors = ExtGradient.GetSimpleGradient(accentA, accentB) },
+                MenuBackground = () => new ExtGradient { colors = ExtGradient.GetSimpleGradient(panelTopA, panelTopB) },
+                ButtonColors = () => new[]
+                {
+                    new ExtGradient { colors = ExtGradient.GetSimpleGradient(off, offB) },
+                    new ExtGradient { colors = ExtGradient.GetSimpleGradient(accentA, accentB) }
+                },
+                TextColors = () => new[]
+                {
+                    new ExtGradient { colors = ExtGradient.GetSimpleGradient(titleA, titleB) },
+                    new ExtGradient { colors = ExtGradient.GetSolidGradient(text) },
+                    new ExtGradient { colors = ExtGradient.GetSolidGradient(onText) }
+                }
+            };
+        }
 
         public static int ThemeCount => Themes.Count;
 

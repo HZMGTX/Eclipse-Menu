@@ -92,7 +92,7 @@ namespace Eclipse.Menu
             IsSteam = PlayFabAuthenticator.instance.platform;
 
             InitializeFonts();
-            activeFont = AgencyFB;
+            activeFont = Utopium ?? AgencyFB; // Eclipse's default font (Change Font Type 3)
 
             //if (Plugin.FirstLaunch)
             //    Prompt("It seems like this is your first time using the menu. Would you like to watch a quick tutorial to get to know how to use it?", Settings.ShowTutorial);
@@ -6741,7 +6741,7 @@ namespace Eclipse.Menu
                 if (!font.fallbackFontAssetTable.Contains(LiberationSans))
                     font.fallbackFontAssetTable.Add(LiberationSans);
             }
-            if (activeFont == null) activeFont = AgencyFB ?? LiberationSans;
+            if (activeFont == null) activeFont = Utopium ?? AgencyFB ?? LiberationSans;
         }
 
         // ReSharper disable once StaticMemberInitializerReferesToMemberBelow
@@ -6798,7 +6798,7 @@ jgs \_   _/ |Oo\
         public static bool crystallizeMenu;
         public static bool zeroGravityMenu;
         public static bool menuCollisions;
-        public static bool dropOnRemove = true;
+        public static bool dropOnRemove; // Eclipse shrinks the menu away by default; "Drop Menu" brings the fall back
         public static bool shouldOutline;
         public static bool outlineText;
         public static bool underlineText;
@@ -7074,7 +7074,7 @@ jgs \_   _/ |Oo\
 
         public static bool lastGunSpawnedVibration;
 
-        public static int fontCycle;
+        public static int fontCycle = 3;
         public static bool NoAutoSizeText;
 
         public static bool doCustomName;
@@ -7284,50 +7284,43 @@ jgs \_   _/ |Oo\
             new[] { "v\nv\nv\nv\nv\nv", "ʌ\nʌ\nʌ\nʌ\nʌ\nʌ" }
         };
 
-        public static int themeType = 0;
+        public static int themeType = Settings.EclipseThemeIndex;
         public static bool slowFadeColors;
 
+        // Matches the "Eclipse" theme until OnLaunch applies the saved one
         public static ExtGradient backgroundColor = new ExtGradient
         {
-            colors = ExtGradient.GetSolidGradient(
-                new Color32(6, 252, 118, 128)
-            )
+            colors = ExtGradient.GetSimpleGradient(new Color32(255, 159, 67, 255), new Color32(255, 209, 102, 255))
         };
 
         public static ExtGradient menuBackgroundColor = new ExtGradient
         {
-            colors = ExtGradient.GetSolidGradient(
-                new Color32(22, 22, 22, 128)
-            )
+            colors = ExtGradient.GetSimpleGradient(new Color32(13, 11, 26, 235), new Color32(27, 20, 51, 235))
         };
 
         public static ExtGradient[] buttonColors = {
             new ExtGradient // Released
             {
-                colors = ExtGradient.GetSolidGradient(
-                    new Color32(6, 252, 118, 255)
-                )
+                colors = ExtGradient.GetSimpleGradient(new Color32(42, 33, 69, 255), new Color32(37, 28, 63, 255))
             },
             new ExtGradient // Pressed
             {
-                colors = ExtGradient.GetSolidGradient(
-                    new Color32(4, 188, 88, 255)
-                )
+                colors = ExtGradient.GetSimpleGradient(new Color32(255, 159, 67, 255), new Color32(255, 209, 102, 255))
             }
         };
 
         public static ExtGradient[] textColors = {
             new ExtGradient // Title
             {
-                colors = ExtGradient.GetSolidGradient(Color.white)
+                colors = ExtGradient.GetSimpleGradient(new Color32(255, 209, 102, 255), new Color32(255, 107, 107, 255))
             },
             new ExtGradient // Button Released
             {
-                colors = ExtGradient.GetSolidGradient(Color.white)
+                colors = ExtGradient.GetSolidGradient(new Color32(230, 224, 255, 255))
             },
             new ExtGradient // Button Clicked
             {
-                colors = ExtGradient.GetSolidGradient(Color.white)
+                colors = ExtGradient.GetSolidGradient(new Color32(26, 16, 51, 255))
             }
         };
 

@@ -49,12 +49,12 @@ namespace Eclipse.Menu
 
         private const float backgroundBaseAlpha = 1f;
         private const float panelBaseAlpha = 1f;
-        private Color background = new Color(0.055f, 0.066f, 0.09f, backgroundBaseAlpha);
-        private Color panel = new Color(0.086f, 0.1f, 0.14f, panelBaseAlpha);
-        private Color border = new Color32(43, 47, 60, 255);
-        private Color accent = new Color32(158, 139, 255, 255);
-        private Color bright = new Color32(235, 237, 245, 255);
-        private Color muted = new Color32(144, 151, 169, 255);
+        private Color background = new Color(0.051f, 0.043f, 0.102f, backgroundBaseAlpha);
+        private Color panel = new Color(0.106f, 0.078f, 0.2f, panelBaseAlpha);
+        private Color border = new Color32(54, 42, 92, 255);
+        private Color accent = new Color32(255, 159, 67, 255);
+        private Color bright = new Color32(230, 224, 255, 255);
+        private Color muted = new Color32(150, 140, 185, 255);
         private static readonly Regex tags = new Regex("<[^>]*>", RegexOptions.Compiled);
 
         internal Color BackgroundColor => background;
