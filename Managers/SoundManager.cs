@@ -69,7 +69,9 @@ namespace Eclipse.Managers
                 { "GMod Undo", "Audio/Menu/Buttons/undo.ogg" },
                 { "Half Life", "Audio/Menu/Buttons/hl1.ogg" },
                 { "Mine", "Audio/Menu/Buttons/mine.ogg" },
-                { "Sensation", "Audio/Menu/Buttons/sensation.ogg" }
+                { "Sensation", "Audio/Menu/Buttons/sensation.ogg" },
+                { "Eclipse Tap", "Audio/Menu/Buttons/eclipse-tap.wav" },
+                { "Eclipse Chime", "Audio/Menu/Buttons/eclipse-chime.wav" }
             },
 
             ["Menu"] = new Dictionary<string, object>
@@ -134,6 +136,73 @@ namespace Eclipse.Managers
         public static readonly Dictionary<string, Dictionary<string, object>> Soundpacks = new Dictionary<string, Dictionary<string, object>>
         {
             ["None"] = null,
+
+            // Eclipse's own packs, synthesized for the menu
+            ["Eclipse"] = new Dictionary<string, object>
+            {
+                ["Buttons"] = new Dictionary<string, object>
+                {
+                    { "Default", "Audio/Menu/Preset/Eclipse/click.wav" }
+                },
+                ["Menu"] = new Dictionary<string, object>
+                {
+                    { "Open", "Audio/Menu/Preset/Eclipse/open.wav" },
+                    { "Close", "Audio/Menu/Preset/Eclipse/close.wav" },
+                    { "Next", "Audio/Menu/Preset/Eclipse/next.wav" },
+                    { "Previous", "Audio/Menu/Preset/Eclipse/prev.wav" },
+                    { "Up", "Audio/Menu/Preset/Eclipse/prev.wav" },
+                    { "Down", "Audio/Menu/Preset/Eclipse/next.wav" },
+                    { "Select", "Audio/Menu/Preset/Eclipse/select.wav" },
+                    { "Achievement", "Audio/Menu/Preset/Eclipse/achievement.wav" },
+                    { "Admin", "Audio/Menu/Preset/Eclipse/admin.wav" },
+                    { "Patreon", "Audio/Menu/Preset/Eclipse/admin.wav" },
+                    { "Return", "Audio/Menu/Preset/Eclipse/back.wav" }
+                },
+                ["Notifications"] = new Dictionary<string, object>
+                {
+                    { "None", "Audio/Menu/Preset/Eclipse/notification.wav" },
+                }
+            },
+            ["Cosmic"] = new Dictionary<string, object>
+            {
+                ["Buttons"] = new Dictionary<string, object>
+                {
+                    { "Default", "Audio/Menu/Preset/Cosmic/click.wav" }
+                },
+                ["Menu"] = new Dictionary<string, object>
+                {
+                    { "Open", "Audio/Menu/Preset/Cosmic/open.wav" },
+                    { "Close", "Audio/Menu/Preset/Cosmic/close.wav" },
+                    { "Next", "Audio/Menu/Preset/Cosmic/next.wav" },
+                    { "Previous", "Audio/Menu/Preset/Cosmic/prev.wav" },
+                    { "Up", "Audio/Menu/Preset/Cosmic/prev.wav" },
+                    { "Down", "Audio/Menu/Preset/Cosmic/next.wav" },
+                    { "Select", "Audio/Menu/Preset/Cosmic/select.wav" },
+                    { "Achievement", "Audio/Menu/Preset/Cosmic/achievement.wav" },
+                    { "Return", "Audio/Menu/Preset/Cosmic/back.wav" }
+                },
+                ["Notifications"] = new Dictionary<string, object>
+                {
+                    { "None", "Audio/Menu/Preset/Cosmic/notification.wav" },
+                }
+            },
+            ["Soft Glass"] = new Dictionary<string, object>
+            {
+                ["Buttons"] = new Dictionary<string, object>
+                {
+                    { "Default", "Audio/Menu/Preset/SoftGlass/click.wav" }
+                },
+                ["Menu"] = new Dictionary<string, object>
+                {
+                    { "Open", "Audio/Menu/Preset/SoftGlass/open.wav" },
+                    { "Close", "Audio/Menu/Preset/SoftGlass/close.wav" },
+                    { "Return", "Audio/Menu/Preset/SoftGlass/back.wav" }
+                },
+                ["Notifications"] = new Dictionary<string, object>
+                {
+                    { "None", "Audio/Menu/Preset/SoftGlass/notification.wav" },
+                }
+            },
 
             ["SteamVR"] = new Dictionary<string, object>
             {
@@ -204,7 +273,7 @@ namespace Eclipse.Managers
 
         };
 
-        public static string DefaultSoundpack = "None";
+        public static string DefaultSoundpack = "Eclipse";
 
         public static void Play(string sound, string outputPath = null, Action<AudioClip> action = null, string buttonText = null, bool overlapHand = false, bool leftOverlap = false, bool global = false, string category = null)
         {
