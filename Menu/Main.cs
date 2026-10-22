@@ -94,6 +94,9 @@ namespace Eclipse.Menu
             InitializeFonts();
             activeFont = Utopium ?? AgencyFB; // Eclipse's default font (Change Font Type 3)
 
+            if (CoroutineManager.instance != null)
+                CoroutineManager.instance.StartCoroutine(EclipseIntro());
+
             //if (Plugin.FirstLaunch)
             //    Prompt("It seems like this is your first time using the menu. Would you like to watch a quick tutorial to get to know how to use it?", Settings.ShowTutorial);
             //else
@@ -1937,6 +1940,9 @@ namespace Eclipse.Menu
 
                 FollowMenuSettings(buttonObject, shouldSwap ? method.enabled : !method.enabled);
             }
+            else if (method != null && buttonIndex >= 0 && EclipseModel && Buttons.CurrentCategoryName == DashboardCategory)
+                AddEclipseCard(tiled ? tilePosition : new Vector3(0.56f, 0f, 0.28f - offset), tiled ? tileScale : new Vector3(0.09f, thinMenu ? 0.9f : 1.3f, ButtonDistance * 0.8f));
+
             TextMeshPro buttonText = new GameObject
             {
                 transform = { parent = canvasObj.transform }
@@ -2384,13 +2390,7 @@ namespace Eclipse.Menu
             buttonCollider = reference.GetComponent<SphereCollider>();
 
             if (EclipseModel)
-            {
-                // A small spinning star; the collider keeps the sphere's size so clicks feel the same
-                reference.GetComponent<MeshFilter>().sharedMesh = EclipseMeshes.Star;
-                reference.transform.localScale = new Vector3(0.018f, 0.018f, 0.018f);
-                buttonCollider.radius = 0.5f * 0.01f / 0.018f;
-                reference.AddComponent<EclipseSpin>();
-            }
+                StyleEclipsePointer();
 
             if (hidePointer)
                 reference.GetComponent<Renderer>().enabled = false;
@@ -3042,6 +3042,9 @@ namespace Eclipse.Menu
                     Buttons.CurrentCategoryName = "Main";
                 }
             }
+
+            if (Buttons.CurrentCategoryName == DashboardCategory)
+                menu.AddComponent<EclipseDashboardTicker>();
 
             if (EclipseModel)
             {

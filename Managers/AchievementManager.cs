@@ -89,7 +89,15 @@ namespace Eclipse.Managers
             new Achievement { name = "Too Dedicated", description = "Enable 100 mods at the same time.", icon = "Images/Achievements/red-award.png" },
             new Achievement { name = "Purgatory", description = "Get banned with the menu.", icon = "Images/Achievements/banned.png" },
             new Achievement { name = "Not forever alone...", description = "Make a friend using the friend system.", icon = "Images/Achievements/notforeveralone.png" },
-            new Achievement { name = "Popular", description = "Have 25+ friends.", icon = "Images/Achievements/popular.png" }
+            new Achievement { name = "Popular", description = "Have 25+ friends.", icon = "Images/Achievements/popular.png" },
+            new Achievement { name = "Liftoff", description = "Start the game with Eclipse.", icon = "Images/Achievements/eclipse-liftoff.png" },
+            new Achievement { name = "Explorer", description = "Open every tab of the Eclipse menu.", icon = "Images/Achievements/eclipse-explorer.png" },
+            new Achievement { name = "Shape Shifter", description = "Try every menu layout.", icon = "Images/Achievements/eclipse-shapeshifter.png" },
+            new Achievement { name = "Quick Draw", description = "Open the Quick Wheel.", icon = "Images/Achievements/eclipse-quickdraw.png" },
+            new Achievement { name = "Stargazer", description = "Turn on Eclipse Sky.", icon = "Images/Achievements/eclipse-stargazer.png" },
+            new Achievement { name = "Star Catcher", description = "Catch 25 stars in Star Catcher.", icon = "Images/Achievements/eclipse-starcatcher.png" },
+            new Achievement { name = "Wormhole Traveller", description = "Travel through a wormhole.", icon = "Images/Achievements/eclipse-wormhole.png" },
+            new Achievement { name = "Supernova", description = "Set off 10 supernovas.", icon = "Images/Achievements/eclipse-supernova.png" }
         };
 
         public static void EnterAchievementTab()

@@ -712,13 +712,13 @@ namespace Eclipse.Mods
         private static float wormholeReady;
 
         /// <summary>
-        /// Click your left stick to open a wormhole in front of you, and again for its partner.
+        /// Click your right stick to open a wormhole in front of you, and again for its partner.
         /// Walk into either one to come out of the other. A third click starts over.
         /// </summary>
         public static void WormholePair()
         {
             float scale = Scale;
-            if (Pressed(leftJoystickClick, ref wormholeHeld))
+            if (Pressed(rightJoystickClick, ref wormholeHeld))
             {
                 Vector3 facing = LookFlat();
                 Vector3 centre = BodyPosition + facing * (1.5f * scale);
@@ -763,6 +763,7 @@ namespace Eclipse.Mods
 
             // Come out a step in front of the other one, so you don't land straight back in
             TeleportPlayer(exit.Centre + exit.Facing * (1f * scale), true);
+            Eclipse.Menu.Main.EclipseUnlock("Wormhole Traveller");
             Burst(exit.Centre, 40, 3f, false);
             wormholeReady = Time.time + 1.5f;
         }
@@ -840,7 +841,8 @@ namespace Eclipse.Mods
                 {
                     Burst(body.position, 25, 2f, false);
                     VRRig.LocalRig.PlayHandTapLocal(50, false, 0.25f);
-                    catcherScore++;
+                    if (++catcherScore == 25)
+                        Eclipse.Menu.Main.EclipseUnlock("Star Catcher");
                     Discard(star);
                     fallingStars.RemoveAt(i);
                 }

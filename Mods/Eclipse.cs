@@ -174,6 +174,9 @@ namespace Eclipse.Mods
         /// <summary>A total eclipse hanging in your sky: a dark moon ringed by a burning corona.</summary>
         public static void EclipseSky()
         {
+            if (skyDisc == null)
+                Main.EclipseUnlock("Stargazer");
+
             Vector3 direction = Quaternion.Euler(-32f, 35f, 0f) * Vector3.forward;
             Vector3 centre = Head.position + direction * 90f;
 
@@ -540,6 +543,7 @@ namespace Eclipse.Mods
         }
 
         private static bool supernovaHeld = true;
+        private static int supernovaCount;
         private static readonly List<Piece> shockwaves = new List<Piece>();
 
         /// <summary>Right trigger sets off a supernova from your hand: a shower of sparks and a glowing shockwave.</summary>
@@ -549,6 +553,9 @@ namespace Eclipse.Mods
             {
                 Vector3 at = RightHand;
                 Burst(at, 70, 4f, false);
+
+                if (++supernovaCount == 10)
+                    Main.EclipseUnlock("Supernova");
 
                 Piece wave = MakePiece(PrimitiveType.Sphere, Accent, Vector3.one * 0.1f);
                 wave.Object.transform.position = at;

@@ -207,6 +207,51 @@ namespace Eclipse.Classes.Menu
             }
         }
 
+        private static Mesh torus;
+
+        /// <summary>A small ring (a torus) for the pointer.</summary>
+        public static Mesh Torus
+        {
+            get
+            {
+                if (torus != null)
+                    return torus;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                const int around = 24, tube = 8;
+                const float major = 0.38f, minor = 0.12f;
+
+                Vector3 Point(int u, int v)
+                {
+                    float a = u * Mathf.PI * 2f / around, b = v * Mathf.PI * 2f / tube;
+                    float reach = major + minor * Mathf.Cos(b);
+                    return new Vector3(Mathf.Cos(a) * reach, minor * Mathf.Sin(b), Mathf.Sin(a) * reach);
+                }
+
+                for (int u = 0; u < around; u++)
+                {
+                    float middle = (u + 0.5f) * Mathf.PI * 2f / around;
+                    Vector3 core = new Vector3(Mathf.Cos(middle) * major, 0f, Mathf.Sin(middle) * major);
+                    for (int v = 0; v < tube; v++)
+                    {
+                        Vector3 a = Point(u, v), b = Point(u + 1, v), c = Point(u + 1, v + 1), d = Point(u, v + 1);
+                        Vector3 outward = (a + b + c + d) * 0.25f - core;
+                        Triangle(vertices, triangles, a, b, c, outward);
+                        Triangle(vertices, triangles, a, c, d, outward);
+                    }
+                }
+
+                torus = new Mesh { name = "EclipseTorus" };
+                torus.SetVertices(vertices);
+                torus.SetTriangles(triangles, 0);
+                torus.RecalculateNormals();
+                torus.RecalculateBounds();
+                torus.hideFlags = HideFlags.DontUnloadUnusedAsset;
+                return torus;
+            }
+        }
+
         /// <summary>
         /// Swaps every cube in the menu for a rounded tile. Positions, sizes, colliders and
         /// colours stay exactly as they were.

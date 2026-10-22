@@ -59,6 +59,7 @@ namespace Eclipse.Menu
 
                 new ButtonInfo { buttonText = "Join Discord", method = Important.JoinDiscord, isTogglable = false, toolTip = "Invites you to join the <b>Eclipse</b> community Discord server.", legal = true},
 
+                new ButtonInfo { buttonText = "Eclipse Dashboard", method = OpenEclipseDashboard, isTogglable = false, toolTip = "Opens the dashboard: your FPS, ping, room, the time and how many mods you have on.", legal = true},
                 new ButtonInfo { buttonText = "Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Opens the settings tab.", legal = true},
                 new ButtonInfo { buttonText = "Favorite Mods", method =() => CurrentCategoryName = "Favorite Mods", isTogglable = false, toolTip = "Opens your favorite mods. Favorite mods with right grip.", legal = true},
                 new ButtonInfo { buttonText = "Enabled Mods", method =() => CurrentCategoryName = "Enabled Mods", isTogglable = false, toolTip = "Shows all mods you have enabled.", legal = true},
@@ -208,6 +209,9 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Custom Watermark", enableMethod = Settings.CustomWatermark, disableMethod =() => customWatermark = null, toolTip = $"Changes the watermark on the UI and the back of the menu to a custom image. You can change the photo inside of your Gorilla Tag files ({PluginInfo.BaseDirectory}/CustomWatermark.png).", legal = true},
                 new ButtonInfo { buttonText = "Disable Watermark", enableMethod =() => disableWatermark = true, disableMethod =() => disableWatermark = false, toolTip = "Disables the watermark on the UI and the back of the menu.", legal = true},
                 ButtonHelper.Create("Change Menu Layout", () => MenuLayoutNames, 0, ApplyMenuLayout, "Changes how the menu is laid out: the Eclipse Panel with tabs down the sides, or the classic list.", legal: true),
+                ButtonHelper.Create("Change Pointer Style", () => PointerStyleNames, 0, ApplyPointerStyle, "Changes the pointer you press buttons with: a star, a ring, a comet or the classic orb.", legal: true),
+                new ButtonInfo { buttonText = "Quick Wheel <color=grey>[</color><color=green>LJ</color><color=grey>]</color>", method = QuickWheel, disableMethod = CloseQuickWheel, enabled = true, toolTip = "Hold your left stick click to pop up a wheel of your favourite mods. Move your right hand toward one and let go to switch it.", legal = true},
+                new ButtonInfo { buttonText = "Disable Intro", enableMethod =() => disableIntro = true, disableMethod =() => disableIntro = false, toolTip = "Stops the Eclipse intro from playing when the game starts.", legal = true},
                 ButtonHelper.CreateNumeric("Change Page Type", 1, 6, pageButtonType, Settings.ApplyPageType, toolTip: "Changes the type of page buttons. The Eclipse Panel keeps its page arrows along the bottom.", legal: true),
                 ButtonHelper.CreateNumeric("Change Arrow Type", 0, arrowTypes.Length - 1, arrowType, Settings.ApplyArrowType, toolTip: "Changes the type of arrows on the page buttons.", legal: true),
                 ButtonHelper.CreateNumeric("Change Font Type", 0, 14, fontCycle, Settings.ApplyFontType, toolTip: "Changes the type of font.", legal: true),
@@ -269,6 +273,7 @@ namespace Eclipse.Menu
 
                 new ButtonInfo { buttonText = "Clear Notifications on Disconnect", enableMethod =() => clearNotificationsOnDisconnect = true, disableMethod =() => clearNotificationsOnDisconnect = false, toolTip = "Clears all notifications on disconnect.", legal = true},
                 new ButtonInfo { buttonText = "Hide Notifications on Camera", overlapText = "Streamer Mode Notifications", toolTip = "Makes notifications only render in VR.", legal = true},
+                new ButtonInfo { buttonText = "Classic Notifications", enableMethod =() => { classicNotifications = true; NotificationManager.ClearAllNotifications(); }, disableMethod =() => { classicNotifications = false; NotificationManager.ClearAllNotifications(); }, toolTip = "Shows notifications as plain lines of text instead of Eclipse's cards.", legal = true},
                 new ButtonInfo { buttonText = "Stack Notifications", enableMethod =() => stackNotifications = true, disableMethod =() => stackNotifications = false, toolTip = "Stacks repeated notifications into one notification.", legal = true},
                 new ButtonInfo { buttonText = "Narrate Notifications", enableMethod =() => NotificationManager.narrateNotifications = true, disableMethod =() => NotificationManager.narrateNotifications = false, toolTip = "Narrates all notifications with text to speech.", legal = true},
                 new ButtonInfo { buttonText = "No Prefix Narration", enableMethod =() => NotificationManager.noPrefix = true, disableMethod =() => NotificationManager.noPrefix = false, toolTip = "Stops the prefix on notifications from narrating itself.", legal = true},
@@ -3003,7 +3008,7 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Orbit Hop", enableMethod = EclipseMods.ResetState, method = EclipseMods.OrbitHop, toolTip = "Every jump slings you forward like a spacecraft swinging round a planet."},
                 new ButtonInfo { buttonText = "Comet Slide <color=grey>[</color><color=green>LT</color><color=grey>]</color>", method = EclipseMods.CometSlide, toolTip = "Hold your left trigger on the ground to slide the way you look, trailing sparks."},
                 new ButtonInfo { buttonText = "Lunar Lander", method = EclipseMods.LunarLander, toolTip = "Falling fast near the ground fires landing thrusters that slow you down."},
-                new ButtonInfo { buttonText = "Wormhole Pair <color=grey>[</color><color=green>LJ</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.WormholePair, disableMethod = EclipseMods.DisableWormholePair, toolTip = "Click your left stick to open a wormhole in front of you, and again for its partner. Walk into either one to come out of the other."},
+                new ButtonInfo { buttonText = "Wormhole Pair <color=grey>[</color><color=green>RJ</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.WormholePair, disableMethod = EclipseMods.DisableWormholePair, toolTip = "Click your right stick to open a wormhole in front of you, and again for its partner. Walk into either one to come out of the other."},
 
                 new ButtonInfo { buttonText = "Moonbeam", method = EclipseMods.Moonbeam, disableMethod = EclipseMods.DisableMoonbeam, toolTip = "A soft beam of moonlight shines from your right hand.", legal = true},
                 new ButtonInfo { buttonText = "Starlight Beacon <color=grey>[</color><color=green>B</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.StarlightBeacon, disableMethod = EclipseMods.DisableStarlightBeacon, toolTip = "Press B to drop a beam of starlight wherever your right hand points, to mark a spot. Up to three at once.", legal = true},
@@ -3018,6 +3023,30 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Asteroid Juggle", method = EclipseMods.AsteroidJuggle, disableMethod = EclipseMods.DisableAsteroidJuggle, toolTip = "Three asteroids juggled back and forth between your hands. Only you can see them.", legal = true},
                 new ButtonInfo { buttonText = "Rocket Launch <color=grey>[</color><color=green>X</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.RocketLaunch, disableMethod = EclipseMods.DisableRocketLaunch, toolTip = "Press X to launch a little firework rocket from your left hand. Only you can see it.", legal = true},
                 new ButtonInfo { buttonText = "Star Catcher", enableMethod = EclipseMods.ResetState, method = EclipseMods.StarCatcher, disableMethod = EclipseMods.DisableStarCatcher, toolTip = "Stars drift down around you. Touch them to catch them; your score is on your right wrist. Only you can see them.", legal = true}
+            },
+
+            new[] // Eclipse Dashboard [60]
+            {
+                new ButtonInfo { buttonText = "Exit Eclipse Dashboard", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+                new ButtonInfo { buttonText = "EclipseDashFps", overlapText = "FPS", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseDashPing", overlapText = "Ping", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseDashRoom", overlapText = "Room", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseDashTime", overlapText = "Time", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseDashMods", overlapText = "Mods", label = true, legal = true},
+                new ButtonInfo { buttonText = "What's New", method =() => CurrentCategoryName = "What's New", isTogglable = false, toolTip = "Opens the list of what is new in Eclipse.", legal = true}
+            },
+
+            new[] // What's New [61]
+            {
+                new ButtonInfo { buttonText = "Exit What's New", method = OpenEclipseDashboard, isTogglable = false, toolTip = "Returns you back to the dashboard.", legal = true},
+                new ButtonInfo { buttonText = "EclipseNewVersion", overlapText = $"Eclipse Menu {PluginInfo.Version}", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewModel", overlapText = "A new 3D menu with rounded tiles", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewLayouts", overlapText = "Eclipse Panel, Orbit Wheel and Holo Grid", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewMods", overlapText = "40 space mods in Eclipse Mods", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewThemes", overlapText = "10 space themes, 3 new sound packs", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewWheel", overlapText = "Quick Wheel: hold your left stick", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewLooks", overlapText = "Card notifications, 4 pointer styles", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewAchievements", overlapText = "8 new achievements to unlock", label = true, legal = true}
             }
         };
 
@@ -3081,7 +3110,9 @@ namespace Eclipse.Menu
             "Room Mod Checker",
             "Room Mod Checker Player",
             "Custom Mods",
-            "Eclipse Mods"
+            "Eclipse Mods",
+            "Eclipse Dashboard",
+            "What's New"
         };
 
         public static int _currentCategoryIndex;

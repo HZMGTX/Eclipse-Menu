@@ -70,7 +70,7 @@ namespace Eclipse.Menu
         // Achievements build their page when opened, so they go through their button)
         private static readonly EclipseGroup[] EclipseGroups =
         {
-            new EclipseGroup { Name = "Home", Entries = new[] { "Main", "Favorite Mods", "Enabled Mods", "Players", "Friends", "Achievements", "Credits" } },
+            new EclipseGroup { Name = "Home", Entries = new[] { DashboardCategory, "Main", "Favorite Mods", "Enabled Mods", "Players", "Friends", "Achievements", "What's New", "Credits" } },
             new EclipseGroup { Name = "Eclipse", Entries = new[] { "Eclipse Mods" } },
             new EclipseGroup { Name = "Movement", Entries = new[] { "Movement Mods", "Macros" } },
             new EclipseGroup { Name = "Visuals", Entries = new[] { "Visual Mods" } },
@@ -84,6 +84,7 @@ namespace Eclipse.Menu
 
         private static readonly Dictionary<string, string> EclipseChipNames = new Dictionary<string, string>
         {
+            { DashboardCategory, "Dashboard" },
             { "Main", "Hub" },
             { "Favorite Mods", "Favorites" },
             { "Enabled Mods", "Enabled" },
@@ -368,6 +369,7 @@ namespace Eclipse.Menu
 
                 eclipseGroup = group;
                 eclipseChipPage = 0;
+                NoteEclipseTab(EclipseGroups[group].Name);
 
                 // Clicking the open tab again goes back to its first page
                 OpenEclipseEntry(entries[0]);
@@ -523,8 +525,11 @@ namespace Eclipse.Menu
             decor.AddComponent<ColorChanger>().colors = color;
         }
 
-        public static void ApplyMenuLayout(int index) =>
+        public static void ApplyMenuLayout(int index)
+        {
             menuLayout = Mathf.Clamp(index, 0, MenuLayoutNames.Length - 1);
+            NoteEclipseLayout(menuLayout);
+        }
 
         // Starts small, grows a little past full size and settles
         private static float EaseOutBack(float t)

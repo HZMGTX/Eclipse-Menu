@@ -479,9 +479,11 @@ namespace Eclipse.Managers
             List<string> lines = new List<string>(activeNotifications.Count);
             foreach (NotificationEntry entry in activeNotifications)
             {
-                lines.Add(entry.Counter > 0
+                string line = entry.Counter > 0
                     ? $"{entry.BaseDisplay} <color=grey>(x{entry.Counter + 1})</color>"
-                    : entry.BaseDisplay);
+                    : entry.BaseDisplay;
+
+                lines.Add(classicNotifications || noRichText ? line : EclipseToast(line));
             }
 
             string combined = string.Join(Environment.NewLine, lines);
