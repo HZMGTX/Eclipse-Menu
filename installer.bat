@@ -83,11 +83,11 @@ mkdir "%gamePath%/BepInEx/plugins" 2>nul
 cls
 title Eclipse Menu Installer // [######----] Downloading Eclipse
 for /f "tokens=*" %%i in ('powershell -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/HZMGTX/Eclipse-Menu/releases/latest').assets | Where-Object { $_.name -eq 'Eclipse.Menu.dll' } | Select-Object -ExpandProperty browser_download_url"') do (
-    set novaUrl=%%i
+    set eclipseUrl=%%i
 )
 
 
-if "%novaUrl%"=="" (
+if "%eclipseUrl%"=="" (
     color 0c
     echo Failed to find Eclipse.Menu.dll in the latest release of Eclipse Menu.
     pause
@@ -96,7 +96,7 @@ if "%novaUrl%"=="" (
 
 
 color 0e
-curl -L "%novaUrl%" -o "%gamePath%/BepInEx/plugins/Eclipse.Menu.dll"
+curl -L "%eclipseUrl%" -o "%gamePath%/BepInEx/plugins/Eclipse.Menu.dll"
 if errorlevel 1 (
     color 0c
     echo Failed to download Eclipse.Menu.dll.

@@ -2,20 +2,62 @@
 
 # Eclipse Menu
 
-A brand-new mod menu for Gorilla Tag, remade from [Nova Menu](https://github.com/HZMGTX/Nova).
-
-> **Being made.** Eclipse is under active development. New menu styles, a new 3D menu model, new themes, sounds and mods are on the way.
+A brand-new mod menu for Gorilla Tag, remade from [Nova Menu](https://github.com/HZMGTX/Nova) with its own 3D menu, layouts, themes, sounds and mods.
 
 ## Install
 
 1. Install [BepInEx 5](https://github.com/BepInEx/BepInEx/releases) for Gorilla Tag.
-2. Download `Eclipse Menu.dll` from the [latest release](https://github.com/HZMGTX/Eclipse-Menu/releases/latest).
+2. Download `Eclipse.Menu.dll` from the [latest release](https://github.com/HZMGTX/Eclipse-Menu/releases/latest).
 3. Put it in `Gorilla Tag/BepInEx/plugins`.
 4. **Remove `Nova Menu.dll` if you have it.** Eclipse and Nova change the same parts of the game, so Eclipse won't start while Nova is installed.
 
-Eclipse keeps its settings in its own `EclipseMenu` folder, so it never touches your Nova settings.
+| File | What it is |
+|---|---|
+| `Eclipse.Menu.dll` | The full menu |
+| `Eclipse.Menu.Legal.dll` | Only the mods that give no advantage (visuals, settings and tools) |
+| `Eclipse.Menu.Debug.dll`, `Eclipse.Menu.Legal.Debug.dll` | The same two with extra logging, for reporting bugs |
 
-The PC menu key is **Q**, the same as Nova.
+Eclipse keeps its settings in its own `EclipseMenu` folder, so it never touches your Nova settings. The PC menu key is **Q**, the same as Nova.
+
+## What's new in Eclipse
+
+### A new 3D menu
+Every part of the menu is a rounded tile with a bevelled edge, the panel has a thin glowing rim, buttons push in when you press them, the menu springs open, and the pointer is a small spinning star.
+
+### Four layouts
+Pick one with **Menu Settings → Change Menu Layout**.
+
+| Layout | |
+|---|---|
+| **Eclipse Panel** (default) | Tabs down the left, the open tab's categories down the right, mods in the middle and the page arrows along the bottom |
+| **Orbit Wheel** | The page's mods sit round an orbit, with the page's name in the middle |
+| **Holo Grid** | Big tiles in two columns over faint hologram scanlines |
+| **Classic** | Nova's list, kept as it was |
+
+The tabs are **Home, Eclipse, Movement, Visuals, Fun, Room, Combat, Power, Admin** (admins only) and **Settings**.
+
+### Eclipse Mods: 40 new space mods
+Every one acts on you alone: how you move, or things only you can see. None of them touch other players.
+
+| | |
+|---|---|
+| **Sky** | Eclipse Sky, Star Field, Starfall, Night Filter, Galaxy Floor, Constellation Lines |
+| **On you** | Corona Hands, Black Hole Hands, Orbiting Moons, Saturn Ring, Planet Hat, Halo Crown, Comet Trail, Aurora Ribbons, Star Aura, Star Footprints, Nebula Cloud, Warp Speed, Supernova Burst (RT) |
+| **Movement** | Moon Gravity, Zero-G Float (LG to fall), Solar Dash (hold RG), Star Jump (A), Gravity Flip (Y), Orbit Hop, Comet Slide (LT), Lunar Lander, Wormhole Pair (RJ) |
+| **Tools** | Moonbeam, Starlight Beacon (B), Moon Phase Watch, Speedometer, Height Meter, Session Timer, Compass Ring, Ping Graph |
+| **Toys** | Pocket Planet (LG to grab), Asteroid Juggle, Rocket Launch (X), Star Catcher |
+
+**Eclipse Mods Colour** changes the colours they draw in: corona, moonlight, nebula, aurora, yours or rainbow.
+
+### And more
+- **Dashboard:** live cards for your FPS, ping, room, the time and how many mods you have on.
+- **Quick Wheel:** hold your left stick click for a wheel of your favourite mods, move your right hand toward one and let go to switch it.
+- **10 space themes:** Eclipse, Solar Corona, Blood Moon, Lunar Silver, Aurora Night, Nebula Pink, Deep Space, Starlight, Comet Ice and Supernova.
+- **3 new sound packs:** Eclipse, Cosmic and Soft Glass.
+- **Card notifications** in the menu's colours (Classic Notifications brings back the plain lines).
+- **Pointer styles:** star, ring, comet or the classic orb.
+- **An intro** when the game starts (Disable Intro turns it off).
+- **8 new achievements** and a **What's New** page.
 
 ## Credits
 
