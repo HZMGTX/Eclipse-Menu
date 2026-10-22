@@ -37,23 +37,25 @@ namespace Eclipse.Menu
     /// </summary>
     public partial class Main
     {
-        public static readonly string[] MenuLayoutNames = { "Eclipse Panel", "Classic" };
-        public static int menuLayout;
+        public const int LayoutPanel = 0, LayoutOrbit = 1, LayoutGrid = 2, LayoutClassic = 3;
+        public static readonly string[] MenuLayoutNames = { "Eclipse Panel", "Orbit Wheel", "Holo Grid", "Classic" };
+        public static int menuLayout = LayoutPanel;
 
         public const string EclipseTabPrefix = "EclipseTab:";
         public const string EclipseChipPrefix = "EclipseCat:";
         public const string EclipseMoreChips = "EclipseMore";
 
         /// <summary>Rounded tiles, the glowing rim, the star pointer and the push-in on press.</summary>
-        public static bool EclipseModel => menuLayout != 1 && !shouldRound;
+        public static bool EclipseModel => menuLayout != LayoutClassic && !shouldRound;
 
         /// <summary>
-        /// Whether this menu is drawn as the Eclipse Panel. Anything that depends on the classic
-        /// list's layout (typing, prompts, the joystick and watch menus, long or scrolling pages)
-        /// is drawn the classic way until it is done.
+        /// Whether this menu gets the Eclipse frame: the tab rails and the page row. The Eclipse
+        /// Panel, the Orbit Wheel and the Holo Grid all share it. Anything that depends on the
+        /// classic list's layout (typing, prompts, the joystick and watch menus, long or scrolling
+        /// pages) is drawn the classic way until it is done.
         /// </summary>
         public static bool EclipsePanelActive =>
-            menuLayout == 0 && CurrentPrompt == null && !inTextInput && !joystickMenu && !watchMenu &&
+            menuLayout != LayoutClassic && CurrentPrompt == null && !inTextInput && !joystickMenu && !watchMenu &&
             !longmenu && !disorganized && !pageScrolling && !annoyingMode && buttonOffset == 0;
 
         private sealed class EclipseGroup
@@ -408,6 +410,117 @@ namespace Eclipse.Menu
 
             if (Buttons.GetCategory(entry) >= 0)
                 Buttons.CurrentCategoryName = entry;
+        }
+
+        // ── Orbit Wheel and Holo Grid ───────────────────────────────────────────
+
+        // Set to LayoutOrbit or LayoutGrid while a page's buttons are being placed as tiles
+        private static int eclipseTileLayout;
+
+        /// <summary>Which tile layout this page's buttons get, or 0 for the list.</summary>
+        private static int EclipseTileLayoutFor(ButtonInfo[] page)
+        {
+            if (!EclipsePanelActive || (menuLayout != LayoutOrbit && menuLayout != LayoutGrid) || checkMode)
+                return 0;
+
+            if (PageSize > (menuLayout == LayoutOrbit ? 10 : 12))
+                return 0;
+
+            // Cyclers need their arrows either side, so a page of settings stays a list
+            if (incrementalButtons && page.Any(button => button != null && button.incremental))
+                return 0;
+
+            return menuLayout;
+        }
+
+        /// <summary>Where a page button goes in the Orbit Wheel or the Holo Grid.</summary>
+        private static bool EclipseTilePlacement(int index, out Vector3 position, out Vector3 scale, out Vector3 textPosition, out Vector2 textSize)
+        {
+            float y, z, width, height;
+            switch (eclipseTileLayout)
+            {
+                case LayoutGrid:
+                    {
+                        // Two columns of square-ish tiles over the same space as the list
+                        int rows = Mathf.Max(1, Mathf.CeilToInt(PageSize / 2f));
+                        float pitch = 0.78f / rows;
+                        width = thinMenu ? 0.43f : 0.63f;
+                        height = pitch * 0.82f;
+                        y = (index % 2 == 0 ? 1f : -1f) * (width / 2f + 0.02f);
+                        z = 0.32f - pitch * (index / 2 + 0.5f);
+                        break;
+                    }
+                case LayoutOrbit:
+                    {
+                        // Round the wheel clockwise from the top
+                        float angle = index * Mathf.PI * 2f / Mathf.Max(1, PageSize);
+                        width = thinMenu ? 0.3f : 0.4f;
+                        height = 0.09f;
+                        y = -Mathf.Sin(angle) * (thinMenu ? 0.33f : 0.5f);
+                        z = Mathf.Cos(angle) * 0.33f + OrbitCentre;
+                        break;
+                    }
+                default:
+                    position = scale = textPosition = Vector3.zero;
+                    textSize = Vector2.zero;
+                    return false;
+            }
+
+            position = new Vector3(0.56f, y, z);
+            scale = new Vector3(0.09f, width, height);
+            textPosition = new Vector3(0.064f, y * 0.3f, z * 0.3825f);
+            textSize = new Vector2((width - 0.05f) * 0.3f, height * 0.3825f * 0.8f);
+            return true;
+        }
+
+        private const float OrbitCentre = -0.05f;
+
+        /// <summary>The pieces that go with a tile layout: the wheel's hub and orbit, or the grid's scanlines.</summary>
+        private static void DrawEclipseTileExtras(int layout)
+        {
+            if (layout == LayoutOrbit)
+            {
+                float ry = thinMenu ? 0.33f : 0.5f;
+
+                // The orbit itself, a dotted ellipse through the tiles
+                ExtGradient orbitColor = new ExtGradient { colors = ExtGradient.GetSolidGradient(Color.Lerp(menuBackgroundColor.GetColor(0), backgroundColor.GetColor(0), 0.6f)) };
+                for (int i = 0; i < 32; i++)
+                {
+                    float angle = (i + 0.5f) * Mathf.PI * 2f / 32f;
+                    AddEclipseDecor(new Vector3(0.552f, -Mathf.Sin(angle) * ry, Mathf.Cos(angle) * 0.33f + OrbitCentre), new Vector3(0.012f, 0.018f, 0.018f * 0.3f / 0.3825f), orbitColor);
+                }
+
+                // The hub: a dark disc with the page's name on it
+                GameObject hub = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                Destroy(hub.GetComponent<Collider>());
+                hub.transform.parent = menu.transform;
+                hub.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                hub.transform.localPosition = new Vector3(0.56f, 0f, OrbitCentre);
+                hub.transform.localScale = new Vector3(0.3f, 0.02f, 0.3f * 0.3f / 0.3825f);
+                hub.AddComponent<ColorChanger>().colors = menuBackgroundColor;
+
+                string name = Buttons.CurrentCategoryName == "Temporary Category" && eclipseLastEntry != null ? eclipseLastEntry : Buttons.CurrentCategoryName;
+                AddEclipseText(ChipName(name), new Vector3(0.064f, 0f, OrbitCentre * 0.3825f), new Vector2(0.08f, 0.028f), textColors[0]);
+            }
+            else if (layout == LayoutGrid)
+            {
+                // Faint scanlines across the panel, for the hologram look
+                ExtGradient lineColor = new ExtGradient { colors = ExtGradient.GetSolidGradient(Color.Lerp(menuBackgroundColor.GetColor(0), backgroundColor.GetColor(0), 0.25f)) };
+                float width = (thinMenu ? 1f : 1.5f) * 0.96f;
+                for (float z = 0.45f; z > -0.47f; z -= 0.075f)
+                    AddEclipseDecor(new Vector3(0.552f, 0f, z), new Vector3(0.008f, width, 0.004f), lineColor);
+            }
+        }
+
+        private static void AddEclipseDecor(Vector3 position, Vector3 scale, ExtGradient color)
+        {
+            GameObject decor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Destroy(decor.GetComponent<BoxCollider>());
+            decor.transform.parent = menu.transform;
+            decor.transform.rotation = Quaternion.identity;
+            decor.transform.localPosition = position;
+            decor.transform.localScale = scale;
+            decor.AddComponent<ColorChanger>().colors = color;
         }
 
         public static void ApplyMenuLayout(int index) =>

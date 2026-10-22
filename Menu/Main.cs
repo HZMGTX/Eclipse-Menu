@@ -1843,6 +1843,13 @@ namespace Eclipse.Menu
 #endif
             if (!shouldCreate)
                 return;
+
+            // The Orbit Wheel and Holo Grid put the page's buttons somewhere other than a row
+            Vector3 tilePosition = default, tileScale = default, tileTextPosition = default;
+            Vector2 tileTextSize = default;
+            bool tiled = eclipseTileLayout != 0 && buttonIndex >= 0 &&
+                EclipseTilePlacement(buttonIndex, out tilePosition, out tileScale, out tileTextPosition, out tileTextSize);
+
             if (method != null && !method.label)
             {
                 GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -1862,6 +1869,12 @@ namespace Eclipse.Menu
                 }
 
                 buttonObject.transform.localPosition = new Vector3(0.56f, 0f, 0.28f - offset);
+
+                if (tiled)
+                {
+                    buttonObject.transform.localPosition = tilePosition;
+                    buttonObject.transform.localScale = tileScale;
+                }
 
                 if (checkMode && buttonIndex > -1)
                 {
@@ -1930,6 +1943,11 @@ namespace Eclipse.Menu
             }.AddComponent<TextMeshPro>();
 
             UpdateButtonText updater = buttonText.gameObject.AddComponent<UpdateButtonText>();
+            if (tiled)
+            {
+                updater.layoutPosition = tileTextPosition;
+                updater.layoutSize = tileTextSize;
+            }
             updater.Init(method, buttonIndex, offset);
             updater.UpdateText();
         }
@@ -3009,11 +3027,17 @@ namespace Eclipse.Menu
                             .ToArray();
 
                     renderedPageButtons = renderButtons.Length;
+                    eclipseTileLayout = EclipseTileLayoutFor(renderButtons);
                     for (int i = 0; i < renderButtons.Length; i++)
                         AddButton((i + buttonIndexOffset + buttonOffset) * ButtonDistance, i, renderButtons[i]);
+
+                    if (eclipseTileLayout != 0)
+                        DrawEclipseTileExtras(eclipseTileLayout);
+                    eclipseTileLayout = 0;
                 }
                 catch (Exception ex)
                 {
+                    eclipseTileLayout = 0;
                     LogManager.Log($"Menu draw is erroring, returning to home page\nException: {ex}");
                     Buttons.CurrentCategoryName = "Main";
                 }

@@ -3273,6 +3273,10 @@ public class UpdateButtonText : MonoBehaviour
     public int buttonIndex;
     public float offset;
 
+    // Set for the tile layouts, which put the text somewhere other than a row
+    public Vector3? layoutPosition;
+    public Vector2? layoutSize;
+
     private TextMeshPro tmp;
     private UIColorChanger colorChanger;
     private bool initialized;
@@ -3304,6 +3308,10 @@ public class UpdateButtonText : MonoBehaviour
         if (NoAutoSizeText) textTransform.sizeDelta = new Vector2(9f, 0.015f);
         if (hideTextOnCamera) textTransform.gameObject.layer = 19;
         textTransform.localPosition = new Vector3(.064f, 0, .111f - offset / 2.6f);
+        if (layoutPosition.HasValue)
+            textTransform.localPosition = layoutPosition.Value;
+        if (layoutSize.HasValue && !NoAutoSizeText)
+            textTransform.sizeDelta = layoutSize.Value;
         textTransform.localRotation = Quaternion.Euler(180f, 90f, 90f);
 
         tmp.font = activeFont;
