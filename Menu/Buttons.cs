@@ -65,6 +65,8 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Players", method = Settings.PlayersTab, isTogglable = false, toolTip = "Opens the players tab.", legal = true},
                 new ButtonInfo { buttonText = "Friends", method =() => CurrentCategoryName = "Friends", isTogglable = false, toolTip = "Opens the friends tab.", legal = true},
 
+                new ButtonInfo { buttonText = "Eclipse Mods", method =() => CurrentCategoryName = "Eclipse Mods", isTogglable = false, toolTip = "Opens Eclipse's own mods: sky, stars, planets and space movement.", legal = true},
+
                 new ButtonInfo { buttonText = "Movement Mods", method =() => CurrentCategoryName = "Movement Mods", isTogglable = false, toolTip = "Opens the movement mods."},
                 new ButtonInfo { buttonText = "Visual Mods", method =() => CurrentCategoryName = "Visual Mods", isTogglable = false, toolTip = "Opens the visual mods.", legal = true},
                 new ButtonInfo { buttonText = "Fun Mods", method =() => CurrentCategoryName = "Fun Mods", isTogglable = false, toolTip = "Opens the fun mods.", legal = true},
@@ -2964,6 +2966,58 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Simon Says", method = Custom.SimonSays, disableMethod = Custom.DisableSimonSays, toolTip = "Four coloured pads light up in a pattern that grows each round. Touch them in the same order with your hands.", legal = true},
                 new ButtonInfo { buttonText = "Parkour Rings", method = Custom.ParkourRings, disableMethod = Custom.DisableParkourRings, toolTip = "A course of rings appears ahead of you. Go through them all as fast as you can; your best time is kept.", legal = true},
                 new ButtonInfo { buttonText = "Training Dummy", method = Custom.TrainingDummy, disableMethod = Custom.DisableTrainingDummy, toolTip = "A dummy to punch in front of you. It shows how hard you hit and your combo.", legal = true}
+            },
+
+            new[] // Eclipse Mods [59]
+            {
+                new ButtonInfo { buttonText = "Exit Eclipse Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+                ButtonHelper.Create("Eclipse Mods Colour", () => EclipseMods.ColorNames, 0, EclipseMods.SetColorMode, "Changes the colour every Eclipse mod draws in: corona, moonlight, nebula, aurora, yours or rainbow.", legal: true),
+                new ButtonInfo { buttonText = "Turn Off All Eclipse Mods", method = EclipseMods.TurnOffAll, isTogglable = false, toolTip = "Turns off every Eclipse mod that is on.", legal = true},
+
+                new ButtonInfo { buttonText = "Eclipse Sky", method = EclipseMods.EclipseSky, disableMethod = EclipseMods.DisableEclipseSky, toolTip = "A total eclipse hangs in your sky: a dark moon ringed by a burning corona. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Star Field", method = EclipseMods.StarField, disableMethod = EclipseMods.DisableStarField, toolTip = "Twinkling stars all around you, whatever map you are on. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Starfall", method = EclipseMods.Starfall, disableMethod = EclipseMods.DisableStarfall, toolTip = "Bright stars rain down across the whole sky above you. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Night Filter", method = EclipseMods.NightFilter, disableMethod = EclipseMods.DisableNightFilter, toolTip = "Tints the air a deep night blue for you.", legal = true},
+                new ButtonInfo { buttonText = "Galaxy Floor", method = EclipseMods.GalaxyFloor, disableMethod = EclipseMods.DisableGalaxyFloor, toolTip = "A slowly turning spiral galaxy under your feet. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Constellation Lines", method = EclipseMods.ConstellationLines, disableMethod = EclipseMods.DisableConstellationLines, toolTip = "Joins your head, hands and body up like a constellation. Only you can see it.", legal = true},
+
+                new ButtonInfo { buttonText = "Corona Hands", method = EclipseMods.CoronaHands, disableMethod = EclipseMods.DisableCoronaHands, toolTip = "Burning corona rings around both of your hands. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Black Hole Hands", method = EclipseMods.BlackHoleHands, disableMethod = EclipseMods.DisableBlackHoleHands, toolTip = "A tiny black hole in each hand, with glowing matter swirling round it. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Orbiting Moons", method = EclipseMods.OrbitingMoons, disableMethod = EclipseMods.DisableOrbitingMoons, toolTip = "Three little moons circle your head. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Saturn Ring", method = EclipseMods.SaturnRing, disableMethod = EclipseMods.DisableSaturnRing, toolTip = "Planetary rings around your body. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Planet Hat", method = EclipseMods.PlanetHat, disableMethod = EclipseMods.DisablePlanetHat, toolTip = "A tiny ringed planet floats just above your head. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Halo Crown", method = EclipseMods.HaloCrown, disableMethod = EclipseMods.DisableHaloCrown, toolTip = "A crown of little stars turns above your head. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Comet Trail", method = EclipseMods.CometTrail, disableMethod = EclipseMods.DisableCometTrail, toolTip = "A glowing comet tail streams out behind you. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Aurora Ribbons", method = EclipseMods.AuroraRibbons, disableMethod = EclipseMods.DisableAuroraRibbons, toolTip = "Ribbons of aurora light flow from your hands. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Star Aura", method = EclipseMods.StarAura, disableMethod = EclipseMods.DisableStarAura, toolTip = "Stardust drifts off your body. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Star Footprints", method = EclipseMods.StarFootprints, disableMethod = EclipseMods.DisableStarFootprints, toolTip = "Little glowing stars are left where you step and fade after a few seconds. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Nebula Cloud", method = EclipseMods.NebulaCloud, disableMethod = EclipseMods.DisableNebulaCloud, toolTip = "Soft clouds of coloured nebula gas drift around you. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Warp Speed", method = EclipseMods.WarpSpeed, disableMethod = EclipseMods.DisableWarpSpeed, toolTip = "Stars streak past you when you move fast, like jumping to warp. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Supernova Burst <color=grey>[</color><color=green>RT</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.SupernovaBurst, disableMethod = EclipseMods.DisableSupernovaBurst, toolTip = "Press your right trigger to set off a supernova from your hand. Only you can see it.", legal = true},
+
+                new ButtonInfo { buttonText = "Moon Gravity", method = EclipseMods.MoonGravity, toolTip = "The Moon's gravity: a sixth of Earth's, so every jump floats."},
+                new ButtonInfo { buttonText = "Zero-G Float <color=grey>[</color><color=green>LG</color><color=grey>]</color>", method = EclipseMods.ZeroGFloat, toolTip = "No gravity at all, with a little drag so you drift to a stop. Hold your left grip to fall."},
+                new ButtonInfo { buttonText = "Solar Dash <color=grey>[</color><color=green>RG</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.SolarDash, toolTip = "Hold your right grip to charge, then let go to dash the way you look. A longer charge goes further."},
+                new ButtonInfo { buttonText = "Star Jump <color=grey>[</color><color=green>A</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.StarJump, toolTip = "Press A on the ground to launch high into the air in a burst of stars."},
+                new ButtonInfo { buttonText = "Gravity Flip <color=grey>[</color><color=green>Y</color><color=grey>]</color>", method = EclipseMods.GravityFlip, toolTip = "Hold Y to fall upwards."},
+                new ButtonInfo { buttonText = "Orbit Hop", enableMethod = EclipseMods.ResetState, method = EclipseMods.OrbitHop, toolTip = "Every jump slings you forward like a spacecraft swinging round a planet."},
+                new ButtonInfo { buttonText = "Comet Slide <color=grey>[</color><color=green>LT</color><color=grey>]</color>", method = EclipseMods.CometSlide, toolTip = "Hold your left trigger on the ground to slide the way you look, trailing sparks."},
+                new ButtonInfo { buttonText = "Lunar Lander", method = EclipseMods.LunarLander, toolTip = "Falling fast near the ground fires landing thrusters that slow you down."},
+                new ButtonInfo { buttonText = "Wormhole Pair <color=grey>[</color><color=green>LJ</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.WormholePair, disableMethod = EclipseMods.DisableWormholePair, toolTip = "Click your left stick to open a wormhole in front of you, and again for its partner. Walk into either one to come out of the other."},
+
+                new ButtonInfo { buttonText = "Moonbeam", method = EclipseMods.Moonbeam, disableMethod = EclipseMods.DisableMoonbeam, toolTip = "A soft beam of moonlight shines from your right hand.", legal = true},
+                new ButtonInfo { buttonText = "Starlight Beacon <color=grey>[</color><color=green>B</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.StarlightBeacon, disableMethod = EclipseMods.DisableStarlightBeacon, toolTip = "Press B to drop a beam of starlight wherever your right hand points, to mark a spot. Up to three at once.", legal = true},
+                new ButtonInfo { buttonText = "Moon Phase Watch", method = EclipseMods.MoonPhaseWatch, disableMethod = EclipseMods.DisableMoonPhaseWatch, toolTip = "The time and tonight's real moon phase, on your left wrist.", legal = true},
+                new ButtonInfo { buttonText = "Speedometer", method = EclipseMods.Speedometer, disableMethod = EclipseMods.DisableSpeedometer, toolTip = "How fast you are going, and your top speed, on your left wrist.", legal = true},
+                new ButtonInfo { buttonText = "Height Meter", method = EclipseMods.HeightMeter, disableMethod = EclipseMods.DisableHeightMeter, toolTip = "How high above the ground you are, on your left wrist.", legal = true},
+                new ButtonInfo { buttonText = "Session Timer", enableMethod = EclipseMods.ResetState, method = EclipseMods.SessionTimer, disableMethod = EclipseMods.DisableSessionTimer, toolTip = "How long you have played since turning it on, on your left wrist.", legal = true},
+                new ButtonInfo { buttonText = "Compass Ring", method = EclipseMods.CompassRing, disableMethod = EclipseMods.DisableCompassRing, toolTip = "A compass ring around your feet that always points north. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Ping Graph", method = EclipseMods.PingGraph, disableMethod = EclipseMods.DisablePingGraph, toolTip = "Your ping over the last ten seconds, as a little graph above your right wrist.", legal = true},
+
+                new ButtonInfo { buttonText = "Pocket Planet", method = EclipseMods.PocketPlanet, disableMethod = EclipseMods.DisablePocketPlanet, toolTip = "A little planet floats beside you. Grab it with your left grip and throw it; it comes back. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Asteroid Juggle", method = EclipseMods.AsteroidJuggle, disableMethod = EclipseMods.DisableAsteroidJuggle, toolTip = "Three asteroids juggled back and forth between your hands. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Rocket Launch <color=grey>[</color><color=green>X</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.RocketLaunch, disableMethod = EclipseMods.DisableRocketLaunch, toolTip = "Press X to launch a little firework rocket from your left hand. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Star Catcher", enableMethod = EclipseMods.ResetState, method = EclipseMods.StarCatcher, disableMethod = EclipseMods.DisableStarCatcher, toolTip = "Stars drift down around you. Touch them to catch them; your score is on your right wrist. Only you can see them.", legal = true}
             }
         };
 
@@ -3026,7 +3080,8 @@ namespace Eclipse.Menu
             "Admin World Controls",
             "Room Mod Checker",
             "Room Mod Checker Player",
-            "Custom Mods"
+            "Custom Mods",
+            "Eclipse Mods"
         };
 
         public static int _currentCategoryIndex;
