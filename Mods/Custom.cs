@@ -46,11 +46,11 @@ namespace Eclipse.Mods
     {
         public const string Category = "Custom Mods";
 
-        private static Transform Head => GorillaTagger.Instance.headCollider.transform;
-        private static float Scale => GTPlayer.Instance.scale;
+        internal static Transform Head => GorillaTagger.Instance.headCollider.transform;
+        internal static float Scale => GTPlayer.Instance.scale;
 
         /// <summary>Where you are looking, flattened onto the ground.</summary>
-        private static Vector3 LookFlat()
+        internal static Vector3 LookFlat()
         {
             Vector3 look = Head.forward;
             look.y = 0f;
@@ -66,7 +66,7 @@ namespace Eclipse.Mods
             colorMode = Mathf.Clamp(mode, 0, ColorNames.Length - 1);
 
         /// <summary>The colour every Custom mod draws in, chosen with Custom Mods Colour.</summary>
-        private static Color MyColor
+        internal static Color MyColor
         {
             get
             {
@@ -88,7 +88,7 @@ namespace Eclipse.Mods
         private static Material vertexColored;
 
         /// <summary>A material that takes its colour from what it draws, for particles and lines.</summary>
-        private static Material VertexColored
+        internal static Material VertexColored
         {
             get
             {
@@ -103,7 +103,7 @@ namespace Eclipse.Mods
         }
 
         /// <summary>One visual thing these mods keep track of, with its renderer kept to hand.</summary>
-        private sealed class Piece
+        internal sealed class Piece
         {
             public GameObject Object;
             public Renderer Renderer;
@@ -117,14 +117,14 @@ namespace Eclipse.Mods
             public bool Alive => Object != null;
         }
 
-        private static Piece MakePiece(PrimitiveType type, Color color, Vector3 scale)
+        internal static Piece MakePiece(PrimitiveType type, Color color, Vector3 scale)
         {
             GameObject made = Extras.Primitive(type, color, scale);
             return new Piece { Object = made, Renderer = made.GetComponent<Renderer>(), Born = Time.time, Seed = Random.value * 100f };
         }
 
         /// <summary>Destroys a piece's object and the material it was given.</summary>
-        private static void Discard(Piece piece)
+        internal static void Discard(Piece piece)
         {
             if (piece == null)
                 return;
@@ -134,7 +134,7 @@ namespace Eclipse.Mods
             piece.Object = null;
         }
 
-        private static void ClearPieces(List<Piece> pieces)
+        internal static void ClearPieces(List<Piece> pieces)
         {
             foreach (Piece piece in pieces)
                 Discard(piece);
@@ -143,14 +143,14 @@ namespace Eclipse.Mods
 
         // Each primitive owns the material Extras.Primitive gave it, so the shared material
         // is coloured directly; reading .material would make a copy and leak the original.
-        private static void SetColor(Piece piece, Color color) =>
+        internal static void SetColor(Piece piece, Color color) =>
             piece.Renderer.sharedMaterial.color = color;
 
-        private static void SetAlpha(Piece piece, Color color, float alpha) =>
+        internal static void SetAlpha(Piece piece, Color color, float alpha) =>
             piece.Renderer.sharedMaterial.color = new Color(color.r, color.g, color.b, alpha);
 
         /// <summary>A live piece: the one given if it still exists, otherwise a new one.</summary>
-        private static Piece Ensure(ref Piece piece, PrimitiveType type, Color color)
+        internal static Piece Ensure(ref Piece piece, PrimitiveType type, Color color)
         {
             if (piece == null || !piece.Alive)
                 piece = MakePiece(type, color, Vector3.one);
@@ -158,14 +158,14 @@ namespace Eclipse.Mods
         }
 
         /// <summary>True on the frame a button goes down.</summary>
-        private static bool Pressed(bool down, ref bool held)
+        internal static bool Pressed(bool down, ref bool held)
         {
             bool pressed = down && !held;
             held = down;
             return pressed;
         }
 
-        private static LineRenderer MakeLine(string name, float width)
+        internal static LineRenderer MakeLine(string name, float width)
         {
             LineRenderer line = new GameObject(name).AddComponent<LineRenderer>();
             line.material = VertexColored;
@@ -175,7 +175,7 @@ namespace Eclipse.Mods
             return line;
         }
 
-        private static void DestroyLine(ref LineRenderer line)
+        internal static void DestroyLine(ref LineRenderer line)
         {
             if (line != null)
                 Object.Destroy(line.gameObject);
@@ -209,7 +209,7 @@ namespace Eclipse.Mods
         // ── Particles ───────────────────────────────────────────────────────────
 
         /// <summary>A particle system that grows and shrinks with you through its transform.</summary>
-        private static ParticleSystem MakeParticles(string name, Transform parent, Action<ParticleSystem> configure)
+        internal static ParticleSystem MakeParticles(string name, Transform parent, Action<ParticleSystem> configure)
         {
             GameObject holder = new GameObject(name);
             if (parent != null)
@@ -231,7 +231,7 @@ namespace Eclipse.Mods
             return particles;
         }
 
-        private static void DestroyParticles(ref ParticleSystem particles)
+        internal static void DestroyParticles(ref ParticleSystem particles)
         {
             if (particles != null)
                 Object.Destroy(particles.gameObject);
@@ -239,7 +239,7 @@ namespace Eclipse.Mods
         }
 
         /// <summary>Moves a free-standing particle system and keeps it at your size.</summary>
-        private static void Follow(ParticleSystem particles, Vector3 position)
+        internal static void Follow(ParticleSystem particles, Vector3 position)
         {
             particles.transform.position = position;
             particles.transform.localScale = Vector3.one * Scale;
@@ -299,7 +299,7 @@ namespace Eclipse.Mods
 
         /// <summary>A one-off spray of rainbow sparks.</summary>
         /// <param name="direction">Sprays in a cone this way; without one, in every direction.</param>
-        private static void Burst(Vector3 at, int count, float speed, bool falling, Vector3? direction = null)
+        internal static void Burst(Vector3 at, int count, float speed, bool falling, Vector3? direction = null)
         {
             ParticleSystem system = Sparks(falling);
             float scale = Scale;
@@ -321,7 +321,7 @@ namespace Eclipse.Mods
 
         // ── Wrist text ──────────────────────────────────────────────────────────
 
-        private static TextMeshPro MakeWristText(string name, Color color)
+        internal static TextMeshPro MakeWristText(string name, Color color)
         {
             TextMeshPro text = new GameObject(name).AddComponent<TextMeshPro>();
             text.fontSize = 4.8f;
@@ -331,7 +331,7 @@ namespace Eclipse.Mods
             return text;
         }
 
-        private static void DestroyText(ref TextMeshPro text)
+        internal static void DestroyText(ref TextMeshPro text)
         {
             if (text != null)
                 Object.Destroy(text.gameObject);
@@ -340,7 +340,7 @@ namespace Eclipse.Mods
 
         /// <summary>Floats text above a wrist, turned to face you.</summary>
         /// <remarks>Each gadget has its own height so several can be on at once.</remarks>
-        private static void PlaceOnWrist(TextMeshPro text, float height, bool rightWrist = false)
+        internal static void PlaceOnWrist(TextMeshPro text, float height, bool rightWrist = false)
         {
             Transform wrist = rightWrist ? GorillaTagger.Instance.rightHandTransform : GorillaTagger.Instance.leftHandTransform;
 
