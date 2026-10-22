@@ -1710,7 +1710,7 @@ namespace Eclipse.Managers
                             NotificationManager.SendNotification($"<color=grey>[</color><color=#{color}>{friendName.ToUpper()}</color><color=grey>]</color> {Regex.Replace(message, @"<\s*https?://[^\s>]+\s*>", "[Media]")}", 5000);
                             UpdateFriendMessage(from, $"<color=grey>[</color><color=#{color}>{friendName.ToUpper()}</color><color=grey>]</color> {message}        ");
 
-                            if (Buttons.CurrentCategoryIndex == 41)
+                            if (Buttons.CurrentCategoryName == "Chat Messages")
                             {
                                 ShowChatMessages(from);
                                 ReloadMenu();

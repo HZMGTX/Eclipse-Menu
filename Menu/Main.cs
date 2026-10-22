@@ -75,7 +75,7 @@ using Random = UnityEngine.Random;
 namespace Eclipse.Menu
 {
     [HarmonyPatch(typeof(GTPlayer), nameof(GTPlayer.LateUpdate))]
-    public class Main : MonoBehaviour
+    public partial class Main : MonoBehaviour
     {
         /// <summary>
         /// Runs on first frame of <see cref="GTPlayer.LateUpdate"/> after menu is launched
@@ -2365,6 +2365,15 @@ namespace Eclipse.Menu
             reference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
             buttonCollider = reference.GetComponent<SphereCollider>();
 
+            if (EclipseModel)
+            {
+                // A small spinning star; the collider keeps the sphere's size so clicks feel the same
+                reference.GetComponent<MeshFilter>().sharedMesh = EclipseMeshes.Star;
+                reference.transform.localScale = new Vector3(0.018f, 0.018f, 0.018f);
+                buttonCollider.radius = 0.5f * 0.01f / 0.018f;
+                reference.AddComponent<EclipseSpin>();
+            }
+
             if (hidePointer)
                 reference.GetComponent<Renderer>().enabled = false;
             else
@@ -2798,7 +2807,9 @@ namespace Eclipse.Menu
                     AddUpdateButton();
             }
 
-            if (!disablePageButtons && CurrentPrompt == null && !pageScrolling)
+            if (EclipsePanelActive)
+                DrawEclipsePanel();
+            else if (!disablePageButtons && CurrentPrompt == null && !pageScrolling)
                 AddPageButtons();
 
             if (inTextInput)
@@ -3006,6 +3017,15 @@ namespace Eclipse.Menu
                     LogManager.Log($"Menu draw is erroring, returning to home page\nException: {ex}");
                     Buttons.CurrentCategoryName = "Main";
                 }
+            }
+
+            if (EclipseModel)
+            {
+                AddEclipseRim(menuBackground);
+
+                bool texturedBackground = doCustomMenuBackground || themeType == 23 || themeType == 24 || themeType == 25 || themeType == 61;
+                EclipseMeshes.Remodel(menu, texturedBackground ? menuBackground : null);
+                EclipseMeshes.AnimatePress(menu);
             }
 
             RecenterMenu();
@@ -5096,12 +5116,17 @@ namespace Eclipse.Menu
 
             float elapsedTime = 0f;
             Vector3 target = menu.transform.localScale;
-            while (elapsedTime < (slowDynamicAnimations ? 0.3f : 0.16f))
+            bool overshoot = EclipseModel;
+            float duration = overshoot ? (slowDynamicAnimations ? 0.4f : 0.24f) : (slowDynamicAnimations ? 0.3f : 0.16f);
+            while (elapsedTime < duration)
             {
                 if (menuObject == null)
                     yield break;
 
-                menuObject.transform.localScale = Vector3.Lerp(Vector3.zero, target, elapsedTime / (slowDynamicAnimations ? 0.3f : 0.16f));
+                float progress = elapsedTime / duration;
+                menuObject.transform.localScale = overshoot
+                    ? Vector3.LerpUnclamped(Vector3.zero, target, EaseOutBack(progress))
+                    : Vector3.Lerp(Vector3.zero, target, progress);
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
@@ -6159,6 +6184,16 @@ namespace Eclipse.Menu
         /// <param name="ignoreForce">true to bypass force-related checks and restrictions during the toggle operation; otherwise, false.</param>
         public static void Toggle(string buttonText, bool fromMenu = false, bool ignoreForce = false)
         {
+            if (fromMenu && EclipseModel)
+                EclipseMeshes.NotePress(buttonText);
+
+            if (buttonText != null && buttonText.StartsWith("Eclipse") && EclipsePanelClick(buttonText))
+            {
+                if (!clickGUI)
+                    ReloadMenu();
+                return;
+            }
+
             switch (buttonText)
             {
                 case "PreviousPage":
