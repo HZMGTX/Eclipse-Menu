@@ -148,9 +148,13 @@ namespace Eclipse.Mods
             dashCharge = 0f;
             dashHeld = rightGrab;
             hopGrounded = true;
-            sessionStart = Time.time;
-            catcherScore = 0;
         }
+
+        /// <summary>Starts Session Timer from zero, when it is turned on.</summary>
+        public static void StartSessionTimer() => sessionStart = Time.time;
+
+        /// <summary>Starts Star Catcher's score from zero, when it is turned on.</summary>
+        public static void StartStarCatcher() => catcherScore = 0;
 
         /// <summary>Turns off every Eclipse mod that is on.</summary>
         public static void TurnOffAll()

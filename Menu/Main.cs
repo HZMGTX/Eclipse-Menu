@@ -1853,6 +1853,10 @@ namespace Eclipse.Menu
             bool tiled = eclipseTileLayout != 0 && buttonIndex >= 0 &&
                 EclipseTilePlacement(buttonIndex, out tilePosition, out tileScale, out tileTextPosition, out tileTextSize);
 
+            // Eclipse's own rows: dark, text on the left, and a switch or an arrow on the right
+            bool eclipseRow = EclipsePanelActive && !tiled && method != null && !method.label &&
+                !(checkMode && buttonIndex > -1) && !(incrementalButtons && method.incremental);
+
             if (method != null && !method.label)
             {
                 GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -1920,7 +1924,7 @@ namespace Eclipse.Menu
                 if (lastClickedName != method.buttonText)
                 {
                     ColorChanger colorChanger = buttonObject.AddComponent<ColorChanger>();
-                    colorChanger.colors = buttonColors[shouldSwap ^ method.enabled ? 1 : 0];
+                    colorChanger.colors = buttonColors[shouldSwap ^ (method.enabled && !eclipseRow) ? 1 : 0];
 
                     if (joystickMenu && buttonIndex == joystickButtonSelected)
                     {
@@ -1939,6 +1943,9 @@ namespace Eclipse.Menu
                     CoroutineManager.instance.StartCoroutine(ButtonClick(buttonIndex, buttonObject.GetComponent<Renderer>()));
 
                 FollowMenuSettings(buttonObject, shouldSwap ? method.enabled : !method.enabled);
+
+                if (eclipseRow)
+                    AddEclipseRowDecor(buttonObject.transform.localPosition, buttonObject.transform.localScale, method);
             }
             else if (method != null && buttonIndex >= 0 && EclipseModel && Buttons.CurrentCategoryName == DashboardCategory)
                 AddEclipseCard(tiled ? tilePosition : new Vector3(0.56f, 0f, 0.28f - offset), tiled ? tileScale : new Vector3(0.09f, thinMenu ? 0.9f : 1.3f, ButtonDistance * 0.8f));
@@ -1953,6 +1960,15 @@ namespace Eclipse.Menu
             {
                 updater.layoutPosition = tileTextPosition;
                 updater.layoutSize = tileTextSize;
+            }
+            else if (eclipseRow)
+            {
+                // Left-aligned, leaving room on the right for the switch
+                float rowWidth = thinMenu ? 0.9f : 1.3f;
+                updater.layoutPosition = new Vector3(.064f, EclipseRowTextShift * 0.3f, .111f - offset / 2.6f);
+                updater.layoutSize = new Vector2((rowWidth - 0.25f) * 0.3f, .03f * (ButtonDistance / 0.1f));
+                updater.layoutAlignment = TextAlignmentOptions.Left;
+                updater.onColors = textColors[0];
             }
             updater.Init(method, buttonIndex, offset);
             updater.UpdateText();
@@ -3048,7 +3064,8 @@ namespace Eclipse.Menu
 
             if (EclipseModel)
             {
-                AddEclipseRim(menuBackground);
+                if (!EclipsePanelActive)
+                    AddEclipseRim(menuBackground);
 
                 bool texturedBackground = doCustomMenuBackground || themeType == 23 || themeType == 24 || themeType == 25 || themeType == 61;
                 EclipseMeshes.Remodel(menu, texturedBackground ? menuBackground : null);

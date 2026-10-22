@@ -78,7 +78,7 @@ namespace Eclipse.Classes.Menu
 
             Vector2[] uv = new Vector2[vertices.Count];
             for (int i = 0; i < uv.Length; i++)
-                uv[i] = new Vector2(vertices[i].y + 0.5f, vertices[i].z + 0.5f);
+                uv[i] = new Vector2(vertices[i].z + 0.5f, vertices[i].y + 0.5f);
             mesh.uv = uv;
 
             mesh.RecalculateNormals();
@@ -278,7 +278,9 @@ namespace Eclipse.Classes.Menu
 
                 float smaller = Mathf.Min(sy, sz);
                 float aspect = Mathf.Max(sy, sz) / smaller;
-                float radius = Mathf.Min(smaller * (aspect > 2.5f ? 0.45f : 0.3f), 0.035f);
+                // Long thin pieces become pills, small square ones become discs
+                float roundness = aspect > 2.5f ? 0.45f : aspect < 1.15f && smaller < 0.03f ? 0.5f : 0.3f;
+                float radius = Mathf.Min(smaller * roundness, 0.035f);
                 float bevel = Mathf.Min(radius * 0.5f, sx * 0.6f);
 
                 filter.sharedMesh = RoundedBox(radius / sy, radius / sz, bevel / sy, bevel / sz, bevel / sx);

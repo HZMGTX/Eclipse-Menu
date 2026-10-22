@@ -20,6 +20,7 @@
  */
 
 using Eclipse.Classes.Menu;
+using Eclipse.Extensions;
 using Eclipse.Managers;
 using Eclipse.Mods;
 using System;
@@ -27,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using static Eclipse.Utilities.AssetUtilities;
 
 namespace Eclipse.Menu
 {
@@ -200,6 +202,9 @@ namespace Eclipse.Menu
             float half = thinMenu ? 0.5f : 0.75f;
             float leftCentre = half + EclipseRailGap + EclipseRailWidth / 2f;
 
+            DrawEclipseHeader(half);
+            DrawEclipseBrackets(half);
+
             // Tabs
             GameObject leftRail = AddEclipseSlab(new Vector3(0.5f, leftCentre, 0f), new Vector3(0.1f, EclipseRailWidth, 1f));
             AddEclipseRim(leftRail);
@@ -248,6 +253,110 @@ namespace Eclipse.Menu
                 AddEclipseText($"{pageNumber + 1} / {Mathf.Max(0, LastPage) + 1}", new Vector3(0.064f, 0f, -0.58f * 0.3825f), new Vector2(0.06f, 0.018f), textColors[0]);
                 AdvancedAddButton("NextPage", new Vector3(0.09f, 0.12f, 0.08f), new Vector3(0.56f, -0.17f, -0.58f), new Vector3(0.064f, -0.17f * 0.3f, -0.58f * 0.3825f), arrows, new Vector2(0.03f, 0.03f), 1);
             }
+        }
+
+        // ── The Eclipse look ────────────────────────────────────────────────────
+
+        // Row text sits this far left of the row's middle, leaving room for the switch
+        private const float EclipseRowTextShift = 0.075f;
+
+        private static Material eclipseLogoMaterial;
+        private static Texture2D eclipseLogo;
+
+        /// <summary>
+        /// The header across the top of the panel: the logo and name on the left, the frame rate on
+        /// the right, and a glowing line underneath. The menu's own title and counter move into it.
+        /// </summary>
+        private static void DrawEclipseHeader(float half)
+        {
+            float width = half * 2f - 0.04f;
+            AddEclipseDecor(new Vector3(0.552f, 0f, 0.435f), new Vector3(0.012f, width, 0.11f), buttonColors[0]);
+            AddEclipseDecor(new Vector3(0.556f, 0f, 0.372f), new Vector3(0.012f, width, 0.007f), backgroundColor);
+
+            if (!backgroundColor.transparent)
+            {
+                UnityEngine.UI.Image logo = new GameObject { transform = { parent = canvasObj.transform } }.AddComponent<UnityEngine.UI.Image>();
+                if (eclipseLogo == null)
+                    eclipseLogo = LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.icon.png");
+                if (eclipseLogoMaterial == null)
+                    eclipseLogoMaterial = new Material(logo.material);
+
+                logo.material = eclipseLogoMaterial;
+                logo.material.SetTexture("_MainTex", eclipseLogo);
+                logo.AddComponent<UIColorChanger>().colors = backgroundColor;
+
+                RectTransform logoRect = logo.GetComponent<RectTransform>();
+                logoRect.sizeDelta = new Vector2(0.034f, 0.034f);
+                logoRect.localPosition = new Vector3(0.064f, (half - 0.075f) * 0.3f, 0.435f * 0.3825f);
+                logoRect.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
+
+                if (hideTextOnCamera)
+                    logo.gameObject.layer = 19;
+            }
+
+            // The menu's title, moved to the left of the header
+            if (!hidetitle && title != null)
+            {
+                if (!doCustomName && !animatedTitle && !gradientTitle && !annoyingMode)
+                    title.text = FollowMenuSettings("<b>ECLIPSE</b>", false);
+
+                RectTransform titleRect = title.GetComponent<RectTransform>();
+                float left = half - 0.14f, right = 0.0f;
+                titleRect.sizeDelta = NoAutoSizeText ? titleRect.sizeDelta : new Vector2((left - right) * 0.3f, 0.032f);
+                titleRect.localPosition = new Vector3(0.064f, (left + right) / 2f * 0.3f, 0.435f * 0.3825f);
+                title.alignment = TextAlignmentOptions.Left;
+            }
+
+            // The frame rate, on the right of the header
+            if (fpsCount != null)
+            {
+                RectTransform fpsRect = fpsCount.GetComponent<RectTransform>();
+                float left = -0.05f, right = -(half - 0.05f);
+                fpsRect.sizeDelta = NoAutoSizeText ? fpsRect.sizeDelta : new Vector2((left - right) * 0.3f, 0.018f);
+                fpsRect.localPosition = new Vector3(0.064f, (left + right) / 2f * 0.3f, 0.435f * 0.3825f);
+                fpsCount.SafeSetAlignment(TextAlignmentOptions.Right);
+            }
+        }
+
+        /// <summary>Sci-fi corner brackets around the panel, in place of a plain outline.</summary>
+        private static void DrawEclipseBrackets(float half)
+        {
+            const float thickness = 0.012f;
+            float thicknessY = thickness * 0.3825f / 0.3f;
+            for (int corner = 0; corner < 4; corner++)
+            {
+                float sy = corner % 2 == 0 ? 1f : -1f;
+                float sz = corner < 2 ? 1f : -1f;
+
+                // Along the top or bottom edge, then down or up the side
+                AddEclipseDecor(new Vector3(0.5f, sy * (half - 0.045f), sz * 0.524f), new Vector3(0.11f, 0.13f, thickness), backgroundColor);
+                AddEclipseDecor(new Vector3(0.5f, sy * (half + 0.0195f), sz * 0.47f), new Vector3(0.11f, thicknessY, 0.11f), backgroundColor);
+            }
+        }
+
+        /// <summary>
+        /// The parts of an Eclipse row: a switch for mods you turn on and off, with a lit strip on
+        /// the left while it is on, or an arrow for buttons that open or do something.
+        /// </summary>
+        private static void AddEclipseRowDecor(Vector3 position, Vector3 scale, ButtonInfo method)
+        {
+            float right = position.y - scale.y / 2f;
+            float left = position.y + scale.y / 2f;
+
+            if (method.isTogglable)
+            {
+                bool on = method.enabled;
+                float trackY = right + 0.1f;
+                float height = scale.z * 0.55f;
+
+                AddEclipseDecor(new Vector3(0.612f, trackY, position.z), new Vector3(0.016f, 0.13f, height), on ? buttonColors[1] : menuBackgroundColor);
+                AddEclipseDecor(new Vector3(0.622f, trackY + (on ? -0.035f : 0.035f), position.z), new Vector3(0.02f, 0.05f, 0.05f * 0.3f / 0.3825f), textColors[on ? 2 : 1]);
+
+                if (on)
+                    AddEclipseDecor(new Vector3(0.612f, left - 0.02f, position.z), new Vector3(0.016f, 0.014f, scale.z * 0.7f), buttonColors[1]);
+            }
+            else
+                AddEclipseText(">", new Vector3(0.064f, (right + 0.07f) * 0.3f, position.z * 0.3825f), new Vector2(0.02f, 0.025f), textColors[1]);
         }
 
         // A background slab under the rails, coloured like the panel
@@ -425,7 +534,7 @@ namespace Eclipse.Menu
             if (!EclipsePanelActive || (menuLayout != LayoutOrbit && menuLayout != LayoutGrid) || checkMode)
                 return 0;
 
-            if (PageSize > (menuLayout == LayoutOrbit ? 10 : 12))
+            if (PageSize > (menuLayout == LayoutOrbit ? 8 : 12))
                 return 0;
 
             // Cyclers need their arrows either side, so a page of settings stays a list

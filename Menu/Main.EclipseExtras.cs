@@ -134,7 +134,7 @@ namespace Eclipse.Menu
         // Reshapes the pointer; the collider keeps the sphere's size so clicks feel the same
         private static void StyleEclipsePointer()
         {
-            if (reference == null || pointerStyle == 3)
+            if (reference == null || pointerStyle == 3 || hidePointer)
                 return;
 
             MeshFilter filter = reference.GetComponent<MeshFilter>();
@@ -194,7 +194,9 @@ namespace Eclipse.Menu
         /// </summary>
         public static void QuickWheel()
         {
-            bool down = leftJoystickClick && !joystickMenu && menu == null;
+            // Opening the menu while the wheel is up closes it without switching anything
+            bool held = leftJoystickClick && !joystickMenu && !watchMenu;
+            bool down = held && menu == null;
             if (down && !wheelHeld)
                 OpenQuickWheel();
 
@@ -203,7 +205,7 @@ namespace Eclipse.Menu
 
             if (!down && wheelHeld)
             {
-                string chosen = wheelSelected >= 0 && wheelSelected < wheelItems.Count ? wheelItems[wheelSelected].Name : null;
+                string chosen = !held && wheelSelected >= 0 && wheelSelected < wheelItems.Count ? wheelItems[wheelSelected].Name : null;
                 CloseQuickWheel();
 
                 if (chosen != null)
@@ -272,7 +274,8 @@ namespace Eclipse.Menu
             Vector3 lean = GorillaTagger.Instance.rightHandTransform.position - wheelCentre;
             Vector2 flat = new Vector2(Vector3.Dot(lean, wheelRight), Vector3.Dot(lean, wheelUp));
             wheelSelected = -1;
-            if (flat.magnitude > 0.05f * scale)
+            // Only while the hand is at the wheel; anywhere else lets go without picking anything
+            if (flat.magnitude > 0.05f * scale && lean.magnitude < 0.3f * scale)
             {
                 float angle = Mathf.Atan2(flat.x, flat.y);
                 if (angle < 0f)

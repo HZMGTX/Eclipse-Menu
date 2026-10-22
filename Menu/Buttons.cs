@@ -212,7 +212,7 @@ namespace Eclipse.Menu
                 ButtonHelper.Create("Change Pointer Style", () => PointerStyleNames, 0, ApplyPointerStyle, "Changes the pointer you press buttons with: a star, a ring, a comet or the classic orb.", legal: true),
                 new ButtonInfo { buttonText = "Quick Wheel <color=grey>[</color><color=green>LJ</color><color=grey>]</color>", method = QuickWheel, disableMethod = CloseQuickWheel, enabled = true, toolTip = "Hold your left stick click to pop up a wheel of your favourite mods. Move your right hand toward one and let go to switch it.", legal = true},
                 new ButtonInfo { buttonText = "Disable Intro", enableMethod =() => disableIntro = true, disableMethod =() => disableIntro = false, toolTip = "Stops the Eclipse intro from playing when the game starts.", legal = true},
-                ButtonHelper.CreateNumeric("Change Page Type", 1, 6, pageButtonType, Settings.ApplyPageType, toolTip: "Changes the type of page buttons. The Eclipse Panel keeps its page arrows along the bottom.", legal: true),
+                ButtonHelper.CreateNumeric("Change Page Type", 1, 6, pageButtonType, Settings.ApplyPageType, toolTip: "Changes the type of page buttons. The Eclipse layouts keep their arrows along the bottom; type 2 puts the arrows in the list, so it uses the classic list.", legal: true),
                 ButtonHelper.CreateNumeric("Change Arrow Type", 0, arrowTypes.Length - 1, arrowType, Settings.ApplyArrowType, toolTip: "Changes the type of arrows on the page buttons.", legal: true),
                 ButtonHelper.CreateNumeric("Change Font Type", 0, 14, fontCycle, Settings.ApplyFontType, toolTip: "Changes the type of font.", legal: true),
                 new ButtonInfo { buttonText = "Rapid Font Changer", method = Settings.ChangeFontRapid, toolTip = "Changes the type of font every menu refresh.", legal = true},
@@ -3016,14 +3016,14 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Moon Phase Watch", method = EclipseMods.MoonPhaseWatch, disableMethod = EclipseMods.DisableMoonPhaseWatch, toolTip = "The time and tonight's real moon phase, on your left wrist.", legal = true},
                 new ButtonInfo { buttonText = "Speedometer", method = EclipseMods.Speedometer, disableMethod = EclipseMods.DisableSpeedometer, toolTip = "How fast you are going, and your top speed, on your left wrist.", legal = true},
                 new ButtonInfo { buttonText = "Height Meter", method = EclipseMods.HeightMeter, disableMethod = EclipseMods.DisableHeightMeter, toolTip = "How high above the ground you are, on your left wrist.", legal = true},
-                new ButtonInfo { buttonText = "Session Timer", enableMethod = EclipseMods.ResetState, method = EclipseMods.SessionTimer, disableMethod = EclipseMods.DisableSessionTimer, toolTip = "How long you have played since turning it on, on your left wrist.", legal = true},
+                new ButtonInfo { buttonText = "Session Timer", enableMethod = EclipseMods.StartSessionTimer, method = EclipseMods.SessionTimer, disableMethod = EclipseMods.DisableSessionTimer, toolTip = "How long you have played since turning it on, on your left wrist.", legal = true},
                 new ButtonInfo { buttonText = "Compass Ring", method = EclipseMods.CompassRing, disableMethod = EclipseMods.DisableCompassRing, toolTip = "A compass ring around your feet that always points north. Only you can see it.", legal = true},
                 new ButtonInfo { buttonText = "Ping Graph", method = EclipseMods.PingGraph, disableMethod = EclipseMods.DisablePingGraph, toolTip = "Your ping over the last ten seconds, as a little graph above your right wrist.", legal = true},
 
                 new ButtonInfo { buttonText = "Pocket Planet", method = EclipseMods.PocketPlanet, disableMethod = EclipseMods.DisablePocketPlanet, toolTip = "A little planet floats beside you. Grab it with your left grip and throw it; it comes back. Only you can see it.", legal = true},
                 new ButtonInfo { buttonText = "Asteroid Juggle", method = EclipseMods.AsteroidJuggle, disableMethod = EclipseMods.DisableAsteroidJuggle, toolTip = "Three asteroids juggled back and forth between your hands. Only you can see them.", legal = true},
                 new ButtonInfo { buttonText = "Rocket Launch <color=grey>[</color><color=green>X</color><color=grey>]</color>", enableMethod = EclipseMods.ResetState, method = EclipseMods.RocketLaunch, disableMethod = EclipseMods.DisableRocketLaunch, toolTip = "Press X to launch a little firework rocket from your left hand. Only you can see it.", legal = true},
-                new ButtonInfo { buttonText = "Star Catcher", enableMethod = EclipseMods.ResetState, method = EclipseMods.StarCatcher, disableMethod = EclipseMods.DisableStarCatcher, toolTip = "Stars drift down around you. Touch them to catch them; your score is on your right wrist. Only you can see them.", legal = true}
+                new ButtonInfo { buttonText = "Star Catcher", enableMethod = EclipseMods.StartStarCatcher, method = EclipseMods.StarCatcher, disableMethod = EclipseMods.DisableStarCatcher, toolTip = "Stars drift down around you. Touch them to catch them; your score is on your right wrist. Only you can see them.", legal = true}
             },
 
             new[] // Eclipse Dashboard [60]
@@ -3308,6 +3308,10 @@ public class UpdateButtonText : MonoBehaviour
     // Set for the tile layouts, which put the text somewhere other than a row
     public Vector3? layoutPosition;
     public Vector2? layoutSize;
+    public TextAlignmentOptions? layoutAlignment;
+
+    // The text colour while the button is on, when the button itself doesn't light up
+    public ExtGradient onColors;
 
     private TextMeshPro tmp;
     private UIColorChanger colorChanger;
@@ -3350,7 +3354,7 @@ public class UpdateButtonText : MonoBehaviour
         tmp.spriteAsset = ButtonSpriteSheet;
         tmp.richText = true;
         tmp.fontSize = 1;
-        tmp.alignment = checkMode ? TextAlignmentOptions.Left : TextAlignmentOptions.Center;
+        tmp.alignment = layoutAlignment ?? (checkMode ? TextAlignmentOptions.Left : TextAlignmentOptions.Center);
         tmp.fontStyle = activeFontStyle;
         tmp.enableAutoSizing = true;
         tmp.fontSizeMin = 0;
@@ -3370,7 +3374,7 @@ public class UpdateButtonText : MonoBehaviour
         if (joystickMenu && buttonIndex == joystickButtonSelected && themeType == 30)
             tmp.color = Color.red;
         else
-            colorChanger.colors = textColors[button.enabled ? 2 : 1];
+            colorChanger.colors = button.enabled ? onColors ?? textColors[2] : textColors[1];
     }
 
     private void LateUpdate()
@@ -3390,7 +3394,7 @@ public class UpdateButtonText : MonoBehaviour
         if (joystickMenu && buttonIndex == joystickButtonSelected && themeType == 30)
             tmp.color = Color.red;
         else
-            colorChanger.colors = textColors[button.enabled ? 2 : 1];
+            colorChanger.colors = button.enabled ? onColors ?? textColors[2] : textColors[1];
     }
 
     private string ButtonText()
