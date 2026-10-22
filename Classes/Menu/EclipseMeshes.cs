@@ -309,7 +309,7 @@ namespace Eclipse.Classes.Menu
         /// <summary>Plays the push-in on the button that was just pressed, if it is in this menu.</summary>
         public static void AnimatePress(GameObject root)
         {
-            if (root == null || pressedName == null || Time.time - pressedAt > 0.3f)
+            if (root == null || pressedName == null || Time.time - pressedAt > 0.3f || CoroutineManager.instance == null)
                 return;
 
             foreach (ButtonCollider button in root.GetComponentsInChildren<ButtonCollider>(true))
