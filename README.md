@@ -1,3 +1,5 @@
+<p align="center"><img src="Resources/GitHub/eclipse-banner.png" alt="Eclipse Menu" width="900"></p>
+
 # Eclipse Menu
 
 A brand-new mod menu for Gorilla Tag, remade from [Nova Menu](https://github.com/HZMGTX/Nova).
