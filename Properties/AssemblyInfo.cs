@@ -27,7 +27,7 @@
 using Eclipse;
 using System.Reflection;
 
-[assembly: AssemblyCompany("Poison Software")]
+[assembly: AssemblyCompany("HZMGTX")]
 
 #if DEBUG
 [assembly: AssemblyConfiguration("Debug")]

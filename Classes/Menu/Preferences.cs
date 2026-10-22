@@ -299,21 +299,26 @@ namespace Eclipse.Classes.Menu
             catch (Exception e) { LogManager.Log("Error importing preferences from text: " + e.Message); }
         }
 
-        public static void ImportSeralyth()
+        /// <summary>
+        /// Copies the mods you had on in Nova Menu, and your page size. Eclipse can't run next to
+        /// Nova, so this is how people switching over keep their setup. The theme, font and page
+        /// buttons stay Eclipse's own.
+        /// </summary>
+        public static void ImportNova()
         {
             try
             {
-                string path = SeralythPath;
-                if (!File.Exists(path))
+                string path = NovaPath;
+                if (path == null)
                 {
-                    LogManager.Log($"Seralyth preferences not found at '{path}'.");
+                    NotificationManager.SendNotification("<color=grey>[</color><color=red>IMPORT</color><color=grey>]</color> No Nova settings were found in your Gorilla Tag folder.");
                     return;
                 }
 
                 var data = JsonConvert.DeserializeObject<PreferencesData>(File.ReadAllText(path));
                 if (data == null)
                 {
-                    LogManager.Log("Failed to parse Seralyth preferences.");
+                    LogManager.Log("Failed to read the Nova settings.");
                     return;
                 }
 
@@ -322,15 +327,10 @@ namespace Eclipse.Classes.Menu
                 {
                     try
                     {
-                        if (data.misc != null)
-                        {
-                            if (data.misc.TryGetValue("pageButtonType", out object pbt)) pageButtonType = SafeInt(pbt, pageButtonType);
-                            if (data.misc.TryGetValue("themeType", out object tt)) themeType = SafeInt(tt, themeType);
-                            if (data.misc.TryGetValue("fontCycle", out object fc)) fontCycle = SafeInt(fc, fontCycle);
-                            if (data.misc.TryGetValue("pageSize", out object ps)) _pageSize = SafeInt(ps, _pageSize);
-                        }
+                        if (data.misc != null && data.misc.TryGetValue("pageSize", out object ps))
+                            _pageSize = SafeInt(ps, _pageSize);
                     }
-                    catch (Exception e) { LogManager.Log("Error restoring Seralyth misc: " + e.Message); }
+                    catch (Exception e) { LogManager.Log("Error reading Nova's page size: " + e.Message); }
 
                     foreach (KeyValuePair<string, SavedButtonState> kv in data.buttons ?? new Dictionary<string, SavedButtonState>())
                     {
@@ -345,9 +345,10 @@ namespace Eclipse.Classes.Menu
                 });
 
                 Save();
-                LogManager.Log($"Imported {applied} settings from Seralyth.");
+                LogManager.Log($"Imported {applied} settings from Nova.");
+                NotificationManager.SendNotification($"<color=grey>[</color><color=green>IMPORT</color><color=grey>]</color> Brought over {applied} mods and settings from Nova.");
             }
-            catch (Exception e) { LogManager.Log("Error importing Seralyth settings: " + e.Message); }
+            catch (Exception e) { LogManager.Log("Error importing Nova settings: " + e.Message); }
         }
 
         public static void Load()
@@ -374,38 +375,58 @@ namespace Eclipse.Classes.Menu
             catch (Exception e) { LogManager.Log("Error loading preferences: " + e.Message); }
 
             hasLoadedPreferences = true;
-            MaybePromptSeralythMigration();
+            MaybePromptNovaImport();
         }
 
-        private static string SeralythPath => Path.Combine(Eclipse.Utilities.FileUtilities.GetGamePath(), "SeralythMenu", "Seralyth_Preferences.json");
-
-        public static bool HasSeralythSettings()
+        // Nova's settings file, for the same kind of build (normal or Legal) if there is one
+        private static string NovaPath
         {
-            try { return File.Exists(SeralythPath); }
+            get
+            {
+                string game = Eclipse.Utilities.FileUtilities.GetGamePath();
+#if LEGAL || LEGAL_DEBUG
+                string[] folders = { "NovaMenu/Legal", "NovaMenu" };
+#else
+                string[] folders = { "NovaMenu", "NovaMenu/Legal" };
+#endif
+                foreach (string folder in folders)
+                {
+                    string path = Path.Combine(game, folder, "Nova_Preferences.json");
+                    if (File.Exists(path))
+                        return path;
+                }
+                return null;
+            }
+        }
+
+        public static bool HasNovaSettings()
+        {
+            try { return NovaPath != null; }
             catch { return false; }
         }
 
-        private static void MaybePromptSeralythMigration()
+        // Asks once, the first time Eclipse finds Nova's settings
+        private static void MaybePromptNovaImport()
         {
             try
             {
-                string marker = Path.Combine(PluginInfo.BaseDirectory, "Seralyth_Migrated.txt");
-                if (!HasSeralythSettings() || File.Exists(marker)) return;
-                Prompt("Seralyth settings detected in your Gorilla Tag folder.\n\nImport your settings from Seralyth?",
+                string marker = Path.Combine(PluginInfo.BaseDirectory, "Nova_Imported.txt");
+                if (!HasNovaSettings() || File.Exists(marker)) return;
+                Prompt("Nova Menu settings found in your Gorilla Tag folder.\n\nBring your mods over to Eclipse?",
                     Accept: () =>
                     {
                         try { File.WriteAllText(marker, DateTime.Now.ToString("F")); } catch { }
-                        ImportSeralyth();
+                        ImportNova();
                     },
                     Decline: () =>
                     {
                         try { File.WriteAllText(marker, DateTime.Now.ToString("F")); } catch { }
-                        LogManager.Log("Skipped Seralyth migration; you can still use Settings > Import Seralyth Settings.");
+                        LogManager.Log("Skipped importing Nova settings; Settings > Import Nova Settings still works.");
                     },
-                    AcceptButton: "Migrate",
+                    AcceptButton: "Import",
                     DeclineButton: "Skip");
             }
-            catch (Exception e) { LogManager.Log("Error checking for Seralyth settings: " + e.Message); }
+            catch (Exception e) { LogManager.Log("Error checking for Nova settings: " + e.Message); }
         }
 
         private static void Apply(PreferencesData data)        {

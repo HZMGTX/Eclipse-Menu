@@ -187,7 +187,7 @@ namespace Eclipse.Managers
         public const int ForestLeaderboardIndex = 6;
 
         public static bool motdTextDirty = true;
-        public static string motdTemplate = "You are using build {0}. This menu was created by Poison Software. " +
+        public static string motdTemplate = "You are using Eclipse Menu {0}, made by HZMGTX. " +
         "This menu is completely free and open sourced, if you paid for this menu you have been scammed. " +
         "There are a total of <b>{1}</b> mods on this menu. " +
         "<color=red>Eclipse is not responsible for any bans using this menu.</color> " +
