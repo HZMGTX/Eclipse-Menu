@@ -333,6 +333,10 @@ namespace Eclipse.Menu
             wheelSelected = -1;
         }
 
+        // The Eclipse model's lit look (Classes/Menu/EclipseLook.cs): the glowing edges and the shiny tiles
+        public static bool disableEclipseGlow;
+        public static bool disableEclipseShine;
+
         // ── Intro ───────────────────────────────────────────────────────────────
 
         public static bool disableIntro;

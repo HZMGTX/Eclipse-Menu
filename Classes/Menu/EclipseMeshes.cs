@@ -287,6 +287,77 @@ namespace Eclipse.Classes.Menu
             }
         }
 
+        private static readonly Dictionary<(int, int, int, int, int), Mesh> haloCache = new Dictionary<(int, int, int, int, int), Mesh>();
+
+        /// <summary>
+        /// A flat ring that fades out around a rounded tile's outline, for a soft glow. It is built
+        /// in the tile's own unit space, so it goes on a child of the tile, and it spreads the same
+        /// distance on every side after the menu's uneven scale.
+        /// </summary>
+        /// <param name="spread">How far the glow reaches past the tile's edge, in metres.</param>
+        /// <param name="strength">How opaque the glow is at the tile's edge.</param>
+        public static Mesh Halo(Transform root, Transform piece, float spread, float strength)
+        {
+            Vector3 size = SizeUnder(root, piece);
+            float sx = Mathf.Abs(size.x), sy = Mathf.Abs(size.y), sz = Mathf.Abs(size.z);
+            if (sx < 1e-5f || sy < 1e-5f || sz < 1e-5f || spread <= 0f)
+                return null;
+
+            // Tenths of a millimetre, and hundredths of strength
+            var key = (Mathf.RoundToInt(sx * 10000f), Mathf.RoundToInt(sy * 10000f), Mathf.RoundToInt(sz * 10000f), Mathf.RoundToInt(spread * 10000f), Mathf.RoundToInt(strength * 100f));
+            if (haloCache.TryGetValue(key, out Mesh cached) && cached != null)
+                return cached;
+
+            // The same corners Remodel gave the tile
+            float smaller = Mathf.Min(sy, sz);
+            float aspect = Mathf.Max(sy, sz) / smaller;
+            float roundness = aspect > 2.5f ? 0.45f : aspect < 1.15f && smaller < 0.03f ? 0.5f : 0.3f;
+            float radius = Mathf.Min(smaller * roundness, 0.035f);
+
+            // Out from the edge: full strength, a quick drop, then nothing
+            float[] reach = { 0f, 0.3f, 1f };
+            float[] alpha = { strength, strength * 0.35f, 0f };
+            float front = 0.5f + 0.0002f / sx;
+
+            List<Vector3> vertices = new List<Vector3>();
+            List<Color> colors = new List<Color>();
+            for (int r = 0; r < reach.Length; r++)
+            {
+                float y = spread * reach[r] / sy, z = spread * reach[r] / sz;
+                foreach (Vector2 point in Ring(0.5f + y, 0.5f + z, radius / sy + y, radius / sz + z))
+                {
+                    vertices.Add(new Vector3(front, point.x, point.y));
+                    colors.Add(new Color(1f, 1f, 1f, alpha[r]));
+                }
+            }
+
+            List<int> triangles = new List<int>();
+            int count = vertices.Count / reach.Length;
+            for (int r = 0; r < reach.Length - 1; r++)
+            {
+                int inner = r * count, outer = (r + 1) * count;
+                for (int i = 0; i < count; i++)
+                {
+                    int j = (i + 1) % count;
+                    triangles.Add(inner + i);
+                    triangles.Add(outer + i);
+                    triangles.Add(outer + j);
+                    triangles.Add(inner + i);
+                    triangles.Add(outer + j);
+                    triangles.Add(inner + j);
+                }
+            }
+
+            Mesh mesh = new Mesh { name = "EclipseHalo" };
+            mesh.SetVertices(vertices);
+            mesh.SetColors(colors);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateBounds();
+            mesh.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            haloCache[key] = mesh;
+            return mesh;
+        }
+
         // The object's size in metres as if the menu were at its base scale
         private static Vector3 SizeUnder(Transform root, Transform child)
         {

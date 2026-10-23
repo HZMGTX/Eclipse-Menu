@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1 — 2026-10-23
+
+- **Glowing edges:** the rims, corner brackets, header line and the switches of mods you have on now glow, with a soft halo around them.
+- **Shiny tiles:** the menu's tiles catch the light, and give off a little of their own colour so they still show in dark maps.
+- Both can be turned off in Menu Settings: **Disable Eclipse Glow** and **Disable Eclipse Shine**.
+- **Coming from Nova?** Eclipse offers to bring over the mods you had on the first time it finds Nova's settings, and Settings → Import Nova Settings does it any time.
+- The leftover Poison and Seralyth names are gone. The in-game board, the Console banner and the DLL now say Eclipse Menu by HZMGTX. The credits are unchanged.
+
 ## 1.0.0 — 2026-10-22
 
 The first release of Eclipse Menu, remade from Nova Menu.

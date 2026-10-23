@@ -212,6 +212,8 @@ namespace Eclipse.Menu
                 ButtonHelper.Create("Change Pointer Style", () => PointerStyleNames, 0, ApplyPointerStyle, "Changes the pointer you press buttons with: a star, a ring, a comet or the classic orb.", legal: true),
                 new ButtonInfo { buttonText = "Quick Wheel <color=grey>[</color><color=green>LJ</color><color=grey>]</color>", method = QuickWheel, disableMethod = CloseQuickWheel, enabled = true, toolTip = "Hold your left stick click to pop up a wheel of your favourite mods. Move your right hand toward one and let go to switch it.", legal = true},
                 new ButtonInfo { buttonText = "Disable Intro", enableMethod =() => disableIntro = true, disableMethod =() => disableIntro = false, toolTip = "Stops the Eclipse intro from playing when the game starts.", legal = true},
+                new ButtonInfo { buttonText = "Disable Eclipse Glow", enableMethod =() => disableEclipseGlow = true, disableMethod =() => disableEclipseGlow = false, toolTip = "Turns off the soft glow around the Eclipse menu's rims, corners and switches.", legal = true},
+                new ButtonInfo { buttonText = "Disable Eclipse Shine", enableMethod =() => disableEclipseShine = true, disableMethod =() => disableEclipseShine = false, toolTip = "Turns off the Eclipse menu's shiny, lit tiles and goes back to flat colours.", legal = true},
                 ButtonHelper.CreateNumeric("Change Page Type", 1, 6, pageButtonType, Settings.ApplyPageType, toolTip: "Changes the type of page buttons. The Eclipse layouts keep their arrows along the bottom; type 2 puts the arrows in the list, so it uses the classic list.", legal: true),
                 ButtonHelper.CreateNumeric("Change Arrow Type", 0, arrowTypes.Length - 1, arrowType, Settings.ApplyArrowType, toolTip: "Changes the type of arrows on the page buttons.", legal: true),
                 ButtonHelper.CreateNumeric("Change Font Type", 0, 14, fontCycle, Settings.ApplyFontType, toolTip: "Changes the type of font.", legal: true),
@@ -3041,6 +3043,7 @@ namespace Eclipse.Menu
             {
                 new ButtonInfo { buttonText = "Exit What's New", method = OpenEclipseDashboard, isTogglable = false, toolTip = "Returns you back to the dashboard.", legal = true},
                 new ButtonInfo { buttonText = "EclipseNewVersion", overlapText = $"Eclipse Menu {PluginInfo.Version}", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewGlow", overlapText = "Glowing edges and shiny tiles", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewModel", overlapText = "A new 3D menu with rounded tiles", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewLayouts", overlapText = "Eclipse Panel, Orbit Wheel and Holo Grid", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewMods", overlapText = "40 space mods in Eclipse Mods", label = true, legal = true},

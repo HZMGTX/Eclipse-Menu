@@ -271,7 +271,7 @@ namespace Eclipse.Menu
         {
             float width = half * 2f - 0.04f;
             AddEclipseDecor(new Vector3(0.552f, 0f, 0.435f), new Vector3(0.012f, width, 0.11f), buttonColors[0]);
-            AddEclipseDecor(new Vector3(0.556f, 0f, 0.372f), new Vector3(0.012f, width, 0.007f), backgroundColor);
+            EclipseLook.MarkGlow(AddEclipseDecor(new Vector3(0.556f, 0f, 0.372f), new Vector3(0.012f, width, 0.007f), backgroundColor), 0.006f, 0.45f, 1.2f);
 
             if (!backgroundColor.transparent)
             {
@@ -329,8 +329,8 @@ namespace Eclipse.Menu
                 float sz = corner < 2 ? 1f : -1f;
 
                 // Along the top or bottom edge, then down or up the side
-                AddEclipseDecor(new Vector3(0.5f, sy * (half - 0.045f), sz * 0.524f), new Vector3(0.11f, 0.13f, thickness), backgroundColor);
-                AddEclipseDecor(new Vector3(0.5f, sy * (half + 0.0195f), sz * 0.47f), new Vector3(0.11f, thicknessY, 0.11f), backgroundColor);
+                EclipseLook.MarkGlow(AddEclipseDecor(new Vector3(0.5f, sy * (half - 0.045f), sz * 0.524f), new Vector3(0.11f, 0.13f, thickness), backgroundColor), 0.007f, 0.5f, 1.2f);
+                EclipseLook.MarkGlow(AddEclipseDecor(new Vector3(0.5f, sy * (half + 0.0195f), sz * 0.47f), new Vector3(0.11f, thicknessY, 0.11f), backgroundColor), 0.007f, 0.5f, 1.2f);
             }
         }
 
@@ -349,11 +349,13 @@ namespace Eclipse.Menu
                 float trackY = right + 0.1f;
                 float height = scale.z * 0.55f;
 
-                AddEclipseDecor(new Vector3(0.612f, trackY, position.z), new Vector3(0.016f, 0.13f, height), on ? buttonColors[1] : menuBackgroundColor);
+                GameObject track = AddEclipseDecor(new Vector3(0.612f, trackY, position.z), new Vector3(0.016f, 0.13f, height), on ? buttonColors[1] : menuBackgroundColor);
+                if (on)
+                    EclipseLook.MarkGlow(track, 0.005f, 0.35f, 0.6f);
                 AddEclipseDecor(new Vector3(0.622f, trackY + (on ? -0.035f : 0.035f), position.z), new Vector3(0.02f, 0.05f, 0.05f * 0.3f / 0.3825f), textColors[on ? 2 : 1]);
 
                 if (on)
-                    AddEclipseDecor(new Vector3(0.612f, left - 0.02f, position.z), new Vector3(0.016f, 0.014f, scale.z * 0.7f), buttonColors[1]);
+                    EclipseLook.MarkGlow(AddEclipseDecor(new Vector3(0.612f, left - 0.02f, position.z), new Vector3(0.016f, 0.014f, scale.z * 0.7f), buttonColors[1]), 0.006f, 0.55f, 1.4f);
             }
             else
                 AddEclipseText(">", new Vector3(0.064f, (right + 0.07f) * 0.3f, position.z * 0.3825f), new Vector2(0.02f, 0.025f), textColors[1]);
@@ -393,6 +395,7 @@ namespace Eclipse.Menu
             rim.transform.localScale = new Vector3(scale.x * 0.8f, scale.y + 0.03f, scale.z + 0.03f * 0.3f / 0.3825f);
 
             rim.AddComponent<ColorChanger>().colors = backgroundColor;
+            EclipseLook.MarkGlow(rim, 0.01f, 0.5f, 1f);
         }
 
         // A tab or category tile with its label. `inner` is the side the panel is on (-1 or 1).
@@ -623,7 +626,7 @@ namespace Eclipse.Menu
             }
         }
 
-        private static void AddEclipseDecor(Vector3 position, Vector3 scale, ExtGradient color)
+        private static GameObject AddEclipseDecor(Vector3 position, Vector3 scale, ExtGradient color)
         {
             GameObject decor = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Destroy(decor.GetComponent<BoxCollider>());
@@ -632,6 +635,7 @@ namespace Eclipse.Menu
             decor.transform.localPosition = position;
             decor.transform.localScale = scale;
             decor.AddComponent<ColorChanger>().colors = color;
+            return decor;
         }
 
         public static void ApplyMenuLayout(int index)

@@ -4,6 +4,8 @@
 
 A brand-new mod menu for Gorilla Tag, remade from [Nova Menu](https://github.com/HZMGTX/Nova) with its own 3D menu, layouts, themes, sounds and mods.
 
+<p align="center"><img src="Resources/GitHub/eclipse-panel-render.png" alt="A render of the Eclipse Panel layout" width="800"><br><sub>A render of the Eclipse Panel layout</sub></p>
+
 ## Install
 
 1. Install [BepInEx 5](https://github.com/BepInEx/BepInEx/releases) for Gorilla Tag.
@@ -22,7 +24,7 @@ Eclipse keeps its settings in its own `EclipseMenu` folder, so it never touches 
 ## What's new in Eclipse
 
 ### A new 3D menu
-Every part of the menu is a rounded tile with a bevelled edge, the panel has a thin glowing rim, buttons push in when you press them, the menu springs open, and the pointer is a small spinning star.
+Every part of the menu is a rounded tile with a bevelled edge, the tiles are shiny, the rims, corners and switched-on mods glow, buttons push in when you press them, the menu springs open, and the pointer is a small spinning star. Don't like the glow or the shine? Turn them off in **Menu Settings → Disable Eclipse Glow / Disable Eclipse Shine**.
 
 ### Four layouts
 Pick one with **Menu Settings → Change Menu Layout**.

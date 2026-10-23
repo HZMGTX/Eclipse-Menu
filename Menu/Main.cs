@@ -3069,6 +3069,7 @@ namespace Eclipse.Menu
 
                 bool texturedBackground = doCustomMenuBackground || themeType == 23 || themeType == 24 || themeType == 25 || themeType == 61;
                 EclipseMeshes.Remodel(menu, texturedBackground ? menuBackground : null);
+                EclipseLook.Apply(menu, texturedBackground ? menuBackground : null);
                 EclipseMeshes.AnimatePress(menu);
             }
 
