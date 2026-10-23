@@ -40,7 +40,7 @@ namespace Eclipse.Mods
         /// <remarks>A button already held while turning a toy on would otherwise count as a press.</remarks>
         public static void ResetToys()
         {
-            builderHeld = planeHeld = diceHeld = glowHeld = meteorHeld = true;
+            builderHeld = planeHeld = diceHeld = glowHeld = meteorHeld = boomerangHeld = true;
             planeLastHand = ControllerUtilities.GetTrueRightHand().position;
             glowLastHand = ControllerUtilities.GetTrueLeftHand().position;
         }
@@ -1407,6 +1407,762 @@ namespace Eclipse.Mods
             meteorFired = -10f;
         }
 
+        private static Piece scopeEyepiece, scopeTube, scopeBarrel, scopeGlass, scopeLens;
+        private static LineRenderer scopeLensRim, scopeBand;
+        private static Camera scopeCamera;
+        private static RenderTexture scopeView;
+        private static float scopeRaise;
+
+        /// <summary>Hold your left trigger to raise a little brass telescope whose lens shows a zoomed-in live view of whatever it points at.</summary>
+        public static void StarScope()
+        {
+            bool held = leftTrigger > 0.5f;
+            scopeRaise = Mathf.MoveTowards(scopeRaise, held ? 1f : 0f, Time.deltaTime * 6f);
+
+            if (scopeRaise <= 0f)
+            {
+                if (scopeCamera != null)
+                    scopeCamera.enabled = false;
+                ShowStarScope(false);
+                return;
+            }
+
+            // The camera and its picture are made the first time the scope comes up, then kept for next time
+            if (scopeCamera == null)
+                MakeScopeCamera();
+            scopeCamera.enabled = held;
+
+            if (scopeLens == null || !scopeLens.Alive)
+                scopeLens = MakeScopeLens();
+
+            Ensure(ref scopeEyepiece, PrimitiveType.Cylinder, Color.white);
+            Ensure(ref scopeTube, PrimitiveType.Cylinder, Color.white);
+            Ensure(ref scopeBarrel, PrimitiveType.Cylinder, Color.white);
+            Ensure(ref scopeGlass, PrimitiveType.Cylinder, Color.white);
+            if (scopeLensRim == null)
+                scopeLensRim = MakeRing("Eclipse_StarScopeRim");
+            if (scopeBand == null)
+                scopeBand = MakeRing("Eclipse_StarScopeBand");
+            ShowStarScope(true);
+
+            float scale = Scale;
+            var hand = ControllerUtilities.GetTrueLeftHand();
+            Vector3 forward = hand.forward;
+            Vector3 origin = hand.position;
+
+            // Kept upright however your hand is turned, so the picture never rolls over
+            Quaternion aim = Quaternion.LookRotation(forward, Mathf.Abs(forward.y) > 0.98f ? hand.up : Vector3.up);
+            float size = scale * Mathf.SmoothStep(0f, 1f, scopeRaise);
+
+            Color brass = Color.Lerp(new Color(0.8f, 0.6f, 0.28f), Accent, 0.2f);
+            PlaceScopePart(scopeEyepiece, origin, aim, -0.075f, -0.035f, 0.031f, size, Color.Lerp(brass, Color.black, 0.3f));
+            PlaceScopePart(scopeTube, origin, aim, -0.035f, 0.11f, 0.019f, size, brass);
+            PlaceScopePart(scopeBarrel, origin, aim, 0.11f, 0.215f, 0.025f, size, Color.Lerp(brass, Color.black, 0.15f));
+            PlaceScopePart(scopeGlass, origin, aim, 0.215f, 0.219f, 0.022f, size, WithAlpha(Color.Lerp(Second, Color.white, 0.5f), 0.45f));
+
+            // The lens sits in the near end, facing you
+            Vector3 lensAt = origin + forward * (-0.077f * size);
+            scopeLens.Object.transform.SetPositionAndRotation(lensAt, aim);
+            scopeLens.Object.transform.localScale = Vector3.one * (0.027f * size);
+            SetColor(scopeLens, Color.Lerp(Color.white, Second, 0.08f));
+
+            PlaceRing(scopeLensRim, lensAt, forward, 0.028f * size, 0.004f * size, Accent);
+            PlaceRing(scopeBand, origin + forward * (0.11f * size), forward, 0.026f * size, 0.005f * size, Color.Lerp(Accent, Color.white, 0.3f));
+
+            scopeCamera.transform.SetPositionAndRotation(origin + forward * (0.23f * scale), aim);
+            scopeCamera.nearClipPlane = 0.02f * scale;
+        }
+
+        private static void MakeScopeCamera()
+        {
+            if (scopeView == null)
+            {
+                scopeView = new RenderTexture(256, 256, 16) { name = "Eclipse_StarScopeView" };
+                scopeView.Create();
+            }
+
+            scopeCamera = new GameObject("Eclipse_StarScopeCamera").AddComponent<Camera>();
+            scopeCamera.enabled = false;
+            scopeCamera.targetTexture = scopeView;
+            scopeCamera.stereoTargetEye = StereoTargetEyeMask.None;
+            scopeCamera.fieldOfView = 15f;
+            scopeCamera.allowHDR = false;
+            scopeCamera.allowMSAA = false;
+            scopeCamera.depth = -10f;
+
+            // Sees the world the way you do
+            Camera view = Camera.main;
+            if (view != null)
+            {
+                scopeCamera.cullingMask = view.cullingMask;
+                scopeCamera.clearFlags = view.clearFlags;
+                scopeCamera.backgroundColor = view.backgroundColor;
+                scopeCamera.farClipPlane = view.farClipPlane;
+            }
+
+            // Only the picture: no shadows, effects or smoothing, and never drawn to the headset
+            var settings = UnityEngine.Rendering.Universal.CameraExtensions.GetUniversalAdditionalCameraData(scopeCamera);
+            settings.renderShadows = false;
+            settings.renderPostProcessing = false;
+            settings.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.None;
+            settings.requiresDepthOption = UnityEngine.Rendering.Universal.CameraOverrideOption.Off;
+            settings.requiresColorOption = UnityEngine.Rendering.Universal.CameraOverrideOption.Off;
+            settings.allowXRRendering = false;
+        }
+
+        private static Piece MakeScopeLens()
+        {
+            // The toys' see-through material would let parts of the picture show through, so the lens gets a solid one
+            Piece lens = MakeShaped(ScopeLensMesh, Color.white);
+            Object.Destroy(lens.Renderer.sharedMaterial);
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Texture") ?? Shader.Find("Sprites/Default");
+            lens.Renderer.sharedMaterial = new Material(shader) { mainTexture = scopeView };
+            return lens;
+        }
+
+        // Lays one length of the scope's tube along its aim, between two distances from your hand
+        private static void PlaceScopePart(Piece part, Vector3 origin, Quaternion aim, float from, float to, float radius, float size, Color color)
+        {
+            Transform body = part.Object.transform;
+            body.SetPositionAndRotation(origin + aim * new Vector3(0f, 0f, (from + to) * 0.5f * size), aim * Quaternion.Euler(90f, 0f, 0f));
+            body.localScale = new Vector3(radius * 2f, (to - from) * 0.5f, radius * 2f) * size;
+            SetColor(part, color);
+        }
+
+        private static void ShowStarScope(bool shown)
+        {
+            ShowPiece(scopeEyepiece, shown);
+            ShowPiece(scopeTube, shown);
+            ShowPiece(scopeBarrel, shown);
+            ShowPiece(scopeGlass, shown);
+            ShowPiece(scopeLens, shown);
+            if (scopeLensRim != null)
+                scopeLensRim.enabled = shown;
+            if (scopeBand != null)
+                scopeBand.enabled = shown;
+        }
+
+        /// <summary>Puts the star scope away for good, along with its camera and picture.</summary>
+        public static void DisableStarScope()
+        {
+            DiscardPiece(ref scopeEyepiece);
+            DiscardPiece(ref scopeTube);
+            DiscardPiece(ref scopeBarrel);
+            DiscardPiece(ref scopeGlass);
+            DiscardPiece(ref scopeLens);
+            DestroyLine(ref scopeLensRim);
+            DestroyLine(ref scopeBand);
+
+            if (scopeCamera != null)
+            {
+                scopeCamera.targetTexture = null;
+                Object.Destroy(scopeCamera.gameObject);
+            }
+            scopeCamera = null;
+
+            if (scopeView != null)
+            {
+                scopeView.Release();
+                Object.Destroy(scopeView);
+            }
+            scopeView = null;
+            scopeRaise = 0f;
+        }
+
+        // Inside the snow globe the glass is one unit round: the snowy ground, the planet sitting on it and how close snow gets to the glass
+        private const int GlobeFlakes = 60;
+        private const float GlobeFloor = -0.55f;
+        private const float GlobePlanetSize = 0.27f;
+        private const float GlobeWall = 0.9f;
+        private const float GlobeFlakeSize = 0.03f;
+        private static readonly Vector3 GlobePlanetAt = new Vector3(0f, GlobeFloor + GlobePlanetSize, 0f);
+
+        private static readonly Vector3[] globeFlakeAt = new Vector3[GlobeFlakes];
+        private static readonly Vector3[] globeFlakeVelocity = new Vector3[GlobeFlakes];
+        private static readonly ParticleSystem.Particle[] globeFlakes = new ParticleSystem.Particle[GlobeFlakes];
+        private static Piece globeGlass, globeBase, globeGround, globePlanet, globeMoon;
+        private static LineRenderer globeCollar, globeRing;
+        private static ParticleSystem globeSnow;
+        private static Vector3 globeLastHand, globeLastVelocity;
+        private static float globeStir;
+
+        /// <summary>A snow globe with a tiny ringed planet inside sits on your right hand; shake it to swirl up glittery snow that slowly settles again.</summary>
+        public static void SnowGlobe()
+        {
+            float now = Time.time;
+            float dt = Mathf.Max(Time.deltaTime, 0.001f);
+            float scale = Scale;
+            float radius = 0.075f * scale;
+            Vector3 hand = RightHand;
+            Vector3 centre = hand + Vector3.up * (0.12f * scale);
+
+            // Measured against your body, so running about doesn't count as shaking
+            Vector3 relative = hand - BodyPosition;
+            if (globeSnow == null)
+            {
+                globeSnow = MakeParticles("Eclipse_SnowGlobe", null, particles =>
+                {
+                    var main = particles.main;
+                    main.loop = true;
+                    main.startSpeed = 0f;
+                    main.startLifetime = 100f;
+                    main.maxParticles = GlobeFlakes;
+                    main.scalingMode = ParticleSystemScalingMode.Local;
+
+                    var emission = particles.emission;
+                    emission.enabled = false;
+                });
+
+                globeSnow.transform.localScale = Vector3.one;
+                StartGlobeSnow();
+                globeLastHand = relative;
+                globeLastVelocity = Vector3.zero;
+            }
+
+            Vector3 velocity = (relative - globeLastHand) / dt;
+            globeLastHand = relative;
+            Vector3 jolt = Vector3.ClampMagnitude(velocity - globeLastVelocity, 3f * scale);
+            globeLastVelocity = velocity;
+
+            // Small tremors are ignored; a real jolt sloshes the snow the other way and stirs it all up
+            if (jolt.sqrMagnitude < 0.08f * 0.08f * scale * scale)
+                jolt = Vector3.zero;
+            globeStir = Mathf.Clamp01(globeStir * Mathf.Exp(-0.6f * dt) + jolt.magnitude / scale * 0.15f);
+            Vector3 slosh = -jolt / radius * 0.5f;
+
+            Color accent = Accent;
+            Color second = Second;
+            for (int i = 0; i < GlobeFlakes; i++)
+            {
+                Vector3 at = globeFlakeAt[i];
+                Vector3 drift = globeFlakeVelocity[i];
+
+                // Lighter flakes are thrown about more; stirred snow swirls round the planet, tumbling as it goes, then sinks
+                drift += slosh * (0.6f + 0.4f * Mathf.Sin(i * 2.39f));
+                drift += (new Vector3(-at.z, 0f, at.x) * 2.5f + Random.insideUnitSphere * 3f) * (globeStir * dt);
+                drift.y -= 0.45f * dt;
+                drift = Vector3.ClampMagnitude(drift * Mathf.Exp(-2.2f * dt), 4f);
+                at += drift * dt;
+
+                bool resting = false;
+                if (at.y < GlobeFloor + GlobeFlakeSize)
+                {
+                    at.y = GlobeFloor + GlobeFlakeSize;
+                    if (drift.y < 0f)
+                        drift.y = 0f;
+                    resting = true;
+                }
+
+                Vector3 fromPlanet = at - GlobePlanetAt;
+                float clear = GlobePlanetSize + GlobeFlakeSize;
+                if (fromPlanet.sqrMagnitude < clear * clear)
+                {
+                    float distance = fromPlanet.magnitude;
+                    Vector3 normal = distance > 0.0001f ? fromPlanet / distance : Vector3.up;
+                    at = GlobePlanetAt + normal * clear;
+                    float into = Vector3.Dot(drift, normal);
+                    if (into < 0f)
+                        drift -= normal * into;
+                    resting = true;
+                }
+
+                float reach = at.magnitude;
+                if (reach > GlobeWall)
+                {
+                    Vector3 normal = at / reach;
+                    at = normal * GlobeWall;
+                    float outward = Vector3.Dot(drift, normal);
+                    if (outward > 0f)
+                        drift -= normal * (outward * 1.5f);
+                }
+
+                // Snow that has landed stays put until it is shaken loose
+                if (resting)
+                    drift *= Mathf.Exp(-8f * dt);
+
+                globeFlakeAt[i] = at;
+                globeFlakeVelocity[i] = drift;
+
+                // Glitter: every flake twinkles in its own time
+                float twinkle = 0.5f + 0.5f * Mathf.Sin(now * (4f + i % 5) + i * 1.7f);
+                Color tint = i % 3 == 0 ? accent : i % 3 == 1 ? second : Color.white;
+                ParticleSystem.Particle flake = globeFlakes[i];
+                flake.position = centre + at * radius;
+                flake.startSize = radius * (0.05f + 0.03f * twinkle);
+                flake.startColor = WithAlpha(Color.Lerp(Color.white, tint, 0.3f + 0.4f * twinkle), 0.55f + 0.45f * twinkle);
+                flake.remainingLifetime = 100f;
+                globeFlakes[i] = flake;
+            }
+
+            globeSnow.transform.position = centre;
+            globeSnow.SetParticles(globeFlakes, GlobeFlakes);
+
+            Ensure(ref globeBase, PrimitiveType.Cylinder, Color.white);
+            globeBase.Object.transform.position = centre + Vector3.down * (0.98f * radius);
+            globeBase.Object.transform.localScale = new Vector3(1.45f, 0.16f, 1.45f) * radius;
+            SetColor(globeBase, Color.Lerp(new Color(0.14f, 0.09f, 0.2f), accent, 0.3f));
+
+            Ensure(ref globeGround, PrimitiveType.Cylinder, Color.white);
+            globeGround.Object.transform.position = centre + Vector3.up * (GlobeFloor * radius);
+            globeGround.Object.transform.localScale = new Vector3(1.62f, 0.01f, 1.62f) * radius;
+            SetAlpha(globeGround, Color.Lerp(Color.white, second, 0.15f), 0.95f);
+
+            Vector3 planet = centre + GlobePlanetAt * radius;
+            Ensure(ref globePlanet, PrimitiveType.Sphere, Color.white);
+            globePlanet.Object.transform.position = planet;
+            globePlanet.Object.transform.localScale = Vector3.one * (GlobePlanetSize * 2f * radius);
+            SetColor(globePlanet, Color.Lerp(accent, Color.white, 0.1f));
+
+            float orbit = now * 1.1f;
+            Ensure(ref globeMoon, PrimitiveType.Sphere, Color.white);
+            globeMoon.Object.transform.position = planet + new Vector3(Mathf.Cos(orbit) * 0.48f, 0.22f, Mathf.Sin(orbit) * 0.48f) * radius;
+            globeMoon.Object.transform.localScale = Vector3.one * (0.12f * radius);
+            SetColor(globeMoon, Color.Lerp(Color.white, second, 0.3f));
+
+            Ensure(ref globeGlass, PrimitiveType.Sphere, Color.white);
+            globeGlass.Object.transform.position = centre;
+            globeGlass.Object.transform.localScale = Vector3.one * (2f * radius);
+            SetAlpha(globeGlass, Color.Lerp(Color.white, second, 0.35f), 0.13f);
+
+            if (globeRing == null)
+                globeRing = MakeRing("Eclipse_SnowGlobeRing");
+            PlaceRing(globeRing, planet, Quaternion.Euler(20f, 0f, 12f) * Vector3.up, GlobePlanetSize * 1.45f * radius, 0.03f * radius, WithAlpha(second, 0.85f), now * 40f);
+
+            if (globeCollar == null)
+                globeCollar = MakeRing("Eclipse_SnowGlobeCollar");
+            PlaceRing(globeCollar, centre + Vector3.down * (0.82f * radius), Vector3.up, 0.73f * radius, 0.08f * radius, Color.Lerp(accent, Color.white, 0.25f));
+        }
+
+        // Scatters the snow through the top of the globe, so it starts off settling
+        private static void StartGlobeSnow()
+        {
+            for (int i = 0; i < GlobeFlakes; i++)
+            {
+                Vector3 at = Random.insideUnitSphere * 0.8f;
+                at.y = Mathf.Abs(at.y);
+                globeFlakeAt[i] = at;
+                globeFlakeVelocity[i] = Vector3.zero;
+                globeFlakes[i].startLifetime = 100f;
+            }
+
+            globeStir = 0.5f;
+        }
+
+        /// <summary>Takes away the snow globe and its snow.</summary>
+        public static void DisableSnowGlobe()
+        {
+            DiscardPiece(ref globeGlass);
+            DiscardPiece(ref globeBase);
+            DiscardPiece(ref globeGround);
+            DiscardPiece(ref globePlanet);
+            DiscardPiece(ref globeMoon);
+            DestroyLine(ref globeCollar);
+            DestroyLine(ref globeRing);
+            DestroyParticles(ref globeSnow);
+            globeStir = 0f;
+        }
+
+        private static readonly Piece[] pinwheelBlades = new Piece[4];
+        private static Piece pinwheelStick, pinwheelHub;
+        private static Vector3 pinwheelLastHand;
+        private static float pinwheelWind, pinwheelSpeed, pinwheelSpin;
+
+        /// <summary>A colourful pinwheel on a stick in your right hand that spins faster the faster your hand moves through the air.</summary>
+        public static void Pinwheel()
+        {
+            float dt = Mathf.Max(Time.deltaTime, 0.001f);
+            float scale = Scale;
+            var hand = ControllerUtilities.GetTrueRightHand();
+
+            if (pinwheelStick == null || !pinwheelStick.Alive)
+            {
+                pinwheelStick = MakePiece(PrimitiveType.Cylinder, Color.white, Vector3.one);
+                pinwheelLastHand = hand.position;
+                pinwheelWind = pinwheelSpeed = 0f;
+            }
+
+            // The blades always draw over the stick, and the pin over the blades
+            if (pinwheelHub == null || !pinwheelHub.Alive)
+            {
+                pinwheelHub = MakePiece(PrimitiveType.Sphere, Color.white, Vector3.one);
+                pinwheelHub.Renderer.sharedMaterial.renderQueue = DecalQueue + 1;
+            }
+
+            // How fast your hand moves through the air, smoothed a little
+            float speed = Mathf.Min(Vector3.Distance(hand.position, pinwheelLastHand) / dt, 12f * scale);
+            pinwheelLastHand = hand.position;
+            pinwheelWind = Mathf.Lerp(pinwheelWind, speed, 1f - Mathf.Exp(-10f * dt));
+
+            // A breeze keeps it turning lazily; a quick sweep whips it round, and it coasts back down
+            float target = Mathf.Min(40f + pinwheelWind / scale * 700f, 2400f);
+            float response = target > pinwheelSpeed ? 5f : 1.2f;
+            pinwheelSpeed = Mathf.Lerp(pinwheelSpeed, target, 1f - Mathf.Exp(-response * dt));
+            pinwheelSpin = (pinwheelSpin + pinwheelSpeed * dt) % 360f;
+
+            Vector3 along = hand.forward;
+            Vector3 top = hand.position + along * (0.3f * scale);
+
+            // Turned face-on to you so you can see it spin
+            Vector3 facing = Vector3.ProjectOnPlane(Head.position - top, along);
+            if (facing.sqrMagnitude < 0.0001f)
+                facing = hand.up;
+            facing.Normalize();
+            Quaternion face = Quaternion.LookRotation(facing, along);
+
+            Vector3 bottom = hand.position - along * (0.04f * scale);
+            Vector3 stickTop = top - facing * (0.008f * scale);
+            pinwheelStick.Object.transform.SetPositionAndRotation((bottom + stickTop) * 0.5f, Quaternion.LookRotation(along) * Quaternion.Euler(90f, 0f, 0f));
+            pinwheelStick.Object.transform.localScale = new Vector3(0.009f * scale, Vector3.Distance(bottom, stickTop) * 0.5f, 0.009f * scale);
+            SetColor(pinwheelStick, Color.Lerp(new Color(0.88f, 0.78f, 0.58f), Second, 0.15f));
+
+            Color accent = Accent;
+            Color second = Second;
+            for (int i = 0; i < pinwheelBlades.Length; i++)
+            {
+                Piece blade = pinwheelBlades[i];
+                if (blade == null || !blade.Alive)
+                    blade = pinwheelBlades[i] = MakeDecal(PinwheelBladeMesh, Color.white);
+
+                blade.Object.transform.SetPositionAndRotation(top, face * Quaternion.Euler(0f, 0f, pinwheelSpin + i * 90f));
+                blade.Object.transform.localScale = Vector3.one * (0.16f * scale);
+
+                // Alternating colours, the second pair paler
+                Color color = i % 2 == 0 ? accent : second;
+                SetColor(blade, i < 2 ? color : Color.Lerp(color, Color.white, 0.45f));
+            }
+
+            pinwheelHub.Object.transform.position = top + facing * (0.012f * scale);
+            pinwheelHub.Object.transform.localScale = Vector3.one * (0.022f * scale);
+            SetColor(pinwheelHub, Color.Lerp(Color.white, accent, 0.3f));
+        }
+
+        /// <summary>Takes away the pinwheel.</summary>
+        public static void DisablePinwheel()
+        {
+            DiscardPiece(ref pinwheelStick);
+            DiscardPiece(ref pinwheelHub);
+            for (int i = 0; i < pinwheelBlades.Length; i++)
+                DiscardPiece(ref pinwheelBlades[i]);
+            pinwheelWind = pinwheelSpeed = 0f;
+        }
+
+        private const int BalloonCordPoints = 14;
+        private static readonly Vector3[] balloonCordBuffer = new Vector3[BalloonCordPoints];
+        private static Piece balloonMoon, balloonCraters, balloonGlow, balloonKnot;
+        private static LineRenderer balloonCord;
+        private static Vector3 balloonAt, balloonVelocity;
+
+        /// <summary>A round glowing moon balloon on a string tied to your left wrist, bobbing along and trailing behind as you move.</summary>
+        public static void MoonBalloon()
+        {
+            float now = Time.time;
+            float dt = Mathf.Max(Time.deltaTime, 0.001f);
+            float scale = Scale;
+            float reach = 0.6f * scale;
+            float size = 0.2f * scale;
+            Vector3 wrist = LeftHand;
+
+            if (balloonMoon == null || !balloonMoon.Alive)
+            {
+                balloonMoon = MakePiece(PrimitiveType.Sphere, Color.white, Vector3.one);
+                balloonAt = wrist + Vector3.up * reach;
+                balloonVelocity = Vector3.zero;
+            }
+
+            if (balloonCraters == null || !balloonCraters.Alive)
+                balloonCraters = MakeDecal(BalloonCraterMesh, Color.white);
+            Ensure(ref balloonGlow, PrimitiveType.Sphere, Color.white);
+            Ensure(ref balloonKnot, PrimitiveType.Sphere, Color.white);
+
+            // Left far behind after a teleport
+            if ((balloonAt - wrist).sqrMagnitude > 9f * reach * reach)
+            {
+                balloonAt = wrist + Vector3.up * reach;
+                balloonVelocity = Vector3.zero;
+            }
+
+            // Floats upwards, drifts on a gentle breeze, and the air holds it back as you move
+            Vector3 breeze = new Vector3(Mathf.Sin(now * 0.9f), 0f, Mathf.Cos(now * 0.7f)) * (0.8f * scale);
+            balloonVelocity += (Vector3.up * (4f * scale) + breeze) * dt;
+            balloonVelocity *= Mathf.Exp(-1.5f * dt);
+            balloonAt += balloonVelocity * dt;
+
+            // The string only ever holds the balloon back; it never pulls on you
+            Vector3 fromWrist = balloonAt - wrist;
+            float length = fromWrist.magnitude;
+            if (length > reach)
+            {
+                Vector3 outwards = fromWrist / length;
+                balloonAt = wrist + outwards * reach;
+                float outward = Vector3.Dot(balloonVelocity, outwards);
+                if (outward > 0f)
+                    balloonVelocity -= outwards * outward;
+                length = reach;
+            }
+
+            Vector3 along = length > 0.001f * scale ? (balloonAt - wrist) / length : Vector3.up;
+            Vector3 centre = balloonAt + Vector3.up * (Mathf.Sin(now * 2.1f) * 0.015f * scale);
+            Quaternion turn = Quaternion.FromToRotation(Vector3.up, along) * Quaternion.Euler(0f, now * 12f, 0f);
+            float pulse = 0.5f + 0.5f * Mathf.Sin(now * 1.8f);
+
+            Color moon = Color.Lerp(new Color(0.93f, 0.91f, 0.84f), Second, 0.2f);
+            balloonMoon.Object.transform.SetPositionAndRotation(centre, turn);
+            balloonMoon.Object.transform.localScale = new Vector3(1f, 1.06f, 1f) * size;
+            SetColor(balloonMoon, Color.Lerp(moon, Color.white, 0.15f * pulse));
+
+            balloonCraters.Object.transform.SetPositionAndRotation(centre, turn);
+            balloonCraters.Object.transform.localScale = balloonMoon.Object.transform.localScale;
+            SetColor(balloonCraters, Color.Lerp(moon, new Color(0.35f, 0.33f, 0.42f), 0.45f));
+
+            balloonGlow.Object.transform.position = centre;
+            balloonGlow.Object.transform.localScale = Vector3.one * (size * (1.4f + 0.08f * pulse));
+            SetAlpha(balloonGlow, Accent, 0.16f + 0.08f * pulse);
+
+            // The knot at the bottom, where the string is tied on
+            Vector3 knot = centre - along * (size * 0.53f);
+            balloonKnot.Object.transform.position = knot;
+            balloonKnot.Object.transform.localScale = Vector3.one * (0.018f * scale);
+            SetColor(balloonKnot, Accent);
+
+            if (balloonCord == null)
+            {
+                balloonCord = MakeLine("Eclipse_MoonBalloonString", 0.003f);
+                balloonCord.positionCount = BalloonCordPoints;
+            }
+
+            // Sags a little when slack, and bows back against the way the balloon is moving
+            float sag = Mathf.Lerp(0.08f, 0.012f, length / reach) * scale;
+            Vector3 bow = Vector3.ClampMagnitude(-balloonVelocity * 0.03f, 0.05f * scale);
+            for (int i = 0; i < BalloonCordPoints; i++)
+            {
+                float k = i / (float)(BalloonCordPoints - 1);
+                balloonCordBuffer[i] = Vector3.Lerp(wrist, knot, k) + (Vector3.down * sag + bow) * Mathf.Sin(k * Mathf.PI);
+            }
+
+            balloonCord.SetPositions(balloonCordBuffer);
+            balloonCord.startWidth = balloonCord.endWidth = 0.0025f * scale;
+            balloonCord.startColor = balloonCord.endColor = new Color(1f, 1f, 1f, 0.6f);
+        }
+
+        /// <summary>Takes away the moon balloon and its string.</summary>
+        public static void DisableMoonBalloon()
+        {
+            DiscardPiece(ref balloonMoon);
+            DiscardPiece(ref balloonCraters);
+            DiscardPiece(ref balloonGlow);
+            DiscardPiece(ref balloonKnot);
+            DestroyLine(ref balloonCord);
+        }
+
+        // How far out the star goes, how wide its loop is and how long it takes to come back
+        private const float BoomerangRange = 3.2f;
+        private const float BoomerangWidth = 0.9f;
+        private const float BoomerangFlight = 2.4f;
+
+        private static Piece boomerangStar, boomerangGlow;
+        private static TrailRenderer boomerangTrail;
+        private static Vector3 boomerangFrom, boomerangForward, boomerangSide, boomerangUp;
+        private static float boomerangThrown, boomerangSpin;
+        private static bool boomerangHeld = true, boomerangFlying;
+
+        /// <summary>Press A to throw a spinning star that curves out the way your right hand points and comes back round to be caught in your hand.</summary>
+        public static void BoomerangStar()
+        {
+            float now = Time.time;
+            float dt = Time.deltaTime;
+            float scale = Scale;
+            var hand = ControllerUtilities.GetTrueRightHand();
+
+            if (boomerangStar == null || !boomerangStar.Alive)
+            {
+                boomerangStar = MakeShaped(BoomerangStarMesh, Accent);
+                boomerangFlying = false;
+            }
+
+            Ensure(ref boomerangGlow, PrimitiveType.Sphere, Color.white);
+
+            // Its own object rather than part of the star, so throwing the star away never takes the shared line material with it
+            if (boomerangTrail == null)
+            {
+                boomerangTrail = new GameObject("Eclipse_BoomerangTrail").AddComponent<TrailRenderer>();
+                boomerangTrail.material = VertexColored;
+                boomerangTrail.time = 0.4f;
+                boomerangTrail.minVertexDistance = 0.03f;
+                boomerangTrail.widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
+                boomerangTrail.emitting = false;
+            }
+
+            if (Pressed(rightPrimary, ref boomerangHeld) && !boomerangFlying)
+                ThrowBoomerangStar(hand.position, hand.forward, now);
+
+            Vector3 at;
+            Quaternion turn;
+            if (boomerangFlying)
+            {
+                // Out along a loop that bends left, round the far end and back in from the right, to wherever your hand is by then
+                float u = Mathf.Clamp01((now - boomerangThrown) / BoomerangFlight);
+                Vector3 loop = boomerangForward * (BoomerangRange * Mathf.Sin(u * Mathf.PI))
+                    - boomerangSide * (BoomerangWidth * Mathf.Sin(u * Mathf.PI * 2f))
+                    + boomerangUp * (0.3f * Mathf.Sin(u * Mathf.PI));
+                at = Vector3.Lerp(boomerangFrom, hand.position, u * u * (3f - 2f * u)) + loop * scale;
+
+                boomerangSpin = (boomerangSpin + 1100f * dt) % 360f;
+                turn = Quaternion.LookRotation(boomerangForward, boomerangUp) * Quaternion.Euler(0f, 0f, 18f) * Quaternion.Euler(0f, boomerangSpin, 0f);
+
+                if (u >= 1f || (u > 0.7f && (at - hand.position).sqrMagnitude < 0.12f * 0.12f * scale * scale))
+                    CatchBoomerangStar(hand.position);
+            }
+            else
+            {
+                // Waits in your hand, turning slowly
+                at = hand.position + hand.forward * (0.08f * scale);
+                boomerangSpin = (boomerangSpin + 90f * dt) % 360f;
+                turn = hand.rotation * Quaternion.Euler(0f, boomerangSpin, 0f);
+            }
+
+            float size = 0.13f * scale;
+            boomerangStar.Object.transform.SetPositionAndRotation(at, turn);
+            boomerangStar.Object.transform.localScale = Vector3.one * size;
+            SetColor(boomerangStar, Color.Lerp(Accent, Color.white, 0.2f));
+
+            float pulse = 1f + Mathf.Sin(now * 6f) * 0.08f;
+            boomerangGlow.Object.transform.position = at;
+            boomerangGlow.Object.transform.localScale = Vector3.one * (size * 1.5f * pulse);
+            SetAlpha(boomerangGlow, Second, boomerangFlying ? 0.3f : 0.15f);
+
+            boomerangTrail.transform.position = at;
+            boomerangTrail.widthMultiplier = 0.05f * scale;
+            boomerangTrail.startColor = WithAlpha(Accent, 0.8f);
+            boomerangTrail.endColor = WithAlpha(Second, 0f);
+        }
+
+        private static void ThrowBoomerangStar(Vector3 from, Vector3 aim, float now)
+        {
+            // The loop's own up and sideways, worked out from the way it was thrown
+            Vector3 up = Vector3.ProjectOnPlane(Vector3.up, aim);
+            if (up.sqrMagnitude < 0.01f)
+                up = Vector3.ProjectOnPlane(-Head.forward, aim);
+            if (up.sqrMagnitude < 0.0001f)
+                up = Vector3.ProjectOnPlane(Vector3.forward, aim);
+
+            boomerangForward = aim.normalized;
+            boomerangUp = up.normalized;
+            boomerangSide = Vector3.Cross(boomerangUp, boomerangForward);
+            boomerangFrom = from;
+            boomerangThrown = now;
+            boomerangFlying = true;
+
+            boomerangTrail.transform.position = from;
+            boomerangTrail.Clear();
+            boomerangTrail.emitting = true;
+            Burst(from, 10, 1f, false, aim);
+        }
+
+        private static void CatchBoomerangStar(Vector3 at)
+        {
+            boomerangFlying = false;
+            if (boomerangTrail != null)
+                boomerangTrail.emitting = false;
+
+            Burst(at, 14, 1.2f, false);
+            GorillaTagger.Instance.StartVibration(false, GorillaTagger.Instance.tapHapticStrength / 2f, 0.06f);
+        }
+
+        /// <summary>Takes away the boomerang star and its trail.</summary>
+        public static void DisableBoomerangStar()
+        {
+            DiscardPiece(ref boomerangStar);
+            DiscardPiece(ref boomerangGlow);
+            if (boomerangTrail != null)
+                Object.Destroy(boomerangTrail.gameObject);
+            boomerangTrail = null;
+            boomerangFlying = false;
+        }
+
+        private static Piece spinnerBody, spinnerCaps, spinnerBlur;
+        private static Vector3 spinnerLastHand;
+        private static float spinnerSpeed, spinnerAngle;
+
+        /// <summary>A three-lobed fidget spinner balanced on your right fingertip; flick your hand sideways to spin it up, and it slowly winds down by itself.</summary>
+        public static void FidgetSpinner()
+        {
+            float now = Time.time;
+            float dt = Mathf.Max(Time.deltaTime, 0.001f);
+            float scale = Scale;
+            var hand = ControllerUtilities.GetTrueRightHand();
+
+            // Measured against your body, so only a flick of the hand counts
+            Vector3 relative = hand.position - BodyPosition;
+            if (spinnerBody == null || !spinnerBody.Alive)
+            {
+                spinnerBody = MakeShaped(SpinnerMesh, Accent);
+                spinnerLastHand = relative;
+            }
+
+            if (spinnerCaps == null || !spinnerCaps.Alive)
+                spinnerCaps = MakeDecal(SpinnerCapsMesh, Second);
+
+            // A faint copy just behind the spinner as it whirls, always drawn underneath it
+            if (spinnerBlur == null || !spinnerBlur.Alive)
+            {
+                spinnerBlur = MakeShaped(SpinnerMesh, Accent);
+                spinnerBlur.Renderer.sharedMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent - 1;
+            }
+
+            Vector3 velocity = Vector3.ClampMagnitude((relative - spinnerLastHand) / dt, 10f * scale);
+            spinnerLastHand = relative;
+
+            Vector3 side = Vector3.ProjectOnPlane(hand.right, Vector3.up);
+            if (side.sqrMagnitude < 0.01f)
+                side = Vector3.ProjectOnPlane(Head.right, Vector3.up);
+            float flick = Vector3.Dot(velocity, side.normalized) / scale;
+
+            // A quick sideways flick spins it up that way, and a flick back slows it; gentle moves do nothing
+            if (Mathf.Abs(flick) > 1f)
+                spinnerSpeed = Mathf.Clamp(spinnerSpeed + (flick - Mathf.Sign(flick)) * 1800f * dt, -2400f, 2400f);
+
+            // The bearings wind it down by themselves, over the best part of a minute from full speed
+            spinnerSpeed = Mathf.MoveTowards(spinnerSpeed, 0f, (10f + Mathf.Abs(spinnerSpeed) * 0.06f) * dt);
+            spinnerAngle = (spinnerAngle + spinnerSpeed * dt) % 360f;
+
+            // Wobbles on your fingertip as it slows
+            float spin = Mathf.Abs(spinnerSpeed);
+            float wobble = 7f * (1f - Mathf.Clamp01(spin / 600f));
+            Quaternion tilt = Quaternion.AngleAxis(wobble, new Vector3(Mathf.Cos(now * 2.6f), 0f, Mathf.Sin(now * 2.6f)));
+            Quaternion turn = tilt * Quaternion.Euler(0f, spinnerAngle, 0f);
+
+            Vector3 centre = hand.position + hand.forward * (0.1f * scale) + Vector3.up * (0.008f * scale);
+            Vector3 size = Vector3.one * (0.06f * scale);
+
+            spinnerBody.Object.transform.SetPositionAndRotation(centre, turn);
+            spinnerBody.Object.transform.localScale = size;
+            SetColor(spinnerBody, Accent);
+
+            spinnerCaps.Object.transform.SetPositionAndRotation(centre, turn);
+            spinnerCaps.Object.transform.localScale = size;
+            SetColor(spinnerCaps, Color.Lerp(Second, Color.white, 0.3f));
+
+            float blur = Mathf.Clamp01((spin - 300f) / 1200f);
+            ShowPiece(spinnerBlur, blur > 0.01f);
+            if (blur <= 0.01f)
+                return;
+
+            float lag = Mathf.Sign(spinnerSpeed) * Mathf.Min(spin * 0.02f, 45f);
+            spinnerBlur.Object.transform.SetPositionAndRotation(centre, tilt * Quaternion.Euler(0f, spinnerAngle - lag, 0f));
+            spinnerBlur.Object.transform.localScale = size;
+            SetAlpha(spinnerBlur, Accent, 0.35f * blur);
+        }
+
+        /// <summary>Takes away the fidget spinner.</summary>
+        public static void DisableFidgetSpinner()
+        {
+            DiscardPiece(ref spinnerBody);
+            DiscardPiece(ref spinnerCaps);
+            DiscardPiece(ref spinnerBlur);
+            spinnerSpeed = 0f;
+        }
+
         // ── Toy shapes ──────────────────────────────────────────────────────────
 
         // Spots and stripes are drawn just after the pieces they sit on, so they always show on top
@@ -1552,6 +2308,194 @@ namespace Eclipse.Mods
             }
         }
 
+        private static Mesh scopeLensMesh, balloonCraterMesh, pinwheelBladeMesh, boomerangStarMesh, spinnerMesh, spinnerCapsMesh;
+
+        /// <summary>A round lens of radius one facing back along -Z, with the scope's picture laid square across it.</summary>
+        private static Mesh ScopeLensMesh
+        {
+            get
+            {
+                if (scopeLensMesh != null)
+                    return scopeLensMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                AddToyDisc(vertices, triangles, Vector3.zero, Vector3.back, 1f, 32);
+
+                // Seen from behind, the camera's right is the lens's right, so the picture isn't mirrored
+                List<Vector2> uvs = new List<Vector2>(vertices.Count);
+                foreach (Vector3 vertex in vertices)
+                    uvs.Add(new Vector2(0.5f + vertex.x * 0.5f, 0.5f + vertex.y * 0.5f));
+
+                scopeLensMesh = FinishMesh("EclipseScopeLens", vertices, triangles);
+                scopeLensMesh.SetUVs(0, uvs);
+                return scopeLensMesh;
+            }
+        }
+
+        // Which way each of the moon balloon's craters faces, and in w how wide it is
+        private static readonly Vector4[] BalloonCraters =
+        {
+            new Vector4(0.3f, 0.5f, 0.8f, 0.11f), new Vector4(-0.6f, 0.2f, 0.7f, 0.08f), new Vector4(0.7f, -0.3f, 0.6f, 0.07f),
+            new Vector4(-0.2f, -0.6f, 0.75f, 0.09f), new Vector4(-0.8f, 0.4f, -0.3f, 0.1f), new Vector4(0.5f, 0.3f, -0.8f, 0.08f),
+            new Vector4(0.1f, -0.2f, -0.95f, 0.12f), new Vector4(0.9f, 0.35f, -0.1f, 0.06f), new Vector4(-0.45f, -0.25f, -0.7f, 0.07f),
+            new Vector4(0.05f, 0.95f, 0.2f, 0.07f)
+        };
+
+        /// <summary>Round craters just outside a sphere primitive, which is one unit across.</summary>
+        /// <remarks>Each crater faces outwards only, so the ones round the back are never drawn through the balloon.</remarks>
+        private static Mesh BalloonCraterMesh
+        {
+            get
+            {
+                if (balloonCraterMesh != null)
+                    return balloonCraterMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                foreach (Vector4 crater in BalloonCraters)
+                {
+                    Vector3 normal = new Vector3(crater.x, crater.y, crater.z).normalized;
+                    AddToyDisc(vertices, triangles, normal * 0.503f, normal, crater.w, 12);
+                }
+
+                return balloonCraterMesh = FinishMesh("EclipseBalloonCraters", vertices, triangles);
+            }
+        }
+
+        /// <summary>One blade of a paper pinwheel: a flat triangle out to a corner, with a flap curling back towards the pin along +Z.</summary>
+        private static Mesh PinwheelBladeMesh
+        {
+            get
+            {
+                if (pinwheelBladeMesh != null)
+                    return pinwheelBladeMesh;
+
+                Vector3 pin = Vector3.zero;
+                Vector3 corner = new Vector3(0.5f, 0.5f, 0.04f);
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                AddSheet(vertices, triangles, pin, new Vector3(0.5f, 0f, 0f), corner);
+                AddSheet(vertices, triangles, pin, corner, new Vector3(0.1f, 0.14f, 0.2f));
+                return pinwheelBladeMesh = FinishMesh("EclipsePinwheelBlade", vertices, triangles);
+            }
+        }
+
+        /// <summary>A flat five-pointed star lying across Y, raised a little in the middle on both sides.</summary>
+        private static Mesh BoomerangStarMesh
+        {
+            get
+            {
+                if (boomerangStarMesh != null)
+                    return boomerangStarMesh;
+
+                Vector3 top = new Vector3(0f, 0.09f, 0f);
+                Vector3 bottom = new Vector3(0f, -0.09f, 0f);
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                for (int k = 0; k < 10; k++)
+                {
+                    // Points and the notches between them take turns round the edge
+                    float a = k * Mathf.PI / 5f;
+                    float b = (k + 1) * Mathf.PI / 5f;
+                    float ra = k % 2 == 0 ? 0.5f : 0.21f;
+                    float rb = k % 2 == 0 ? 0.21f : 0.5f;
+                    Vector3 p = new Vector3(Mathf.Sin(a) * ra, 0f, Mathf.Cos(a) * ra);
+                    Vector3 q = new Vector3(Mathf.Sin(b) * rb, 0f, Mathf.Cos(b) * rb);
+                    AddTriangle(vertices, triangles, top, p, q, Vector3.up);
+                    AddTriangle(vertices, triangles, bottom, p, q, Vector3.down);
+                }
+
+                return boomerangStarMesh = FinishMesh("EclipseBoomerangStar", vertices, triangles);
+            }
+        }
+
+        // Half the spinner's thickness, with the whole spinner a little under two units across
+        private const float SpinnerHalf = 0.1f;
+
+        /// <summary>The fidget spinner's body: a round middle and three round lobes joined into one flat piece.</summary>
+        private static Mesh SpinnerMesh
+        {
+            get
+            {
+                if (spinnerMesh != null)
+                    return spinnerMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                Vector3 up = Vector3.up * SpinnerHalf;
+
+                // Walls go in first and faces last, so where the circles overlap the faces cover the walls inside
+                for (int part = 0; part < 4; part++)
+                {
+                    SpinnerPart(part, out Vector3 centre, out float radius);
+                    for (int slice = 0; slice < 24; slice++)
+                    {
+                        float a = slice * Mathf.PI / 12f;
+                        float b = (slice + 1) * Mathf.PI / 12f;
+                        Vector3 p = centre + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radius;
+                        Vector3 q = centre + new Vector3(Mathf.Cos(b), 0f, Mathf.Sin(b)) * radius;
+                        Vector3 outward = (p + q) * 0.5f - centre;
+                        AddTriangle(vertices, triangles, p - up, q - up, q + up, outward);
+                        AddTriangle(vertices, triangles, p - up, q + up, p + up, outward);
+                    }
+                }
+
+                for (int part = 0; part < 4; part++)
+                {
+                    SpinnerPart(part, out Vector3 centre, out float radius);
+                    AddToyDisc(vertices, triangles, centre - up, Vector3.down, radius, 24);
+                }
+
+                for (int part = 0; part < 4; part++)
+                {
+                    SpinnerPart(part, out Vector3 centre, out float radius);
+                    AddToyDisc(vertices, triangles, centre + up, Vector3.up, radius, 24);
+                }
+
+                return spinnerMesh = FinishMesh("EclipseSpinner", vertices, triangles);
+            }
+        }
+
+        /// <summary>The round bearing caps on both faces of the fidget spinner's middle and lobes.</summary>
+        private static Mesh SpinnerCapsMesh
+        {
+            get
+            {
+                if (spinnerCapsMesh != null)
+                    return spinnerCapsMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                for (int part = 0; part < 4; part++)
+                {
+                    SpinnerPart(part, out Vector3 centre, out float radius);
+                    for (int side = -1; side <= 1; side += 2)
+                    {
+                        Vector3 normal = new Vector3(0f, side, 0f);
+                        AddToyDisc(vertices, triangles, centre + normal * (SpinnerHalf + 0.005f), normal, radius * 0.6f, 20);
+                    }
+                }
+
+                return spinnerCapsMesh = FinishMesh("EclipseSpinnerCaps", vertices, triangles);
+            }
+        }
+
+        // The spinner's middle, then its three lobes a third of a turn apart
+        private static void SpinnerPart(int part, out Vector3 centre, out float radius)
+        {
+            if (part == 0)
+            {
+                centre = Vector3.zero;
+                radius = 0.3f;
+                return;
+            }
+
+            float angle = part * Mathf.PI * 2f / 3f;
+            centre = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 0.55f;
+            radius = 0.33f;
+        }
+
         // Adds a triangle facing `outward`
         private static void AddTriangle(List<Vector3> vertices, List<int> triangles, Vector3 a, Vector3 b, Vector3 c, Vector3 outward)
         {
@@ -1573,6 +2517,22 @@ namespace Eclipse.Mods
             Vector3 normal = Vector3.Cross(b - a, c - a);
             AddTriangle(vertices, triangles, a, b, c, normal);
             AddTriangle(vertices, triangles, a, b, c, -normal);
+        }
+
+        // Adds a flat round disc facing `normal`
+        private static void AddToyDisc(List<Vector3> vertices, List<int> triangles, Vector3 centre, Vector3 normal, float radius, int slices)
+        {
+            Vector3 u = Vector3.Cross(normal, Mathf.Abs(normal.y) > 0.9f ? Vector3.right : Vector3.up).normalized;
+            Vector3 v = Vector3.Cross(normal, u);
+            for (int slice = 0; slice < slices; slice++)
+            {
+                float a = slice * Mathf.PI * 2f / slices;
+                float b = (slice + 1) * Mathf.PI * 2f / slices;
+                AddTriangle(vertices, triangles, centre,
+                    centre + (u * Mathf.Cos(a) + v * Mathf.Sin(a)) * radius,
+                    centre + (u * Mathf.Cos(b) + v * Mathf.Sin(b)) * radius,
+                    normal);
+            }
         }
 
         private static Mesh FinishMesh(string name, List<Vector3> vertices, List<int> triangles)

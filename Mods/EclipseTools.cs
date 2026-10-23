@@ -21,6 +21,7 @@
 
 using Eclipse.Extensions;
 using Eclipse.Managers;
+using GorillaLocomotion;
 using Photon.Pun;
 using TMPro;
 using UnityEngine;
@@ -32,7 +33,8 @@ namespace Eclipse.Mods
     /// <summary>The wrist tools: readouts and reminders only you can see, in the Wrist Tools category.</summary>
     /// <remarks>
     /// The left wrist already carries the Eclipse watches up to 0.66 and the right wrist up to 0.42,
-    /// so these sit above them. Anything that counts real minutes uses unscaled time, so a mod that
+    /// so these sit above them. The second set goes higher still, from 1.02 on the left wrist and
+    /// 0.92 on the right. Anything that counts real minutes uses unscaled time, so a mod that
     /// slows the game down doesn't stretch it.
     /// </remarks>
     public static partial class EclipseMods
@@ -131,6 +133,7 @@ namespace Eclipse.Mods
         private static Vector3 handSpeedLeftFrom, handSpeedRightFrom;
         private static float handSpeedLeft, handSpeedRight, handSpeedBestLeft, handSpeedBestRight, handSpeedNext;
         private static int handSpeedFrame = -2, handSpeedShown = -1, handSpeedBestShown = -1;
+        private static bool handSpeedUnlocked;
 
         /// <summary>How fast each of your hands is swinging, and your best this session, in metres a second on your right wrist.</summary>
         public static void HandSpeed()
@@ -155,6 +158,12 @@ namespace Eclipse.Mods
                 handSpeedRight = EaseHandSpeed(handSpeedRight, (right - handSpeedRightFrom).magnitude / dt, dt);
                 handSpeedBestLeft = Mathf.Max(handSpeedBestLeft, handSpeedLeft);
                 handSpeedBestRight = Mathf.Max(handSpeedBestRight, handSpeedRight);
+
+                if (!handSpeedUnlocked && Mathf.Max(handSpeedBestLeft, handSpeedBestRight) >= 10f)
+                {
+                    handSpeedUnlocked = true;
+                    Eclipse.Menu.Main.EclipseUnlock("Speedster");
+                }
             }
 
             handSpeedLeftFrom = left;
@@ -468,5 +477,633 @@ namespace Eclipse.Mods
             DestroyText(ref countdownText);
             countdownRunning = false;
         }
+
+        // ── More Wrist Tools ────────────────────────────────────────────────────
+
+        // Resting your body on something, or a hand touching, climbing or holding on: the game's own
+        // test for being on the ground. The usual ground ray reaches about a metre down, so it would
+        // count the first part of every jump as still standing.
+        private static bool TouchingSomething() =>
+            GTPlayer.Instance.IsGroundedHand || GTPlayer.Instance.IsGroundedButt;
+
+        // Minutes, seconds and tenths, like 1:02.3
+        private static string LapClock(int tenths) =>
+            $"{tenths / 600}:{tenths / 10 % 60:00}.{tenths % 10}";
+
+        private const float LapGateRadius = 1.1f;
+        private static LineRenderer lapRing, lapGlow;
+        private static TextMeshPro lapText;
+        private static Vector3 lapCentre, lapFacing;
+        private static float lapSize, lapStart, lapFlash = -10f, lapNext;
+        private static int lapCount, lapLast, lapBest, lapSide, lapSessionLaps, lapShown = int.MinValue, lapShownCount;
+        private static bool lapHeld = true, lapPlaced, lapArmed, lapRunning;
+
+        /// <summary>Forgets a held A and clears the gate and laps, when Lap Timer is turned on.</summary>
+        public static void EnableLapTimer()
+        {
+            lapHeld = true;
+            lapPlaced = lapArmed = lapRunning = false;
+            lapCount = 0;
+            lapShown = int.MinValue;
+        }
+
+        /// <summary>A drops a glowing start gate where you stand; going through it starts the clock and every time after records a lap, on your left wrist.</summary>
+        public static void LapTimer()
+        {
+            float now = Time.unscaledTime;
+
+            if (Pressed(rightPrimary, ref lapHeld))
+            {
+                // You start out standing on the line, so a step forward through it starts the clock
+                lapSize = Scale;
+                lapFacing = LookFlat();
+                lapCentre = Feet + Vector3.up * (LapGateRadius * lapSize);
+                lapPlaced = lapArmed = true;
+                lapRunning = false;
+                lapSide = -1;
+                lapCount = 0;
+                LayLapGate();
+            }
+
+            if (lapPlaced)
+            {
+                if (lapRing == null || lapGlow == null)
+                    LayLapGate();
+
+                CrossLapGate(now);
+
+                // The glow flares for a moment each time you go through
+                float flare = Mathf.Clamp01(1f - (now - lapFlash) / 0.6f);
+                lapRing.startColor = lapRing.endColor = Accent;
+                lapGlow.startColor = lapGlow.endColor = WithAlpha(Second, 0.25f + 0.55f * flare);
+                lapGlow.startWidth = lapGlow.endWidth = (0.14f + 0.1f * flare) * lapSize;
+            }
+
+            if (lapText == null)
+            {
+                lapText = MakeWristText("Eclipse_LapTimer", Color.white);
+                lapShown = int.MinValue;
+            }
+
+            PlaceOnWrist(lapText, 1.02f);
+
+            // Tenths into this lap while running, -2 while waiting at the gate, -3 before there is one
+            int shown = lapRunning ? Mathf.FloorToInt((now - lapStart) * 10f) : lapPlaced ? -2 : -3;
+            if (shown != lapShown || lapCount != lapShownCount)
+            {
+                lapShown = shown;
+                lapShownCount = lapCount;
+                lapText.text = shown == -3 ? "Lap Timer\n<size=55%>A to drop a start gate</size>"
+                    : shown == -2 ? "Ready\n<size=55%>go through the gate to start</size>"
+                    : lapCount == 0 ? $"{LapClock(shown)}\n<size=55%>lap 1</size>"
+                    : $"{LapClock(shown)}\n<size=55%>lap {lapCount + 1}  ·  last {LapClock(lapLast)}  ·  best {LapClock(lapBest)}</size>";
+            }
+
+            if (Time.time < lapNext)
+                return;
+            lapNext = Time.time + 0.1f;
+            lapText.color = !lapPlaced ? Color.Lerp(Color.white, Second, 0.35f) : now - lapFlash < 1f ? Accent : Color.Lerp(Color.white, Accent, 0.35f);
+        }
+
+        // Stands the gate upright where it was dropped, facing the way you were looking
+        private static void LayLapGate()
+        {
+            if (lapRing == null)
+                lapRing = MakeRing("Eclipse_LapGate");
+            if (lapGlow == null)
+                lapGlow = MakeRing("Eclipse_LapGateGlow");
+
+            float radius = LapGateRadius * lapSize;
+            PlaceRing(lapRing, lapCentre, lapFacing, radius, 0.04f * lapSize, Accent);
+            PlaceRing(lapGlow, lapCentre, lapFacing, radius, 0.14f * lapSize, WithAlpha(Second, 0.25f));
+        }
+
+        // A crossing is your body going from one side of the gate to the other through the ring
+        // itself. After each one you have to get a few metres away before the next counts, so
+        // stepping back and forth on the line doesn't rack up laps.
+        private static void CrossLapGate(float now)
+        {
+            Vector3 offset = BodyPosition - lapCentre;
+            float along = Vector3.Dot(offset, lapFacing);
+            float radius = LapGateRadius * lapSize;
+
+            if (!lapArmed && offset.sqrMagnitude > radius * radius * 6.25f)
+                lapArmed = true;
+
+            // A little either side of the line still counts as on it, so standing in the gate doesn't flicker
+            float edge = 0.15f * lapSize;
+            int side = along > edge ? 1 : along < -edge ? -1 : lapSide;
+            if (side == lapSide)
+                return;
+            lapSide = side;
+
+            if (!lapArmed || (offset - lapFacing * along).sqrMagnitude > radius * radius * 1.69f)
+                return;
+
+            lapArmed = false;
+            lapFlash = now;
+            if (lapRunning)
+            {
+                int lap = Mathf.FloorToInt((now - lapStart) * 10f);
+                lapBest = lapCount == 0 ? lap : Mathf.Min(lapBest, lap);
+                lapLast = lap;
+                lapCount++;
+
+                if (++lapSessionLaps == 10)
+                    Eclipse.Menu.Main.EclipseUnlock("Lap Legend");
+            }
+
+            lapRunning = true;
+            lapStart = now;
+        }
+
+        /// <summary>Takes down the start gate and the lap times on your wrist.</summary>
+        public static void DisableLapTimer()
+        {
+            DestroyLine(ref lapRing);
+            DestroyLine(ref lapGlow);
+            DestroyText(ref lapText);
+            lapPlaced = lapRunning = false;
+        }
+
+        // Where along the arrow each of its points sits: the tail, the shoulders of the head, and the tip
+        private static readonly float[] WaypointArrowStops = { 0f, 0.55f, 0.56f, 1f };
+        private static readonly Vector3[] waypointArrowPoints = new Vector3[4];
+        private static LineRenderer waypointBeam, waypointArrow;
+        private static TextMeshPro waypointText;
+        private static Vector3 waypointAt;
+        private static float waypointSize, waypointNext;
+        private static int waypointShown = int.MinValue, waypointShownRise;
+        private static bool waypointHeld = true, waypointSet;
+
+        /// <summary>Forgets a held B and clears the waypoint, when Waypoint is turned on.</summary>
+        public static void EnableWaypoint()
+        {
+            waypointHeld = true;
+            waypointSet = false;
+            waypointShown = int.MinValue;
+        }
+
+        /// <summary>B saves a waypoint where you stand, marked by a tall beam of light, and your right wrist points the way to it and says how far.</summary>
+        public static void Waypoint()
+        {
+            float scale = Scale;
+            if (Pressed(rightSecondary, ref waypointHeld))
+            {
+                waypointAt = BodyPosition;
+                waypointSize = scale;
+                waypointSet = true;
+                LayWaypointBeam();
+            }
+
+            Vector3 toWaypoint = waypointAt - BodyPosition;
+            float distance = toWaypoint.magnitude;
+            bool here = distance < 1f * scale;
+
+            if (waypointSet)
+            {
+                if (waypointBeam == null)
+                    LayWaypointBeam();
+
+                waypointBeam.startColor = WithAlpha(Accent, 0.35f);
+                waypointBeam.endColor = WithAlpha(Second, 0f);
+            }
+
+            if (waypointSet && !here)
+            {
+                if (waypointArrow == null)
+                {
+                    waypointArrow = MakeLine("Eclipse_WaypointArrow", 0.045f);
+                    waypointArrow.positionCount = WaypointArrowStops.Length;
+
+                    // A narrow shaft that widens into the head and comes to a point. The head is also
+                    // keyed at its point's place in the list, so it draws the same however Unity reads it.
+                    waypointArrow.widthCurve = new AnimationCurve(
+                        new Keyframe(0f, 0.3f), new Keyframe(0.55f, 0.3f), new Keyframe(0.56f, 1f), new Keyframe(2f / 3f, 1f), new Keyframe(1f, 0f));
+                }
+
+                // Points the way you would have to go, floating above your right wrist
+                Vector3 way = toWaypoint / distance;
+                float length = 0.12f * scale;
+                Vector3 tail = RightHand + Vector3.up * (1.02f * scale) - way * (length * 0.5f);
+                for (int i = 0; i < waypointArrowPoints.Length; i++)
+                    waypointArrowPoints[i] = tail + way * (length * WaypointArrowStops[i]);
+
+                waypointArrow.enabled = true;
+                waypointArrow.SetPositions(waypointArrowPoints);
+                waypointArrow.widthMultiplier = 0.045f * scale;
+                waypointArrow.startColor = waypointArrow.endColor = Accent;
+            }
+            else if (waypointArrow != null)
+                waypointArrow.enabled = false;
+
+            if (waypointText == null)
+            {
+                waypointText = MakeWristText("Eclipse_Waypoint", Color.white);
+                waypointShown = int.MinValue;
+            }
+
+            PlaceOnWrist(waypointText, 0.92f, true);
+            if (Time.time < waypointNext)
+                return;
+            waypointNext = Time.time + 0.1f;
+            waypointText.color = !waypointSet ? Color.Lerp(Color.white, Second, 0.35f) : here ? Accent : Color.Lerp(Color.white, Accent, 0.35f);
+
+            // Tenths of a metre up close and whole metres from ten on, -2 once you are there, -3 with no waypoint
+            int shown = !waypointSet ? -3 : here ? -2 : distance < 10f ? Mathf.RoundToInt(distance * 10f) : Mathf.RoundToInt(distance) * 10;
+            int rise = shown >= 0 ? Mathf.RoundToInt(toWaypoint.y) : 0;
+            if (shown == waypointShown && rise == waypointShownRise)
+                return;
+            waypointShown = shown;
+            waypointShownRise = rise;
+
+            if (shown < 0)
+            {
+                waypointText.text = shown == -3 ? "Waypoint\n<size=55%>B to save one here</size>" : "You're here\n<size=55%>B to move the waypoint</size>";
+                return;
+            }
+
+            string height = rise > 0 ? $"{rise} m up" : rise < 0 ? $"{-rise} m down" : "level";
+            waypointText.text = shown < 100
+                ? $"{shown / 10f:0.0} m\n<size=55%>{height}  ·  to your waypoint</size>"
+                : $"{shown / 10} m\n<size=55%>{height}  ·  to your waypoint</size>";
+        }
+
+        // A tall, faint column of light rising from the ground where the waypoint was saved
+        private static void LayWaypointBeam()
+        {
+            if (waypointBeam == null)
+                waypointBeam = MakeLine("Eclipse_WaypointBeam", 0.25f);
+
+            Vector3 ground = waypointAt + Vector3.down * (0.45f * waypointSize);
+            waypointBeam.SetPosition(0, ground);
+            waypointBeam.SetPosition(1, ground + Vector3.up * (40f * waypointSize));
+            waypointBeam.startWidth = waypointBeam.endWidth = 0.25f * waypointSize;
+        }
+
+        /// <summary>Takes down the waypoint, its beam and the arrow on your wrist.</summary>
+        public static void DisableWaypoint()
+        {
+            DestroyLine(ref waypointBeam);
+            DestroyLine(ref waypointArrow);
+            DestroyText(ref waypointText);
+            waypointSet = false;
+        }
+
+        // Rises smaller than this are the little hops of moving about, and don't replace your last real jump
+        private const float JumpHeightLeast = 0.25f;
+        private static TextMeshPro jumpHeightText;
+        private static float jumpHeightFrom, jumpHeightPeak, jumpHeightLast = -1f, jumpHeightBest, jumpHeightNext;
+        private static int jumpHeightFrame = -2, jumpHeightShown = int.MinValue, jumpHeightBestShown;
+        private static bool jumpHeightReady, jumpHeightUp;
+
+        /// <summary>How high your current jump has taken you above where you left the ground, and your best this session, on your left wrist.</summary>
+        public static void JumpHeight()
+        {
+            float height = BodyPosition.y;
+            bool fresh = jumpHeightFrame != Time.frameCount - 1;
+            jumpHeightFrame = Time.frameCount;
+
+            if (TouchingSomething())
+            {
+                // Until you leave the ground, where you took off from follows you about
+                jumpHeightFrom = height;
+                jumpHeightPeak = 0f;
+                jumpHeightReady = true;
+                jumpHeightUp = false;
+            }
+            else if (fresh)
+            {
+                // Turned on in mid-air, so where this jump started was missed
+                jumpHeightReady = jumpHeightUp = false;
+            }
+            else if (jumpHeightReady)
+            {
+                jumpHeightPeak = Mathf.Max(jumpHeightPeak, height - jumpHeightFrom);
+                if (jumpHeightPeak >= JumpHeightLeast * Scale)
+                {
+                    jumpHeightUp = true;
+                    jumpHeightLast = jumpHeightPeak;
+                    jumpHeightBest = Mathf.Max(jumpHeightBest, jumpHeightPeak);
+                }
+            }
+
+            if (jumpHeightText == null)
+            {
+                jumpHeightText = MakeWristText("Eclipse_JumpHeight", Color.white);
+                jumpHeightShown = int.MinValue;
+            }
+
+            PlaceOnWrist(jumpHeightText, 1.14f);
+            if (Time.time < jumpHeightNext)
+                return;
+            jumpHeightNext = Time.time + 0.1f;
+            jumpHeightText.color = jumpHeightLast < 0f ? Color.Lerp(Color.white, Second, 0.35f) : jumpHeightUp ? Accent : Color.Lerp(Color.white, Accent, 0.25f);
+
+            // In tenths, doubled with one added while still in the air, so the text is only rebuilt when it changes
+            int last = Mathf.RoundToInt(jumpHeightLast * 10f);
+            int shown = jumpHeightLast < 0f ? -1 : last * 2 + (jumpHeightUp ? 1 : 0);
+            int best = Mathf.RoundToInt(jumpHeightBest * 10f);
+            if (shown == jumpHeightShown && best == jumpHeightBestShown)
+                return;
+            jumpHeightShown = shown;
+            jumpHeightBestShown = best;
+
+            jumpHeightText.text = shown < 0 ? "Jump Height\n<size=55%>jump to measure</size>"
+                : $"{last / 10f:0.0} m\n<size=55%>{(jumpHeightUp ? "this jump" : "last jump")}  ·  best {best / 10f:0.0} m</size>";
+        }
+
+        /// <summary>Takes your jump height off your wrist; your best stays until the game closes.</summary>
+        public static void DisableJumpHeight()
+        {
+            DestroyText(ref jumpHeightText);
+            jumpHeightReady = jumpHeightUp = false;
+        }
+
+        // Time up shorter than this is just moving about
+        private const float AirTimeLeast = 0.2f;
+        private static TextMeshPro airTimeText;
+        private static float airTimeStart, airTimeLast = -1f, airTimeLongest, airTimeNext;
+        private static int airTimeFrame = -2, airTimeShown = int.MinValue, airTimeLongestShown;
+        private static bool airTimeReady, airTimeUp;
+
+        /// <summary>How long you have been in the air, and your longest time up this session, on your left wrist.</summary>
+        public static void AirTime()
+        {
+            float now = Time.unscaledTime;
+            bool fresh = airTimeFrame != Time.frameCount - 1;
+            airTimeFrame = Time.frameCount;
+
+            if (TouchingSomething())
+            {
+                airTimeReady = true;
+                airTimeUp = false;
+            }
+            else if (fresh)
+            {
+                // Turned on in mid-air, so when this jump started was missed
+                airTimeReady = airTimeUp = false;
+            }
+            else if (airTimeReady && !airTimeUp)
+            {
+                airTimeUp = true;
+                airTimeStart = now;
+            }
+
+            float flight = airTimeUp ? now - airTimeStart : 0f;
+            bool counting = flight >= AirTimeLeast;
+            if (counting)
+            {
+                airTimeLast = flight;
+                airTimeLongest = Mathf.Max(airTimeLongest, flight);
+            }
+
+            if (airTimeText == null)
+            {
+                airTimeText = MakeWristText("Eclipse_AirTime", Color.white);
+                airTimeShown = int.MinValue;
+            }
+
+            PlaceOnWrist(airTimeText, 1.26f);
+            if (Time.time < airTimeNext)
+                return;
+            airTimeNext = Time.time + 0.1f;
+            airTimeText.color = airTimeLast < 0f ? Color.Lerp(Color.white, Second, 0.35f) : counting ? Accent : Color.Lerp(Color.white, Accent, 0.25f);
+
+            // In tenths, doubled with one added while still in the air, so the text is only rebuilt when it changes
+            int last = Mathf.FloorToInt(airTimeLast * 10f);
+            int shown = airTimeLast < 0f ? -1 : last * 2 + (counting ? 1 : 0);
+            int longest = Mathf.FloorToInt(airTimeLongest * 10f);
+            if (shown == airTimeShown && longest == airTimeLongestShown)
+                return;
+            airTimeShown = shown;
+            airTimeLongestShown = longest;
+
+            airTimeText.text = shown < 0 ? "Air Time\n<size=55%>jump to start</size>"
+                : $"{last / 10f:0.0} s\n<size=55%>{(counting ? "in the air" : "last time up")}  ·  longest {longest / 10f:0.0} s</size>";
+        }
+
+        /// <summary>Takes your air time off your wrist; your longest stays until the game closes.</summary>
+        public static void DisableAirTime()
+        {
+            DestroyText(ref airTimeText);
+            airTimeReady = airTimeUp = false;
+        }
+
+        private static TextMeshPro roomCardText;
+        private static string roomCardName, roomCardMode, roomCardRegion, roomCardWhere;
+        private static int roomCardPlayers = int.MinValue, roomCardMax;
+        private static bool roomCardPrivate;
+        private static float roomCardNext;
+
+        /// <summary>The room you are in, how full it is, its map and game mode and your region, on your right wrist.</summary>
+        public static void RoomCard()
+        {
+            if (roomCardText == null)
+            {
+                roomCardText = MakeWristText("Eclipse_RoomCard", Color.white);
+                roomCardPlayers = int.MinValue;
+            }
+
+            PlaceOnWrist(roomCardText, 1.16f, true);
+            if (Time.time < roomCardNext)
+                return;
+            roomCardNext = Time.time + 0.5f;
+
+            // Only what Photon already knows about the room you are in, and nothing about anyone in it but how many
+            var room = PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom : null;
+            string region = PhotonNetwork.IsConnected ? PhotonNetwork.CloudRegion : null;
+            string name = room?.Name;
+            int players = room != null ? room.PlayerCount : -1;
+            int max = room != null ? room.MaxPlayers : 0;
+            bool hidden = room != null && !room.IsVisible;
+            object mode = null;
+            if (room != null && room.CustomProperties != null)
+                room.CustomProperties.TryGetValue("gameMode", out mode);
+            string modeText = mode as string;
+
+            roomCardText.color = room == null ? Color.Lerp(Color.white, Second, 0.35f) : Color.Lerp(Color.white, Accent, 0.3f);
+            if (players == roomCardPlayers && max == roomCardMax && hidden == roomCardPrivate && name == roomCardName && modeText == roomCardMode && region == roomCardRegion)
+                return;
+
+            if (modeText != roomCardMode)
+                roomCardWhere = RoomWhere(modeText);
+
+            roomCardPlayers = players;
+            roomCardMax = max;
+            roomCardPrivate = hidden;
+            roomCardName = name;
+            roomCardMode = modeText;
+            roomCardRegion = region;
+
+            if (room == null)
+            {
+                roomCardText.text = $"Not in a room\n<size=55%>{(region == null ? "offline" : "online  ·  " + RegionName(region))}</size>";
+                return;
+            }
+
+            string count = max > 0 ? $"{players}/{max} players" : $"{players} {(players == 1 ? "player" : "players")}";
+            string where = roomCardWhere == null ? RegionName(region) : $"{roomCardWhere}  ·  {RegionName(region)}";
+            roomCardText.text = $"<size=55%>room</size> {name}\n<size=55%>{count}  ·  {(hidden ? "private" : "public")}\n{where}</size>";
+        }
+
+        // The room's game mode reads like "forest;DEFAULT;Infection;;": its map, queue and game.
+        // The usual queue isn't worth saying; anything that isn't in that shape is left out.
+        private static string RoomWhere(string mode)
+        {
+            if (string.IsNullOrEmpty(mode))
+                return null;
+
+            string[] parts = mode.Split(';');
+            if (parts.Length < 3)
+                return null;
+
+            string where = null;
+            for (int i = 0; i < 3; i++)
+            {
+                if (parts[i].Length == 0 || (i == 1 && parts[i] == "DEFAULT"))
+                    continue;
+
+                string part = Spaced(parts[i]);
+                where = where == null ? part : $"{where}  ·  {part}";
+            }
+
+            return where;
+        }
+
+        // "FreezeTag", "MODDED_Infection" or "forest" as "Freeze Tag", "Modded Infection" or "Forest"
+        private static string Spaced(string word)
+        {
+            System.Text.StringBuilder built = new System.Text.StringBuilder(word.Length + 4);
+            for (int i = 0; i < word.Length; i++)
+            {
+                char letter = word[i];
+                bool wordStart = built.Length == 0 || built[built.Length - 1] == ' ';
+                if (letter == '_' || letter == ' ')
+                {
+                    if (!wordStart)
+                        built.Append(' ');
+                    continue;
+                }
+
+                if (!wordStart && char.IsUpper(letter) && char.IsLower(word[i - 1]))
+                {
+                    built.Append(' ');
+                    wordStart = true;
+                }
+
+                built.Append(wordStart ? char.ToUpperInvariant(letter) : char.ToLowerInvariant(letter));
+            }
+
+            return built.ToString().TrimEnd();
+        }
+
+        // Photon's region codes, like "usw" or "eu/*", by name
+        private static string RegionName(string region)
+        {
+            if (string.IsNullOrEmpty(region))
+                return "unknown region";
+
+            int slash = region.IndexOf('/');
+            string code = slash >= 0 ? region.Substring(0, slash) : region;
+            switch (code)
+            {
+                case "us": return "US East";
+                case "usw": return "US West";
+                case "eu": return "Europe";
+                default: return code.ToUpperInvariant();
+            }
+        }
+
+        /// <summary>Takes the room card off your wrist.</summary>
+        public static void DisableRoomCard()
+        {
+            DestroyText(ref roomCardText);
+            roomCardName = roomCardMode = roomCardRegion = roomCardWhere = null;
+        }
+
+        // The game only plays a tap once a hand has been off the surface for this many frames,
+        // and no more than once every this many seconds per hand
+        private const int TapClearFrames = 5;
+        private const float TapCooldown = 0.15f;
+        private static readonly int[] tapCounterSeconds = new int[60];
+        private static TextMeshPro tapCounterText;
+        private static float tapCounterLeftAt = -10f, tapCounterRightAt = -10f, tapCounterNext;
+        private static int tapCounterTotal, tapCounterSecond = -1, tapCounterFrame = -2, tapCounterLeftOff, tapCounterRightOff;
+        private static int tapCounterShown = int.MinValue, tapCounterRateShown;
+
+        /// <summary>How many times your hands have tapped a surface this session, and how many in the last minute, on your right wrist.</summary>
+        public static void TapCounter()
+        {
+            float now = Time.unscaledTime;
+            int second = Mathf.FloorToInt(now);
+            int seconds = tapCounterSeconds.Length;
+
+            // Empties the seconds that have gone by, so the last minute only holds recent taps
+            if (tapCounterSecond < 0 || second - tapCounterSecond >= seconds)
+                System.Array.Clear(tapCounterSeconds, 0, seconds);
+            else
+                for (int past = tapCounterSecond + 1; past <= second; past++)
+                    tapCounterSeconds[past % seconds] = 0;
+            tapCounterSecond = second;
+
+            // Taps are when a hand lands on something, the same touch that moves you. The first
+            // frame after a gap has nothing to compare against, and the game counts none while
+            // its overlay is up.
+            bool fresh = tapCounterFrame != Time.frameCount - 1;
+            tapCounterFrame = Time.frameCount;
+            if (fresh || GTPlayer.Instance.inOverlay)
+                tapCounterLeftOff = tapCounterRightOff = 0;
+            else
+            {
+                CountTap(GTPlayer.Instance.IsHandTouching(true), ref tapCounterLeftOff, ref tapCounterLeftAt, now);
+                CountTap(GTPlayer.Instance.IsHandTouching(false), ref tapCounterRightOff, ref tapCounterRightAt, now);
+            }
+
+            if (tapCounterText == null)
+            {
+                tapCounterText = MakeWristText("Eclipse_TapCounter", Color.white);
+                tapCounterShown = int.MinValue;
+            }
+
+            PlaceOnWrist(tapCounterText, 1.28f, true);
+            if (Time.time < tapCounterNext)
+                return;
+            tapCounterNext = Time.time + 0.1f;
+
+            int rate = 0;
+            for (int i = 0; i < seconds; i++)
+                rate += tapCounterSeconds[i];
+
+            tapCounterText.color = Color.Lerp(Color.white, Accent, Mathf.Clamp01(rate / 120f));
+            if (tapCounterTotal == tapCounterShown && rate == tapCounterRateShown)
+                return;
+            tapCounterShown = tapCounterTotal;
+            tapCounterRateShown = rate;
+
+            tapCounterText.text = $"{tapCounterTotal} {(tapCounterTotal == 1 ? "tap" : "taps")}\n<size=55%>{rate} in the last minute</size>";
+        }
+
+        // A rising edge of a hand touching, kept only if it was clear for long enough and isn't too soon after the last
+        private static void CountTap(bool touching, ref int framesOff, ref float lastTap, float now)
+        {
+            if (!touching)
+            {
+                framesOff++;
+                return;
+            }
+
+            if (framesOff >= TapClearFrames && now - lastTap >= TapCooldown)
+            {
+                lastTap = now;
+                tapCounterTotal++;
+                tapCounterSeconds[tapCounterSecond % tapCounterSeconds.Length]++;
+            }
+
+            framesOff = 0;
+        }
+
+        /// <summary>Takes the tap counter off your wrist; your count stays until the game closes.</summary>
+        public static void DisableTapCounter() => DestroyText(ref tapCounterText);
     }
 }

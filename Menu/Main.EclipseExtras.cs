@@ -75,7 +75,7 @@ namespace Eclipse.Menu
         /// <summary>The mods you switched most recently from the menu, newest first, after the exit button.</summary>
         public static readonly List<string> recentMods = new List<string> { "Exit Recent Mods" };
 
-        private static readonly HashSet<string> spaceToysTried = new HashSet<string>();
+        private static readonly Dictionary<string, HashSet<string>> categoriesTried = new Dictionary<string, HashSet<string>>();
 
         /// <summary>Moves a mod to the top of Recent Mods when you turn it on or off from the menu.</summary>
         internal static void NoteRecentMod(ButtonInfo button)
@@ -89,7 +89,10 @@ namespace Eclipse.Menu
                 recentMods.RemoveRange(RecentLimit + 1, recentMods.Count - RecentLimit - 1);
 
             if (button.enabled)
-                NoteSpaceToy(button);
+            {
+                NoteTried(button, EclipseMods.ToysCategory, "Toy Box");
+                NoteTried(button, EclipseMods.SkyCategory, "Sky Watcher");
+            }
         }
 
         /// <summary>Puts back the saved Recent Mods list, newest first.</summary>
@@ -101,16 +104,73 @@ namespace Eclipse.Menu
                 recentMods.AddRange(saved.Where(name => name != "Exit Recent Mods").Distinct().Take(RecentLimit));
         }
 
-        // Toy Box: every Space Toy turned on at least once this session
-        private static void NoteSpaceToy(ButtonInfo button)
+        // Toy Box and Sky Watcher: every mod in a category turned on at least once this session
+        private static void NoteTried(ButtonInfo button, string categoryName, string achievement)
         {
-            int category = Buttons.GetCategory(EclipseMods.ToysCategory);
+            int category = Buttons.GetCategory(categoryName);
             if (category < 0 || Array.IndexOf(Buttons.buttons[category], button) < 0)
                 return;
 
-            spaceToysTried.Add(button.buttonText);
-            if (spaceToysTried.Count >= Buttons.buttons[category].Count(toy => toy.isTogglable))
-                EclipseUnlock("Toy Box");
+            if (!categoriesTried.TryGetValue(categoryName, out HashSet<string> tried))
+                categoriesTried[categoryName] = tried = new HashSet<string>();
+
+            tried.Add(button.buttonText);
+            if (tried.Count >= Buttons.buttons[category].Count(mod => mod.isTogglable))
+                EclipseUnlock(achievement);
+        }
+
+        // ── Mod of the Day ──────────────────────────────────────────────────────
+
+        private static DateTime modOfTheDayDate;
+        private static string modOfTheDay;
+
+        /// <summary>
+        /// Today's pick from the Eclipse mods: one that needs no button and that only you can see,
+        /// chosen by the date so it stays the same all day.
+        /// </summary>
+        internal static ButtonInfo ModOfTheDay()
+        {
+            DateTime today = DateTime.Now.Date;
+            if (modOfTheDay == null || modOfTheDayDate != today)
+            {
+                List<ButtonInfo> pool = new List<ButtonInfo>();
+                foreach (string name in new[] { EclipseMods.Category, EclipseMods.ToysCategory, EclipseMods.SkyCategory, EclipseMods.ToolsCategory })
+                {
+                    int category = Buttons.GetCategory(name);
+                    if (category >= 0)
+                        pool.AddRange(Buttons.buttons[category].Where(mod => mod.isTogglable && mod.legal && !mod.buttonText.Contains("<color")));
+                }
+
+                if (pool.Count == 0)
+                    return null;
+
+                unchecked
+                {
+                    uint seed = (uint)(today.Year * 1000 + today.DayOfYear) * 2654435761u;
+                    modOfTheDay = pool[(int)(seed % (uint)pool.Count)].buttonText;
+                }
+                modOfTheDayDate = today;
+            }
+
+            return Buttons.GetIndex(modOfTheDay);
+        }
+
+        /// <summary>Turns on today's Mod of the Day.</summary>
+        public static void TryModOfTheDay()
+        {
+            ButtonInfo pick = ModOfTheDay();
+            if (pick == null)
+                return;
+
+            string name = pick.overlapText ?? pick.buttonText;
+            if (pick.enabled)
+            {
+                NotificationManager.SendNotification($"Today's mod, {name}, is already on.", 3000);
+                return;
+            }
+
+            Toggle(pick, true);
+            NotificationManager.SendNotification($"Mod of the Day: {name}!", 3000);
         }
 
         // ── Dashboard and What's New ────────────────────────────────────────────
@@ -126,6 +186,10 @@ namespace Eclipse.Menu
                 ? $"Room  {PhotonNetwork.CurrentRoom.Name}  |  {PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers}"
                 : "Not in a room");
             SetDashboardCard("EclipseDashTime", $"{DateTime.Now:HH:mm}  |  {DateTime.Now:ddd d MMM}");
+
+            ButtonInfo today = ModOfTheDay();
+            if (today != null)
+                SetDashboardCard("EclipseDashToday", $"Today  {today.overlapText ?? today.buttonText}");
 
             int on = 0;
             for (int category = 0; category < Buttons.buttons.Length && category < Buttons.categoryNames.Length; category++)

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 — 2026-10-23
+
+- **Space Sky (8), a new category:** Ringed Planet, Twin Moons, Space Station, Satellites, Comet Flyby, Galaxy Band, Rocket Launches and Nebula Sky. Big things in your sky that only you can see.
+- **6 more Space Toys:** Star Scope (hold LT for a live zoomed-in view), Snow Globe, Pinwheel, Moon Balloon, Boomerang Star (A) and Fidget Spinner.
+- **6 more Wrist Tools:** Lap Timer (A drops a start gate), Waypoint (B), Jump Height, Air Time, Room Card and Tap Counter.
+- **Mod of the Day:** a different Eclipse mod every day, on the dashboard and in Eclipse Mods.
+- **Random Theme** in Menu Settings picks one of Eclipse's space themes for you.
+- **3 new themes:** Solar Flare, Moonstone and Dark Matter.
+- **3 new achievements:** Sky Watcher, Speedster and Lap Legend.
+
 ## 1.1.0 — 2026-10-23
 
 Three new categories on the Eclipse tab, and more to the menu itself.

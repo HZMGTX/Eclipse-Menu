@@ -3453,6 +3453,9 @@ exit 0";
             SpaceTheme("Neptune", Hex("3A86FF"), Hex("8ECAE6"), Hex("06101F"), Hex("0D1B33"), Hex("16284A"), Hex("8ECAE6"), Hex("3A86FF"), Hex("E3F1FF"), Hex("06101F")),
             // The average colour of the universe; the one light theme
             SpaceTheme("Cosmic Latte", Hex("9C6B3E"), Hex("C8A27A"), Hex("FFF8E7"), Hex("F3E9D2"), Hex("E6D8BC"), Hex("6B4F3A"), Hex("9C6B3E"), Hex("3B2A1E"), Hex("FFF8E7")),
+            SpaceTheme("Solar Flare", Hex("FF4500"), Hex("FFC300"), Hex("160700"), Hex("2A0E02"), Hex("3A1604"), Hex("FFC300"), Hex("FF4500"), Hex("FFF1D6"), Hex("160700")),
+            SpaceTheme("Moonstone", Hex("B8C6FF"), Hex("E0E7FF"), Hex("101425"), Hex("1B2140"), Hex("262E52"), Hex("E0E7FF"), Hex("B8C6FF"), Hex("EEF1FF"), Hex("101425")),
+            SpaceTheme("Dark Matter", Hex("C04DFF"), Hex("FF4DB8"), Hex("07040C"), Hex("120A1C"), Hex("1E1230"), Hex("FF4DB8"), Hex("C04DFF"), Hex("F3E6FF"), Hex("07040C")),
         };
 
         /// <summary>Index of the "Eclipse" theme, the menu's default.</summary>
@@ -3493,6 +3496,31 @@ exit 0";
         }
 
         public static int ThemeCount => Themes.Count;
+
+        /// <summary>Switches to a random one of Eclipse's own space themes, never the one you have on.</summary>
+        public static void RandomSpaceTheme()
+        {
+            int count = Themes.Count - EclipseThemeIndex;
+            if (count < 2)
+                return;
+
+            int pick = EclipseThemeIndex + UnityEngine.Random.Range(0, count);
+            if (pick == themeType)
+                pick = EclipseThemeIndex + (pick - EclipseThemeIndex + 1 + UnityEngine.Random.Range(0, count - 1)) % count;
+
+            // Through the theme picker, so its label and your saved settings follow
+            ButtonInfo picker = Buttons.GetIndex("Change Menu Theme");
+            if (picker?.onValueChanged != null)
+            {
+                picker.value = Themes[pick].Name;
+                picker.onValueChanged();
+                Preferences.SaveButton(picker);
+            }
+            else
+                ApplyMenuTheme(pick);
+
+            NotificationManager.SendNotification($"<color=grey>[</color><color=green>THEME</color><color=grey>]</color> {Themes[pick].Name}", 3000);
+        }
 
         public static void ApplyMenuTheme(int themeType)
         {
