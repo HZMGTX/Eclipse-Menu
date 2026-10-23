@@ -32,7 +32,7 @@ namespace Eclipse
         public const string Name = "Eclipse Menu";
         public const string Description = "A brand-new mod menu for Gorilla Tag, remade from Nova Menu.";
         public const string BuildTimestamp = "2026-10-19T06:09:14Z";
-        public const string Version = "1.0.1";
+        public const string Version = "1.1.0";
 
         public const string BaseDirectory =
 #if LEGAL || LEGAL_DEBUG

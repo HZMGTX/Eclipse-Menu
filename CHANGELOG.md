@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.0 — 2026-10-23
+
+Three new categories on the Eclipse tab, and more to the menu itself.
+
+- **Space Toys (10):** Mini Solar System, Planet Builder (both grips), Kite, Yo-yo (RG), Paper Planes (RT), Magic 8-Ball (shake your left hand), Space Dice (X), Glow Sticks (LG), Echo Ghost and Meteor Defense (B). Only you can see them.
+- **Wrist Tools (8):** Battery Meter, Coordinates, Hand Speed, Measuring Tape, Mic Meter, Ping Alarm, Break Reminder and Countdown Timer (X).
+- **Space Movement (5):** Charge Jump (LT), Zipline (RT, ride with RG), Air Strafe, Orbit Mode (RG) and Gravity Well (Y).
+- **Recent Mods** on the Home tab: the last 12 mods you switched, newest first. It is remembered between sessions.
+- **Surprise Me** in Eclipse Mods and Space Toys turns on something you haven't tried, and every new category has a Turn Off All.
+- **5 new themes:** Pulsar, Event Horizon, Mars Dust, Neptune and Cosmic Latte, the first light theme.
+- **4 new achievements:** Planet Maker, Meteor Defender, Zipliner and Toy Box.
+
+As before, every one of these acts on you alone and sends nothing over the network.
+
 ## 1.0.1 — 2026-10-23
 
 - **Glowing edges:** the rims, corner brackets, header line and the switches of mods you have on now glow, with a soft halo around them.

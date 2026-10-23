@@ -32,7 +32,7 @@ using Random = UnityEngine.Random;
 
 namespace Eclipse.Mods
 {
-    /// <summary>The second half of the Eclipse mods: tools, visuals around you and toys.</summary>
+    /// <summary>The second part of the Eclipse mods: tools, visuals around you and toys.</summary>
     public static partial class EclipseMods
     {
         // ── Tools ───────────────────────────────────────────────────────────────

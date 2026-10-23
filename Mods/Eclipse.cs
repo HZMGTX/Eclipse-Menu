@@ -25,6 +25,7 @@ using Eclipse.Menu;
 using GorillaTag.Rendering;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using static Eclipse.Menu.Main;
@@ -37,12 +38,16 @@ namespace Eclipse.Mods
     /// <remarks>
     /// Space-themed, and every one of them acts on you alone: how you move, and things only you
     /// can see. Nothing here touches another player or sends anything over the network. The class
-    /// is split over two files; this one holds the shared helpers, the sky, the effects on you and
-    /// the movement mods.
+    /// is split over several files; this one holds the shared helpers, the sky, the effects on you
+    /// and the movement mods, and the others hold the rest of Eclipse Mods, the Space Toys, the
+    /// Wrist Tools and Space Movement.
     /// </remarks>
     public static partial class EclipseMods
     {
         public const string Category = "Eclipse Mods";
+        public const string ToysCategory = "Space Toys";
+        public const string ToolsCategory = "Wrist Tools";
+        public const string MotionCategory = "Space Movement";
 
         // ── Colour ──────────────────────────────────────────────────────────────
 
@@ -157,9 +162,12 @@ namespace Eclipse.Mods
         public static void StartStarCatcher() => catcherScore = 0;
 
         /// <summary>Turns off every Eclipse mod that is on.</summary>
-        public static void TurnOffAll()
+        public static void TurnOffAll() => TurnOffAllIn(Category, "Every Eclipse mod is off.");
+
+        /// <summary>Turns off every mod that is on in one category.</summary>
+        public static void TurnOffAllIn(string categoryName, string message)
         {
-            int category = Buttons.GetCategory(Category);
+            int category = Buttons.GetCategory(categoryName);
             if (category < 0)
                 return;
 
@@ -167,7 +175,31 @@ namespace Eclipse.Mods
                 if (button.enabled && button.isTogglable)
                     Main.Toggle(button);
 
-            NotificationManager.SendNotification("Every Eclipse mod is off.", 3000);
+            NotificationManager.SendNotification(message, 3000);
+        }
+
+        /// <summary>
+        /// Turns on a random mod from a category, for something new to try. Only mods that need no
+        /// button and that only you can see are picked.
+        /// </summary>
+        public static void SurpriseMe(string categoryName)
+        {
+            int category = Buttons.GetCategory(categoryName);
+            if (category < 0)
+                return;
+
+            ButtonInfo[] choices = Buttons.buttons[category]
+                .Where(button => button.isTogglable && button.legal && !button.enabled && !button.buttonText.Contains("<color"))
+                .ToArray();
+            if (choices.Length == 0)
+            {
+                NotificationManager.SendNotification("Everything here is already on.", 3000);
+                return;
+            }
+
+            ButtonInfo pick = choices[Random.Range(0, choices.Length)];
+            Main.Toggle(pick, true);
+            NotificationManager.SendNotification($"Surprise: {pick.overlapText ?? pick.buttonText}!", 3000);
         }
 
         // ── Sky and scene ───────────────────────────────────────────────────────

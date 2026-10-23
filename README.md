@@ -51,15 +51,27 @@ Every one acts on you alone: how you move, or things only you can see. None of t
 
 **Eclipse Mods Colour** changes the colours they draw in: corona, moonlight, nebula, aurora, yours or rainbow.
 
+### Space Toys, Wrist Tools and Space Movement
+Three more categories on the Eclipse tab, new in 1.1.0. They act on you alone too.
+
+| | |
+|---|---|
+| **Space Toys** | Mini Solar System, Planet Builder (both grips), Kite, Yo-yo (RG), Paper Planes (RT), Magic 8-Ball (shake your left hand), Space Dice (X), Glow Sticks (LG), Echo Ghost, Meteor Defense (B) |
+| **Wrist Tools** | Battery Meter, Coordinates, Hand Speed, Measuring Tape, Mic Meter, Ping Alarm, Break Reminder, Countdown Timer (X) |
+| **Space Movement** | Charge Jump (LT), Zipline (RT, ride with RG), Air Strafe, Orbit Mode (RG), Gravity Well (Y) |
+
+**Surprise Me** turns on a random Eclipse mod or Space Toy you don't have on yet.
+
 ### And more
 - **Dashboard:** live cards for your FPS, ping, room, the time and how many mods you have on.
 - **Quick Wheel:** hold your left stick click for a wheel of your favourite mods, move your right hand toward one and let go to switch it.
-- **10 space themes:** Eclipse, Solar Corona, Blood Moon, Lunar Silver, Aurora Night, Nebula Pink, Deep Space, Starlight, Comet Ice and Supernova.
+- **Recent Mods** on the Home tab: the last 12 mods you switched, newest first.
+- **15 space themes:** Eclipse, Solar Corona, Blood Moon, Lunar Silver, Aurora Night, Nebula Pink, Deep Space, Starlight, Comet Ice, Supernova, Pulsar, Event Horizon, Mars Dust, Neptune and Cosmic Latte (a light one).
 - **3 new sound packs:** Eclipse, Cosmic and Soft Glass.
 - **Card notifications** in the menu's colours (Classic Notifications brings back the plain lines).
 - **Pointer styles:** star, ring, comet or the classic orb.
 - **An intro** when the game starts (Disable Intro turns it off).
-- **8 new achievements** and a **What's New** page.
+- **12 new achievements** and a **What's New** page.
 
 ## Credits
 

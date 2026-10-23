@@ -72,8 +72,8 @@ namespace Eclipse.Menu
         // Achievements build their page when opened, so they go through their button)
         private static readonly EclipseGroup[] EclipseGroups =
         {
-            new EclipseGroup { Name = "Home", Entries = new[] { DashboardCategory, "Main", "Favorite Mods", "Enabled Mods", "Players", "Friends", "Achievements", "What's New", "Credits" } },
-            new EclipseGroup { Name = "Eclipse", Entries = new[] { "Eclipse Mods" } },
+            new EclipseGroup { Name = "Home", Entries = new[] { DashboardCategory, "Main", "Favorite Mods", "Enabled Mods", RecentCategory, "Players", "Friends", "Achievements", "What's New", "Credits" } },
+            new EclipseGroup { Name = "Eclipse", Entries = new[] { EclipseMods.Category, EclipseMods.ToysCategory, EclipseMods.MotionCategory, EclipseMods.ToolsCategory } },
             new EclipseGroup { Name = "Movement", Entries = new[] { "Movement Mods", "Macros" } },
             new EclipseGroup { Name = "Visuals", Entries = new[] { "Visual Mods" } },
             new EclipseGroup { Name = "Fun", Entries = new[] { "Fun Mods", "Custom Mods", "Sound Mods", "Soundboard", "Voice Changers", "Custom Map Mods" } },
@@ -90,6 +90,10 @@ namespace Eclipse.Menu
             { "Main", "Hub" },
             { "Favorite Mods", "Favorites" },
             { "Enabled Mods", "Enabled" },
+            { RecentCategory, "Recent" },
+            { EclipseMods.ToysCategory, "Toys" },
+            { EclipseMods.MotionCategory, "Motion" },
+            { EclipseMods.ToolsCategory, "Tools" },
             { "Room Mod Checker", "Mod Checker" },
             { "Custom Map Mods", "Maps" },
             { "Voice Changers", "Voices" },

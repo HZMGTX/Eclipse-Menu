@@ -93,6 +93,7 @@ namespace Eclipse.Classes.Menu
         {
             public Dictionary<string, SavedButtonState> buttons = new Dictionary<string, SavedButtonState>();
             public List<string> favorites = new List<string>();
+            public List<string> recentMods = new List<string>();
             public List<string> quickActions = new List<string>();
             public List<string> skipButtons = new List<string>();
             public Dictionary<string, List<string>> modBindings = new Dictionary<string, List<string>>();
@@ -144,6 +145,7 @@ namespace Eclipse.Classes.Menu
             }
 
             data.favorites = favorites.ToList();
+            data.recentMods = recentMods.ToList();
             data.quickActions = quickActions.ToList();
             data.skipButtons = skipButtons.ToList();
             data.modBindings = ModBindings.ToDictionary(kv => kv.Key, kv => kv.Value);
@@ -496,6 +498,8 @@ namespace Eclipse.Classes.Menu
                     favorites.Clear();
                     favorites.AddRange(data.favorites ?? new List<string>());
 
+                    RestoreRecentMods(data.recentMods);
+
                     quickActions.Clear();
                     quickActions.AddRange(data.quickActions ?? new List<string>());
 
@@ -562,6 +566,7 @@ namespace Eclipse.Classes.Menu
                 }
 
                 merged.favorites = liveSnapshot.favorites;
+                merged.recentMods = liveSnapshot.recentMods;
                 merged.quickActions = liveSnapshot.quickActions;
                 merged.skipButtons = liveSnapshot.skipButtons;
                 merged.modBindings = liveSnapshot.modBindings;

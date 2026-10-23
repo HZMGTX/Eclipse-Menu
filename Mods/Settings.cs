@@ -3447,6 +3447,12 @@ exit 0";
             SpaceTheme("Starlight", Hex("FFF3B0"), Hex("FFD6A5"), Hex("0F1020"), Hex("1D1F3A"), Hex("282A4D"), Hex("FFFFFF"), Hex("FFF3B0"), Hex("F5F3FF"), Hex("1D1F3A")),
             SpaceTheme("Comet Ice", Hex("9BF6FF"), Hex("A0C4FF"), Hex("07141C"), Hex("0E2433"), Hex("163447"), Hex("E0FBFF"), Hex("9BF6FF"), Hex("E6FAFF"), Hex("07141C")),
             SpaceTheme("Supernova", Hex("FFD23F"), Hex("FF5E5B"), Hex("12091F"), Hex("24103A"), Hex("331A4F"), Hex("FFD23F"), Hex("EE4266"), Hex("FFF0E5"), Hex("24103A")),
+            SpaceTheme("Pulsar", Hex("00E5FF"), Hex("7DF9FF"), Hex("03121A"), Hex("082430"), Hex("0E3240"), Hex("E0FBFF"), Hex("00E5FF"), Hex("DFF9FF"), Hex("03121A")),
+            SpaceTheme("Event Horizon", Hex("FF7A18"), Hex("FFB347"), Hex("050505"), Hex("120C08"), Hex("1E1610"), Hex("FFB347"), Hex("FF7A18"), Hex("F5E9DC"), Hex("120C08")),
+            SpaceTheme("Mars Dust", Hex("E2725B"), Hex("F4A261"), Hex("1A0D0A"), Hex("2B1610"), Hex("3A1F17"), Hex("F4A261"), Hex("E2725B"), Hex("FBE7DE"), Hex("1A0D0A")),
+            SpaceTheme("Neptune", Hex("3A86FF"), Hex("8ECAE6"), Hex("06101F"), Hex("0D1B33"), Hex("16284A"), Hex("8ECAE6"), Hex("3A86FF"), Hex("E3F1FF"), Hex("06101F")),
+            // The average colour of the universe; the one light theme
+            SpaceTheme("Cosmic Latte", Hex("9C6B3E"), Hex("C8A27A"), Hex("FFF8E7"), Hex("F3E9D2"), Hex("E6D8BC"), Hex("6B4F3A"), Hex("9C6B3E"), Hex("3B2A1E"), Hex("FFF8E7")),
         };
 
         /// <summary>Index of the "Eclipse" theme, the menu's default.</summary>
@@ -4714,6 +4720,7 @@ exit 0";
                 "Players",
                 "Favorite Mods",
                 "Enabled Mods",
+                "Recent Mods",
                 "Room Mods",
                 "Important Mods",
                 "Safety Mods",

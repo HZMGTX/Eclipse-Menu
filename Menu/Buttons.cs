@@ -63,10 +63,14 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Opens the settings tab.", legal = true},
                 new ButtonInfo { buttonText = "Favorite Mods", method =() => CurrentCategoryName = "Favorite Mods", isTogglable = false, toolTip = "Opens your favorite mods. Favorite mods with right grip.", legal = true},
                 new ButtonInfo { buttonText = "Enabled Mods", method =() => CurrentCategoryName = "Enabled Mods", isTogglable = false, toolTip = "Shows all mods you have enabled.", legal = true},
+                new ButtonInfo { buttonText = "Recent Mods", method =() => CurrentCategoryName = "Recent Mods", isTogglable = false, toolTip = "Shows the mods you turned on or off most recently, newest first.", legal = true},
                 new ButtonInfo { buttonText = "Players", method = Settings.PlayersTab, isTogglable = false, toolTip = "Opens the players tab.", legal = true},
                 new ButtonInfo { buttonText = "Friends", method =() => CurrentCategoryName = "Friends", isTogglable = false, toolTip = "Opens the friends tab.", legal = true},
 
                 new ButtonInfo { buttonText = "Eclipse Mods", method =() => CurrentCategoryName = "Eclipse Mods", isTogglable = false, toolTip = "Opens Eclipse's own mods: sky, stars, planets and space movement.", legal = true},
+                new ButtonInfo { buttonText = "Space Toys", method =() => CurrentCategoryName = "Space Toys", isTogglable = false, toolTip = "Opens the Space Toys: things to play with that only you can see.", legal = true},
+                new ButtonInfo { buttonText = "Space Movement", method =() => CurrentCategoryName = "Space Movement", isTogglable = false, toolTip = "Opens Space Movement: new ways to get around."},
+                new ButtonInfo { buttonText = "Wrist Tools", method =() => CurrentCategoryName = "Wrist Tools", isTogglable = false, toolTip = "Opens the Wrist Tools: handy readouts and timers on your wrist.", legal = true},
 
                 new ButtonInfo { buttonText = "Movement Mods", method =() => CurrentCategoryName = "Movement Mods", isTogglable = false, toolTip = "Opens the movement mods."},
                 new ButtonInfo { buttonText = "Visual Mods", method =() => CurrentCategoryName = "Visual Mods", isTogglable = false, toolTip = "Opens the visual mods.", legal = true},
@@ -2981,6 +2985,7 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Exit Eclipse Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
                 ButtonHelper.Create("Eclipse Mods Colour", () => EclipseMods.ColorNames, 0, EclipseMods.SetColorMode, "Changes the colour every Eclipse mod draws in: corona, moonlight, nebula, aurora, yours or rainbow.", legal: true),
                 new ButtonInfo { buttonText = "Turn Off All Eclipse Mods", method = EclipseMods.TurnOffAll, isTogglable = false, toolTip = "Turns off every Eclipse mod that is on.", legal = true},
+                new ButtonInfo { buttonText = "Eclipse Surprise Me", overlapText = "Surprise Me", method =() => EclipseMods.SurpriseMe(EclipseMods.Category), isTogglable = false, toolTip = "Turns on a random Eclipse mod you don't have on yet.", legal = true},
 
                 new ButtonInfo { buttonText = "Eclipse Sky", method = EclipseMods.EclipseSky, disableMethod = EclipseMods.DisableEclipseSky, toolTip = "A total eclipse hangs in your sky: a dark moon ringed by a burning corona. Only you can see it.", legal = true},
                 new ButtonInfo { buttonText = "Star Field", method = EclipseMods.StarField, disableMethod = EclipseMods.DisableStarField, toolTip = "Twinkling stars all around you, whatever map you are on. Only you can see them.", legal = true},
@@ -3043,6 +3048,10 @@ namespace Eclipse.Menu
             {
                 new ButtonInfo { buttonText = "Exit What's New", method = OpenEclipseDashboard, isTogglable = false, toolTip = "Returns you back to the dashboard.", legal = true},
                 new ButtonInfo { buttonText = "EclipseNewVersion", overlapText = $"Eclipse Menu {PluginInfo.Version}", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewToys", overlapText = "10 Space Toys to play with", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewTools", overlapText = "8 Wrist Tools, 5 Space Movement mods", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewRecent", overlapText = "Recent Mods and Surprise Me", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewMoreThemes", overlapText = "5 new themes, 4 new achievements", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewGlow", overlapText = "Glowing edges and shiny tiles", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewModel", overlapText = "A new 3D menu with rounded tiles", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewLayouts", overlapText = "Eclipse Panel, Orbit Wheel and Holo Grid", label = true, legal = true},
@@ -3051,6 +3060,53 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "EclipseNewWheel", overlapText = "Quick Wheel: hold your left stick", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewLooks", overlapText = "Card notifications, 4 pointer styles", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewAchievements", overlapText = "8 new achievements to unlock", label = true, legal = true}
+            },
+
+            new[] // Space Movement [62]
+            {
+                new ButtonInfo { buttonText = "Exit Space Movement", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+                new ButtonInfo { buttonText = "Turn Off All Space Movement", method =() => EclipseMods.TurnOffAllIn(EclipseMods.MotionCategory, "Every Space Movement mod is off."), isTogglable = false, toolTip = "Turns off every Space Movement mod that is on.", legal = true},
+                new ButtonInfo { buttonText = "Charge Jump <color=grey>[</color><color=green>LT</color><color=grey>]</color>", enableMethod = EclipseMods.ResetMotion, method = EclipseMods.ChargeJump, disableMethod = EclipseMods.DisableChargeJump, toolTip = "Hold your left trigger on the ground to charge a jump, then let go to leap. The longer you charge, the higher you go, up to two and a half seconds."},
+                new ButtonInfo { buttonText = "Zipline <color=grey>[</color><color=green>RT</color><color=grey>]</color>", enableMethod = EclipseMods.ResetMotion, method = EclipseMods.Zipline, disableMethod = EclipseMods.DisableZipline, toolTip = "Pull your right trigger to string a glowing line to wherever your right hand points. Hold your right grip with your hand on it to ride to the far end, and let go to drop off. Pull again for a new line, or point at open sky to take it down."},
+                new ButtonInfo { buttonText = "Air Strafe", method = EclipseMods.AirStrafe, disableMethod = EclipseMods.DisableAirStrafe, toolTip = "In the air, the way you are moving slowly bends round to the way you look, like strafing in an old shooter, without making you any faster."},
+                new ButtonInfo { buttonText = "Orbit Mode <color=grey>[</color><color=green>RG</color><color=grey>]</color>", enableMethod = EclipseMods.ResetMotion, method = EclipseMods.OrbitMode, disableMethod = EclipseMods.DisableOrbitMode, toolTip = "Hold your right grip to circle the spot where your right hand was, and let go to fly off the way you were heading."},
+                new ButtonInfo { buttonText = "Gravity Well <color=grey>[</color><color=green>Y</color><color=grey>]</color>", enableMethod = EclipseMods.ResetMotion, method = EclipseMods.GravityWell, disableMethod = EclipseMods.DisableGravityWell, toolTip = "Press Y to drop a little black hole where your right hand points. It gently pulls you in while you are near it; press Y again to take it away."}
+            },
+
+            new[] // Space Toys [63]
+            {
+                new ButtonInfo { buttonText = "Exit Space Toys", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+                new ButtonInfo { buttonText = "Surprise Me", method =() => EclipseMods.SurpriseMe(EclipseMods.ToysCategory), isTogglable = false, toolTip = "Turns on a random Space Toy you don't have on yet.", legal = true},
+                new ButtonInfo { buttonText = "Turn Off All Space Toys", method =() => EclipseMods.TurnOffAllIn(EclipseMods.ToysCategory, "Every Space Toy is off."), isTogglable = false, toolTip = "Turns off every Space Toy that is on.", legal = true},
+                new ButtonInfo { buttonText = "Mini Solar System", method = EclipseMods.MiniSolarSystem, disableMethod = EclipseMods.DisableMiniSolarSystem, toolTip = "A tiny sun with five planets, one of them ringed, circles just above your left palm. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Planet Builder <color=grey>[</color><color=green>LG+RG</color><color=grey>]</color>", enableMethod = EclipseMods.ResetToys, method = EclipseMods.PlanetBuilder, disableMethod = EclipseMods.DisablePlanetBuilder, toolTip = "Hold both grips and pull your hands apart to grow a glowing planet between them. Let go and it orbits you; up to three at once. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Kite", method = EclipseMods.Kite, disableMethod = EclipseMods.DisableKite, toolTip = "A diamond kite on a string from your right hand flies above and behind you, swaying as you move. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Yo-yo <color=grey>[</color><color=green>RG</color><color=grey>]</color>", method = EclipseMods.Yoyo, disableMethod = EclipseMods.DisableYoyo, toolTip = "Hold your right grip to drop a spinning yo-yo on a string from your right hand. Let go and it zips back up. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Paper Planes <color=grey>[</color><color=green>RT</color><color=grey>]</color>", enableMethod = EclipseMods.ResetToys, method = EclipseMods.PaperPlanes, disableMethod = EclipseMods.DisablePaperPlanes, toolTip = "Pull your right trigger to throw a paper plane the way your hand is moving. It glides slowly down and fades after it lands; up to six at once. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Magic 8-Ball", method = EclipseMods.MagicEightBall, disableMethod = EclipseMods.DisableMagicEightBall, toolTip = "Shake your left hand and the magic 8-ball in it gives you an answer, floating above your hand for a few seconds. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Space Dice <color=grey>[</color><color=green>X</color><color=grey>]</color>", enableMethod = EclipseMods.ResetToys, method = EclipseMods.SpaceDice, disableMethod = EclipseMods.DisableSpaceDice, toolTip = "Press X to roll two dice from your left hand. They tumble, land and show their total above them, then fade away. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Glow Sticks <color=grey>[</color><color=green>LG</color><color=grey>]</color>", enableMethod = EclipseMods.ResetToys, method = EclipseMods.GlowSticks, disableMethod = EclipseMods.DisableGlowSticks, toolTip = "Press your left grip to snap a glow stick into your left hand, and let go to throw it. It keeps glowing where it lands; up to eight at once. Only you can see them.", legal = true},
+                new ButtonInfo { buttonText = "Echo Ghost", method = EclipseMods.EchoGhost, disableMethod = EclipseMods.DisableEchoGhost, toolTip = "A faint ghost of your head and hands replays exactly what you did two seconds ago. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Meteor Defense <color=grey>[</color><color=green>B</color><color=grey>]</color>", enableMethod = EclipseMods.ResetToys, method = EclipseMods.MeteorDefense, disableMethod = EclipseMods.DisableMeteorDefense, toolTip = "Meteors drift in towards you from all around. Press B to fire a laser from your right hand and blast them before they reach you. Your score and lives are on your right wrist. Only you can see it.", legal = true}
+            },
+
+            new[] // Wrist Tools [64]
+            {
+                new ButtonInfo { buttonText = "Exit Wrist Tools", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+                new ButtonInfo { buttonText = "Turn Off All Wrist Tools", method =() => EclipseMods.TurnOffAllIn(EclipseMods.ToolsCategory, "Every Wrist Tool is off."), isTogglable = false, toolTip = "Turns off every Wrist Tool that is on.", legal = true},
+                new ButtonInfo { buttonText = "Battery Meter", method = EclipseMods.BatteryMeter, disableMethod = EclipseMods.DisableBatteryMeter, toolTip = "Your headset's battery and whether it is charging, on your left wrist. On PC, where there is no headset reading, it says so.", legal = true},
+                new ButtonInfo { buttonText = "Coordinates", method = EclipseMods.Coordinates, disableMethod = EclipseMods.DisableCoordinates, toolTip = "Where you are in the world, to a tenth of a metre, on your left wrist.", legal = true},
+                new ButtonInfo { buttonText = "Hand Speed", method = EclipseMods.HandSpeed, disableMethod = EclipseMods.DisableHandSpeed, toolTip = "How fast each of your hands is swinging, and your best this session, in metres a second on your right wrist.", legal = true},
+                new ButtonInfo { buttonText = "Measuring Tape", method = EclipseMods.MeasuringTape, disableMethod = EclipseMods.DisableMeasuringTape, toolTip = "A line between your hands with how far apart they are, in metres and feet. Only you can see it.", legal = true},
+                new ButtonInfo { buttonText = "Mic Meter", method = EclipseMods.MicMeter, disableMethod = EclipseMods.DisableMicMeter, toolTip = "A little bar above your right wrist showing how loud your own microphone is, so you can check it works.", legal = true},
+                new ButtonInfo { buttonText = "Ping Alarm", method = EclipseMods.PingAlarm, disableMethod = EclipseMods.DisablePingAlarm, toolTip = "Tells you when your ping goes over 200 ms, and again once it settles back down.", legal = true},
+                new ButtonInfo { buttonText = "Break Reminder", enableMethod = EclipseMods.EnableBreakReminder, method = EclipseMods.BreakReminder, disableMethod = EclipseMods.DisableBreakReminder, toolTip = "Every half hour of play since you turned it on, a friendly reminder to take a short break.", legal = true},
+                new ButtonInfo { buttonText = "Countdown Timer <color=grey>[</color><color=green>X</color><color=grey>]</color>", enableMethod = EclipseMods.EnableCountdownTimer, method = EclipseMods.CountdownTimer, disableMethod = EclipseMods.DisableCountdownTimer, toolTip = "Press X to pick 1, 3, 5 or 10 minutes; it counts down on your right wrist and tells you when time is up.", legal = true}
+            },
+
+            new[] // Recent Mods [65]
+            {
+                new ButtonInfo { buttonText = "Exit Recent Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true}
             }
         };
 
@@ -3116,7 +3172,11 @@ namespace Eclipse.Menu
             "Custom Mods",
             "Eclipse Mods",
             "Eclipse Dashboard",
-            "What's New"
+            "What's New",
+            "Space Movement",
+            "Space Toys",
+            "Wrist Tools",
+            "Recent Mods"
         };
 
         public static int _currentCategoryIndex;

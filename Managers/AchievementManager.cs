@@ -97,7 +97,11 @@ namespace Eclipse.Managers
             new Achievement { name = "Stargazer", description = "Turn on Eclipse Sky.", icon = "Images/Achievements/eclipse-stargazer.png" },
             new Achievement { name = "Star Catcher", description = "Catch 25 stars in Star Catcher.", icon = "Images/Achievements/eclipse-starcatcher.png" },
             new Achievement { name = "Wormhole Traveller", description = "Travel through a wormhole.", icon = "Images/Achievements/eclipse-wormhole.png" },
-            new Achievement { name = "Supernova", description = "Set off 10 supernovas.", icon = "Images/Achievements/eclipse-supernova.png" }
+            new Achievement { name = "Supernova", description = "Set off 10 supernovas.", icon = "Images/Achievements/eclipse-supernova.png" },
+            new Achievement { name = "Planet Maker", description = "Build a planet with Planet Builder.", icon = "Images/Achievements/eclipse-planetmaker.png" },
+            new Achievement { name = "Meteor Defender", description = "Score 25 in Meteor Defense.", icon = "Images/Achievements/eclipse-meteordefender.png" },
+            new Achievement { name = "Zipliner", description = "Ride a zipline all the way to the end.", icon = "Images/Achievements/eclipse-zipliner.png" },
+            new Achievement { name = "Toy Box", description = "Play with every Space Toy.", icon = "Images/Achievements/eclipse-toybox.png" }
         };
 
         public static void EnterAchievementTab()

@@ -1522,7 +1522,7 @@ namespace Eclipse.Menu
         private static ButtonInfo[] WatchMenuList()
         {
             string category = Buttons.CurrentCategoryName;
-            bool listed = category == "Favorite Mods" || category == "Enabled Mods";
+            bool listed = category == "Favorite Mods" || category == "Enabled Mods" || category == RecentCategory;
             if (!listed)
             {
                 watchListCategory = category;
@@ -1537,6 +1537,8 @@ namespace Eclipse.Menu
 
             if (category == "Favorite Mods")
                 watchList = StringsToInfos(favorites.ToArray());
+            else if (category == RecentCategory)
+                watchList = StringsToInfos(recentMods.ToArray());
             else
             {
                 watchListBuilder.Clear();
@@ -2994,6 +2996,12 @@ namespace Eclipse.Menu
                                         favorites.Remove(favoriteMod);
 
                                     renderButtons = StringsToInfos(favorites.ToArray());
+                                    break;
+                                }
+                            case RecentCategory:
+                                {
+                                    recentMods.RemoveAll(name => name != "Exit Recent Mods" && Buttons.GetIndex(name) == null);
+                                    renderButtons = StringsToInfos(recentMods.ToArray());
                                     break;
                                 }
                             case "Enabled Mods":
@@ -6380,6 +6388,9 @@ namespace Eclipse.Menu
                                         if (target.isTogglable)
                                         {
                                             target.enabled = !target.enabled;
+                                            if (fromMenu)
+                                                NoteRecentMod(target);
+
                                             if (target.enabled)
                                             {
                                                 if (fromMenu)
@@ -6908,6 +6919,9 @@ jgs \_   _/ |Oo\
 
                 if (Buttons.CurrentCategoryName == "Favorite Mods")
                     count = favorites.Count;
+
+                if (Buttons.CurrentCategoryName == RecentCategory)
+                    count = recentMods.Count;
 
                 if (Buttons.CurrentCategoryName == "Enabled Mods")
                 {

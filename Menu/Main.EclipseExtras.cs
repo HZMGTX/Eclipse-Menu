@@ -67,6 +67,52 @@ namespace Eclipse.Menu
                 EclipseUnlock("Shape Shifter");
         }
 
+        // ── Recent mods ─────────────────────────────────────────────────────────
+
+        public const string RecentCategory = "Recent Mods";
+        private const int RecentLimit = 12;
+
+        /// <summary>The mods you switched most recently from the menu, newest first, after the exit button.</summary>
+        public static readonly List<string> recentMods = new List<string> { "Exit Recent Mods" };
+
+        private static readonly HashSet<string> spaceToysTried = new HashSet<string>();
+
+        /// <summary>Moves a mod to the top of Recent Mods when you turn it on or off from the menu.</summary>
+        internal static void NoteRecentMod(ButtonInfo button)
+        {
+            if (button == null || !button.isTogglable || button.label)
+                return;
+
+            recentMods.Remove(button.buttonText);
+            recentMods.Insert(1, button.buttonText);
+            if (recentMods.Count > RecentLimit + 1)
+                recentMods.RemoveRange(RecentLimit + 1, recentMods.Count - RecentLimit - 1);
+
+            if (button.enabled)
+                NoteSpaceToy(button);
+        }
+
+        /// <summary>Puts back the saved Recent Mods list, newest first.</summary>
+        internal static void RestoreRecentMods(IEnumerable<string> saved)
+        {
+            recentMods.Clear();
+            recentMods.Add("Exit Recent Mods");
+            if (saved != null)
+                recentMods.AddRange(saved.Where(name => name != "Exit Recent Mods").Distinct().Take(RecentLimit));
+        }
+
+        // Toy Box: every Space Toy turned on at least once this session
+        private static void NoteSpaceToy(ButtonInfo button)
+        {
+            int category = Buttons.GetCategory(EclipseMods.ToysCategory);
+            if (category < 0 || Array.IndexOf(Buttons.buttons[category], button) < 0)
+                return;
+
+            spaceToysTried.Add(button.buttonText);
+            if (spaceToysTried.Count >= Buttons.buttons[category].Count(toy => toy.isTogglable))
+                EclipseUnlock("Toy Box");
+        }
+
         // ── Dashboard and What's New ────────────────────────────────────────────
 
         public const string DashboardCategory = "Eclipse Dashboard";
