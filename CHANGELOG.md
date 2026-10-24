@@ -2,13 +2,14 @@
 
 ## 1.2.0 — 2026-10-23
 
-- **Space Sky (8), a new category:** Ringed Planet, Twin Moons, Space Station, Satellites, Comet Flyby, Galaxy Band, Rocket Launches and Nebula Sky. Big things in your sky that only you can see.
-- **6 more Space Toys:** Star Scope (hold LT for a live zoomed-in view), Snow Globe, Pinwheel, Moon Balloon, Boomerang Star (A) and Fidget Spinner.
-- **6 more Wrist Tools:** Lap Timer (A drops a start gate), Waypoint (B), Jump Height, Air Time, Room Card and Tap Counter.
+- **Space Sky (15), a new category:** Ringed Planet, Twin Moons, Space Station, Satellites, Comet Flyby, Galaxy Band, Rocket Launches, Nebula Sky, Binary Stars, Asteroid Belt, Spiral Galaxy, Pulsar Star, Starship Fleet, Black Hole Horizon and Space Whale. Big things in your sky that only you can see.
+- **14 more Space Toys:** Star Scope (hold LT for a live zoomed-in view), Snow Globe, Pinwheel, Moon Balloon, Boomerang Star (A), Fidget Spinner, Slinky, Lava Lamp, Spinning Top (Y), Star Hourglass, Spirograph, Pocket Storm, Newton's Cradle and Keepy-Uppy.
+- **12 more Wrist Tools:** Lap Timer (A drops a start gate), Waypoint (B), Jump Height, Air Time, Room Card, Tap Counter, G-Force Meter, Speed Graph, World Clock, Spirit Level, Head Height and Room Timer.
+- **4 more Space Movement mods:** Wall Slide, Moon Zone (X drops a low-gravity dome), Comet Jab (hold B and punch) and Star Stroke (hold A and swim through the air).
 - **Mod of the Day:** a different Eclipse mod every day, on the dashboard and in Eclipse Mods.
 - **Random Theme** in Menu Settings picks one of Eclipse's space themes for you.
 - **3 new themes:** Solar Flare, Moonstone and Dark Matter.
-- **3 new achievements:** Sky Watcher, Speedster and Lap Legend.
+- **4 new achievements:** Sky Watcher, Speedster, Lap Legend and Juggler.
 
 ## 1.1.0 — 2026-10-23
 

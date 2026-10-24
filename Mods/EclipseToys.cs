@@ -40,7 +40,7 @@ namespace Eclipse.Mods
         /// <remarks>A button already held while turning a toy on would otherwise count as a press.</remarks>
         public static void ResetToys()
         {
-            builderHeld = planeHeld = diceHeld = glowHeld = meteorHeld = boomerangHeld = true;
+            builderHeld = planeHeld = diceHeld = glowHeld = meteorHeld = boomerangHeld = topHeld = true;
             planeLastHand = ControllerUtilities.GetTrueRightHand().position;
             glowLastHand = ControllerUtilities.GetTrueLeftHand().position;
         }
@@ -2163,6 +2163,1260 @@ namespace Eclipse.Mods
             spinnerSpeed = 0f;
         }
 
+        private const int SlinkyTurns = 28;
+        private const int SlinkyPointsPerTurn = 9;
+        private const int SlinkyPoints = SlinkyTurns * SlinkyPointsPerTurn + 1;
+        private static readonly Vector3[] slinkyBuffer = new Vector3[SlinkyPoints];
+        private static readonly GradientColorKey[] slinkyColorKeys = new GradientColorKey[8];
+        private static readonly GradientAlphaKey[] slinkyAlphaKeys = { new GradientAlphaKey(0.95f, 0f), new GradientAlphaKey(0.95f, 1f) };
+        private static Gradient slinkyGradient;
+        private static LineRenderer slinkyCoil;
+        private static Vector3 slinkyMiddle, slinkyMiddleVelocity;
+        private static float slinkySpan, slinkyRipple, slinkyRipplePhase;
+
+        /// <summary>A glowing rainbow spring stretched between your hands that stretches, sags and wobbles as you move them apart and together.</summary>
+        public static void Slinky()
+        {
+            float now = Time.time;
+            float dt = Mathf.Min(Mathf.Max(Time.deltaTime, 0.001f), 0.05f);
+            float scale = Scale;
+            Vector3 left = LeftHand;
+            Vector3 right = RightHand;
+            Vector3 middle = (left + right) * 0.5f;
+            float span = Vector3.Distance(left, right);
+
+            if (slinkyCoil == null)
+            {
+                slinkyCoil = MakeLine("Eclipse_Slinky", 0.005f);
+                slinkyCoil.positionCount = SlinkyPoints;
+                slinkyGradient = new Gradient();
+                slinkyMiddle = middle;
+                slinkyMiddleVelocity = Vector3.zero;
+                slinkySpan = span;
+                slinkyRipple = 0f;
+            }
+
+            // Left far behind after a teleport
+            if ((slinkyMiddle - middle).sqrMagnitude > 4f * scale * scale)
+            {
+                slinkyMiddle = middle;
+                slinkyMiddleVelocity = Vector3.zero;
+                slinkySpan = span;
+            }
+
+            // Pulling your hands apart or pushing them together sends ripples running along the coils
+            slinkyRipple = Mathf.Clamp01(slinkyRipple * Mathf.Exp(-1.3f * dt) + Mathf.Abs(span - slinkySpan) / scale * 2f);
+            slinkySpan = span;
+            slinkyRipplePhase = (slinkyRipplePhase + dt * 11f) % (Mathf.PI * 2f);
+
+            // The middle hangs like a springy weight: it sags a little, more the longer the spring is, and lags and bounces as your hands move
+            float stretch = Mathf.Clamp01(span / (1.2f * scale));
+            Vector3 rest = middle + Vector3.down * ((0.03f + 0.07f * stretch) * scale);
+            slinkyMiddleVelocity += ((rest - slinkyMiddle) * 70f - slinkyMiddleVelocity * 5f) * dt;
+            slinkyMiddle += slinkyMiddleVelocity * dt;
+            slinkyMiddle = rest + Vector3.ClampMagnitude(slinkyMiddle - rest, 0.3f * scale);
+
+            // The coil winds round a curve from hand to hand that passes through the hanging middle
+            Vector3 bend = 2f * slinkyMiddle - middle;
+            Vector3 across = span > 0.001f && Mathf.Abs(Vector3.Dot((right - left) / span, Vector3.up)) > 0.9f ? Head.forward : Vector3.up;
+            Vector3 fallback = Head.right;
+            float radius = 0.035f * scale * Mathf.Lerp(1.15f, 0.8f, stretch);
+            float ripple = 0.025f * slinkyRipple;
+
+            for (int i = 0; i < SlinkyPoints; i++)
+            {
+                float k = i / (float)(SlinkyPoints - 1);
+
+                // The coils bunch up and spread out as a ripple passes, while the ends stay in your hands
+                float t = k + ripple * Mathf.Sin(k * Mathf.PI * 4f - slinkyRipplePhase) * Mathf.Sin(k * Mathf.PI);
+                float u = 1f - t;
+                Vector3 centre = u * u * left + 2f * u * t * bend + t * t * right;
+                Vector3 tangent = 2f * u * (bend - left) + 2f * t * (right - bend);
+
+                Vector3 side = Vector3.Cross(tangent, across);
+                if (side.sqrMagnitude < 1e-8f)
+                    side = fallback;
+                side.Normalize();
+                Vector3 lift = Vector3.Cross(side, tangent);
+                lift = lift.sqrMagnitude < 1e-8f ? Vector3.up : lift.normalized;
+
+                float angle = t * SlinkyTurns * Mathf.PI * 2f;
+                slinkyBuffer[i] = centre + (side * Mathf.Cos(angle) + lift * Mathf.Sin(angle)) * radius;
+            }
+
+            slinkyCoil.SetPositions(slinkyBuffer);
+            slinkyCoil.startWidth = slinkyCoil.endWidth = 0.005f * scale;
+
+            // A slowly shifting rainbow, tinted with your Eclipse colours
+            Color accent = Accent;
+            Color second = Second;
+            for (int i = 0; i < slinkyColorKeys.Length; i++)
+            {
+                float k = i / (float)(slinkyColorKeys.Length - 1);
+                Color hue = Color.HSVToRGB((k * 0.85f + now * 0.08f) % 1f, 0.75f, 1f);
+                slinkyColorKeys[i] = new GradientColorKey(Color.Lerp(hue, i % 2 == 0 ? accent : second, 0.4f), k);
+            }
+
+            slinkyGradient.SetKeys(slinkyColorKeys, slinkyAlphaKeys);
+            slinkyCoil.colorGradient = slinkyGradient;
+        }
+
+        /// <summary>Takes away the slinky.</summary>
+        public static void DisableSlinky()
+        {
+            DestroyLine(ref slinkyCoil);
+            slinkyGradient = null;
+            slinkyRipple = 0f;
+        }
+
+        // Inside a lamp one unit tall: where the wax gathers at the bottom, and how high the blobs rise
+        private const int LavaBlobs = 5;
+        private const float LavaLampSize = 0.17f;
+        private const float LavaLampFloor = 0.36f;
+        private const float LavaLampCeiling = 0.8f;
+
+        // How fast each blob rises and sinks, and how big it is
+        private static readonly float[] LavaSpeeds = { 0.36f, 0.27f, 0.42f, 0.31f, 0.23f };
+        private static readonly float[] LavaSizes = { 0.13f, 0.1f, 0.085f, 0.11f, 0.075f };
+
+        private static readonly Piece[] lavaLampBlobs = new Piece[LavaBlobs];
+        private static Piece lavaLampMetal, lavaLampGlass, lavaLampPool, lavaLampHalo;
+
+        /// <summary>A little lava lamp sitting on your left palm, with soft glowing blobs slowly rising, stretching and sinking inside the glass.</summary>
+        public static void LavaLamp()
+        {
+            float now = Time.time;
+            float scale = Scale;
+            float size = LavaLampSize * scale;
+            Vector3 bottom = LeftHand + Vector3.up * (0.03f * scale);
+            Color accent = Accent;
+            Color second = Second;
+
+            if (lavaLampMetal == null || !lavaLampMetal.Alive)
+                lavaLampMetal = MakeShaped(LavaLampMetalMesh, Color.white);
+
+            // The glass is drawn after the wax, so the blobs always show through it
+            if (lavaLampGlass == null || !lavaLampGlass.Alive)
+                lavaLampGlass = MakeDecal(LavaLampGlassMesh, Color.white);
+
+            Ensure(ref lavaLampPool, PrimitiveType.Sphere, Color.white);
+            Ensure(ref lavaLampHalo, PrimitiveType.Sphere, Color.white);
+
+            lavaLampMetal.Object.transform.SetPositionAndRotation(bottom, Quaternion.identity);
+            lavaLampMetal.Object.transform.localScale = Vector3.one * size;
+            SetColor(lavaLampMetal, Color.Lerp(new Color(0.16f, 0.14f, 0.2f), accent, 0.25f));
+
+            lavaLampGlass.Object.transform.SetPositionAndRotation(bottom, Quaternion.identity);
+            lavaLampGlass.Object.transform.localScale = Vector3.one * size;
+            SetAlpha(lavaLampGlass, Color.Lerp(second, Color.white, 0.3f), 0.2f);
+
+            // A puddle of wax warming at the bottom, slowly swelling and settling
+            float warm = 0.5f + 0.5f * Mathf.Sin(now * 0.8f);
+            lavaLampPool.Object.transform.position = bottom + Vector3.up * ((LavaLampFloor - 0.03f) * size);
+            lavaLampPool.Object.transform.localScale = new Vector3(0.25f, 0.06f + 0.02f * warm, 0.25f) * size;
+            SetAlpha(lavaLampPool, Color.Lerp(accent, Color.white, 0.15f), 0.95f);
+
+            for (int i = 0; i < LavaBlobs; i++)
+            {
+                Piece blob = Ensure(ref lavaLampBlobs[i], PrimitiveType.Sphere, Color.white);
+
+                // Each blob takes its own time to rise and sink, slowest at the bottom and the top
+                float phase = now * LavaSpeeds[i] + i * 1.9f;
+                float rise = 0.5f - 0.5f * Mathf.Cos(phase);
+                float height = Mathf.Lerp(LavaLampFloor, LavaLampCeiling, rise);
+
+                // Stretched out tall while it moves, and small where it melts into the pool or cools at the top
+                float stretch = 1f + 0.45f * Mathf.Abs(Mathf.Sin(phase));
+                float across = LavaSizes[i] * (0.7f + 0.3f * Mathf.Sin(rise * Mathf.PI));
+
+                // Drifts about without ever touching the glass
+                float room = Mathf.Max(0f, ProfileRadius(LavaLampGlassProfile, height) - across * 0.5f / Mathf.Sqrt(stretch)) * 0.6f;
+                Vector3 local = new Vector3(Mathf.Cos(now * 0.21f + i * 2.3f) * room, height, Mathf.Sin(now * 0.17f + i * 1.7f) * room);
+
+                blob.Object.transform.position = bottom + local * size;
+                blob.Object.transform.localScale = new Vector3(across / Mathf.Sqrt(stretch), across * stretch, across / Mathf.Sqrt(stretch)) * size;
+
+                // Hotter and brighter near the bottom
+                Color wax = Color.Lerp(accent, second, i / (float)(LavaBlobs - 1));
+                SetAlpha(blob, Color.Lerp(wax, Color.white, 0.25f * (1f - rise)), 0.92f);
+            }
+
+            lavaLampHalo.Object.transform.position = bottom + Vector3.up * (0.6f * size);
+            lavaLampHalo.Object.transform.localScale = new Vector3(0.55f, 0.95f, 0.55f) * size;
+            SetAlpha(lavaLampHalo, accent, 0.1f + 0.04f * warm);
+        }
+
+        /// <summary>Takes away the lava lamp.</summary>
+        public static void DisableLavaLamp()
+        {
+            DiscardPiece(ref lavaLampMetal);
+            DiscardPiece(ref lavaLampGlass);
+            DiscardPiece(ref lavaLampPool);
+            DiscardPiece(ref lavaLampHalo);
+            for (int i = 0; i < lavaLampBlobs.Length; i++)
+                DiscardPiece(ref lavaLampBlobs[i]);
+        }
+
+        private enum TopStage { None, Dropping, Spinning, Toppled }
+
+        private const float TopSize = 0.17f;
+        private const float TopSpinTime = 14f;
+
+        // How far over the top leans once it has fallen, resting on its tip and the edge of its rim
+        private const float TopRestTilt = 37.9f;
+
+        private static Piece topBody, topStripes, topShadow;
+        private static TopStage topStage;
+        private static Vector3 topAt;
+        private static float topGround, topFall, topEnergy, topSpin, topTurning, topDirection = 1f, topLean, topTilt, topHeading, topToppled, topFallFrom;
+        private static bool topHeld = true;
+
+        /// <summary>Press Y to drop a spinning top onto the ground below your right hand; it spins and wanders, wobbles more as it slows, then tips over and fades.</summary>
+        public static void SpinningTop()
+        {
+            float now = Time.time;
+            float dt = Time.deltaTime;
+            float scale = Scale;
+            int layers = GTPlayer.Instance.locomotionEnabledLayers;
+
+            if (Pressed(leftSecondary, ref topHeld))
+                DropSpinningTop(scale, layers);
+
+            if (topStage == TopStage.None)
+                return;
+
+            if (topBody == null || !topBody.Alive)
+                topBody = MakeShaped(SpinningTopMesh, Accent);
+            if (topStripes == null || !topStripes.Alive)
+                topStripes = MakeDecal(SpinningTopStripesMesh, Second);
+            Ensure(ref topShadow, PrimitiveType.Cylinder, Color.black);
+
+            float size = TopSize * scale;
+            float fade = 1f;
+            switch (topStage)
+            {
+                case TopStage.Dropping:
+                    // Falls from your hand already spinning, and lands upright
+                    topFall += 9.81f * scale * dt;
+                    topAt.y -= topFall * dt;
+                    if (topAt.y <= topGround)
+                    {
+                        topAt.y = topGround;
+                        topStage = TopStage.Spinning;
+                        Burst(topAt, 8, 0.6f, false);
+                    }
+                    break;
+
+                case TopStage.Spinning:
+                    SpinSpinningTop(now, dt, scale, layers);
+                    break;
+
+                case TopStage.Toppled:
+                    fade = TipSpinningTop(now, dt, size);
+                    if (fade <= 0f)
+                    {
+                        ShowSpinningTop(false);
+                        topStage = TopStage.None;
+                        return;
+                    }
+                    break;
+            }
+
+            topSpin = (topSpin + topTurning * dt) % 360f;
+
+            // Spins on its tip, leaning over the way its wobble has carried it
+            float lean = topLean * Mathf.Deg2Rad;
+            Vector3 toward = new Vector3(Mathf.Cos(lean), 0f, Mathf.Sin(lean));
+            Quaternion turn = Quaternion.AngleAxis(topTilt, Vector3.Cross(Vector3.up, toward)) * Quaternion.Euler(0f, topSpin, 0f);
+
+            topBody.Object.transform.SetPositionAndRotation(topAt, turn);
+            topBody.Object.transform.localScale = Vector3.one * size;
+            SetAlpha(topBody, Color.Lerp(Accent, Color.white, 0.15f), fade);
+
+            topStripes.Object.transform.SetPositionAndRotation(topAt, turn);
+            topStripes.Object.transform.localScale = Vector3.one * size;
+            SetAlpha(topStripes, Color.Lerp(Second, Color.white, 0.2f), fade);
+
+            // A soft shadow on the ground under the top's middle, darker the closer it is
+            Vector3 middle = topAt + turn * Vector3.up * (0.4f * size);
+            float near = Mathf.Clamp01(1f - (topAt.y - topGround) / scale);
+            topShadow.Object.transform.SetPositionAndRotation(new Vector3(middle.x, topGround + 0.003f * scale, middle.z), Quaternion.identity);
+            topShadow.Object.transform.localScale = new Vector3(0.9f * size, 0.001f * scale, 0.9f * size);
+            SetAlpha(topShadow, Color.black, 0.3f * fade * near);
+        }
+
+        private static void DropSpinningTop(float scale, int layers)
+        {
+            Vector3 hand = ControllerUtilities.GetTrueRightHand().position;
+            if (!Physics.Raycast(hand, Vector3.down, out RaycastHit hit, 30f * scale, layers))
+            {
+                // Nothing below to spin it on
+                Burst(hand, 6, 0.5f, false);
+                return;
+            }
+
+            // A new spin takes the place of the last one
+            if (topStage != TopStage.None && topBody != null && topBody.Alive)
+                Burst(topBody.Object.transform.position, 10, 0.8f, false);
+
+            topAt = hand + Vector3.down * (0.5f * TopSize * scale);
+            topAt.y = Mathf.Max(topAt.y, hit.point.y);
+            topGround = hit.point.y;
+            topFall = topTilt = 0f;
+            topEnergy = 1f;
+            topDirection = Random.value < 0.5f ? -1f : 1f;
+            topTurning = topDirection * 1700f;
+            topLean = Random.value * 360f;
+            topHeading = Random.value * Mathf.PI * 2f;
+            topStage = TopStage.Dropping;
+            ShowSpinningTop(true);
+        }
+
+        private static void SpinSpinningTop(float now, float dt, float scale, int layers)
+        {
+            topEnergy -= dt / TopSpinTime;
+            if (topEnergy <= 0f)
+            {
+                topStage = TopStage.Toppled;
+                topToppled = now;
+                topFallFrom = topTilt;
+                return;
+            }
+
+            // Fast and steady at first; as it slows it leans further over and its wobble quickens
+            float slow = 1f - topEnergy;
+            topTurning = topDirection * (200f + 1500f * topEnergy);
+            topTilt = Mathf.MoveTowards(topTilt, Mathf.Lerp(2f, 24f, slow * slow) + Mathf.Sin(now * 2.7f) * 2f * slow, 30f * dt);
+            topLean = (topLean + topDirection * Mathf.Lerp(70f, 560f, slow * slow) * dt) % 360f;
+
+            // Wanders slowly about, skidding round in little loops as its wobble grows
+            topHeading += Mathf.Sin(now * 0.6f + topBody.Seed) * dt;
+            float lean = topLean * Mathf.Deg2Rad;
+            Vector3 drift = new Vector3(Mathf.Cos(topHeading), 0f, Mathf.Sin(topHeading)) * (0.04f + 0.05f * slow)
+                + new Vector3(Mathf.Cos(lean), 0f, Mathf.Sin(lean)) * (0.12f * slow * slow);
+            Vector3 step = drift * (scale * dt);
+            float distance = step.magnitude;
+            if (distance <= 0f)
+                return;
+
+            // Bounces off walls
+            Vector3 heading = step / distance;
+            if (Physics.Raycast(topAt + Vector3.up * (0.05f * scale), heading, out RaycastHit wall, distance + 0.06f * scale, layers))
+            {
+                Vector3 away = Vector3.Reflect(heading, wall.normal);
+                topHeading = Mathf.Atan2(away.z, away.x);
+                return;
+            }
+
+            // Follows the ground, and falls over if it runs off an edge
+            Vector3 next = topAt + step;
+            if (!Physics.Raycast(next + Vector3.up * (0.2f * scale), Vector3.down, out RaycastHit floor, 0.45f * scale, layers))
+            {
+                topEnergy = 0f;
+                return;
+            }
+
+            topAt = new Vector3(next.x, floor.point.y, next.z);
+            topGround = floor.point.y;
+        }
+
+        // Returns how much of the top is still showing as it fades away
+        private static float TipSpinningTop(float now, float dt, float size)
+        {
+            float since = now - topToppled;
+
+            // Tips over faster and faster and bumps down onto its side
+            float fall = Mathf.Clamp01(since / 0.4f);
+            float bump = since > 0.4f ? Mathf.Abs(Mathf.Sin((since - 0.4f) * 22f)) * Mathf.Exp(-(since - 0.4f) * 7f) * 5f : 0f;
+            topTilt = Mathf.Lerp(topFallFrom, TopRestTilt, fall * fall) - bump;
+            if (since >= 0.4f && since - dt < 0.4f)
+            {
+                float lean = topLean * Mathf.Deg2Rad;
+                Burst(topAt + new Vector3(Mathf.Cos(lean), 0.3f, Mathf.Sin(lean)) * (0.4f * size), 12, 0.8f, false);
+            }
+
+            // Then rolls round on its rim as the last of its spin runs out
+            float roll = Mathf.Clamp01(1f - since / 1.8f);
+            topLean = (topLean + topDirection * 240f * roll * dt) % 360f;
+            topTurning = topDirection * 200f * roll;
+            return Mathf.Clamp01(1f - (since - 2.4f) / 1.2f);
+        }
+
+        private static void ShowSpinningTop(bool shown)
+        {
+            ShowPiece(topBody, shown);
+            ShowPiece(topStripes, shown);
+            ShowPiece(topShadow, shown);
+        }
+
+        /// <summary>Takes away the spinning top.</summary>
+        public static void DisableSpinningTop()
+        {
+            DiscardPiece(ref topBody);
+            DiscardPiece(ref topStripes);
+            DiscardPiece(ref topShadow);
+            topStage = TopStage.None;
+        }
+
+        // The hourglass is two units from end to end: the narrow neck in the middle, and the caps at either end
+        private const float HourglassSize = 0.075f;
+        private const float HourglassNeck = 0.05f;
+        private const float HourglassEnd = 0.95f;
+        private const float HourglassRunTime = 15f;
+        private const int HourglassGrains = 14;
+        private const int HourglassGlints = 12;
+
+        private static readonly Piece[] hourglassPosts = new Piece[3];
+        private static readonly ParticleSystem.Particle[] hourglassSparkles = new ParticleSystem.Particle[HourglassGrains + HourglassGlints];
+        private static readonly int[] hourglassGlintCycle = new int[HourglassGlints];
+        private static readonly Vector3[] hourglassGlintSpot = new Vector3[HourglassGlints];
+        private static readonly Quaternion HourglassFlip = Quaternion.Euler(180f, 0f, 0f);
+        private static Piece hourglassGlass, hourglassCapA, hourglassCapB, hourglassSandA, hourglassSandB;
+        private static ParticleSystem hourglassGlitter;
+
+        // Each bulb's heap of sand: where its tip is, where its flat side is and how wide that is, measured out from the neck
+        private static Vector3 hourglassHeapA, hourglassHeapB;
+
+        // How much of the sand is in bulb A, how far the hourglass has turned over, and how far the sand in each bulb has slid down to the neck
+        private static float hourglassSand = 1f, hourglassTurn, hourglassSlideA = 1f, hourglassSlideB;
+        private static bool hourglassUpsideDown;
+
+        /// <summary>An hourglass in your left hand with glittering star-sand running from the top bulb to the bottom; turn your hand upside down and it flips and runs the other way.</summary>
+        public static void StarHourglass()
+        {
+            float now = Time.time;
+            float dt = Time.deltaTime;
+            float scale = Scale;
+            float size = HourglassSize * scale;
+            var hand = ControllerUtilities.GetTrueLeftHand();
+
+            // Turning your hand over turns the hourglass over, with a little give either way so it never flickers
+            float roll = Vector3.Dot(hand.up, Vector3.up);
+            if (hourglassUpsideDown ? roll > 0.35f : roll < -0.35f)
+                hourglassUpsideDown = !hourglassUpsideDown;
+            hourglassTurn = Mathf.MoveTowards(hourglassTurn, hourglassUpsideDown ? 1f : 0f, dt * 2.5f);
+
+            // Once it has finished turning, the sand slides down to wherever is now the bottom of each bulb
+            bool settled = hourglassTurn <= 0f || hourglassTurn >= 1f;
+            bool aOnTop = hourglassTurn < 0.5f;
+            if (settled)
+            {
+                hourglassSlideA = Mathf.MoveTowards(hourglassSlideA, aOnTop ? 1f : 0f, dt * 2f);
+                hourglassSlideB = Mathf.MoveTowards(hourglassSlideB, aOnTop ? 0f : 1f, dt * 2f);
+            }
+
+            float topSand = aOnTop ? hourglassSand : 1f - hourglassSand;
+            bool flowing = settled && (aOnTop ? hourglassSlideA : hourglassSlideB) >= 1f && topSand > 0f;
+            if (flowing)
+                hourglassSand = Mathf.Clamp01(hourglassSand + (aOnTop ? -dt : dt) / HourglassRunTime);
+
+            if (hourglassGlass == null || !hourglassGlass.Alive)
+                hourglassGlass = MakeDecal(HourglassGlassMesh, Color.white);
+            if (hourglassSandA == null || !hourglassSandA.Alive)
+                hourglassSandA = MakeShaped(HourglassSandMesh, Color.white);
+            if (hourglassSandB == null || !hourglassSandB.Alive)
+                hourglassSandB = MakeShaped(HourglassSandMesh, Color.white);
+            Ensure(ref hourglassCapA, PrimitiveType.Cylinder, Color.white);
+            Ensure(ref hourglassCapB, PrimitiveType.Cylinder, Color.white);
+
+            if (hourglassGlitter == null)
+            {
+                hourglassGlitter = MakeParticles("Eclipse_StarHourglass", null, particles =>
+                {
+                    var main = particles.main;
+                    main.loop = true;
+                    main.startSpeed = 0f;
+                    main.startLifetime = 100f;
+                    main.maxParticles = HourglassGrains + HourglassGlints;
+                    main.scalingMode = ParticleSystemScalingMode.Local;
+
+                    var emission = particles.emission;
+                    emission.enabled = false;
+                });
+
+                hourglassGlitter.transform.localScale = Vector3.one;
+            }
+
+            // Sits upright on your hand, rolling over about the way your hand points
+            Vector3 ahead = Vector3.ProjectOnPlane(hand.forward, Vector3.up);
+            if (ahead.sqrMagnitude < 0.0001f)
+                ahead = LookFlat();
+            Quaternion turn = Quaternion.LookRotation(ahead, Vector3.up) * Quaternion.Euler(0f, 0f, Mathf.SmoothStep(0f, 180f, hourglassTurn));
+            Vector3 axis = turn * Vector3.up;
+            Vector3 centre = hand.position + Vector3.up * (1.1f * size);
+
+            Color frame = Color.Lerp(new Color(0.55f, 0.4f, 0.25f), Accent, 0.35f);
+            PlaceHourglassCap(hourglassCapA, centre + axis * size, turn, size, frame);
+            PlaceHourglassCap(hourglassCapB, centre - axis * size, turn, size, frame);
+
+            for (int i = 0; i < hourglassPosts.Length; i++)
+            {
+                Piece post = Ensure(ref hourglassPosts[i], PrimitiveType.Cylinder, Color.white);
+                float angle = i * Mathf.PI * 2f / hourglassPosts.Length + 0.5f;
+                post.Object.transform.SetPositionAndRotation(centre + turn * new Vector3(Mathf.Cos(angle) * 0.56f, 0f, Mathf.Sin(angle) * 0.56f) * size, turn);
+                post.Object.transform.localScale = new Vector3(0.07f, 1f, 0.07f) * size;
+                SetColor(post, Color.Lerp(frame, Color.white, 0.15f));
+            }
+
+            hourglassGlass.Object.transform.SetPositionAndRotation(centre, turn);
+            hourglassGlass.Object.transform.localScale = Vector3.one * size;
+            SetAlpha(hourglassGlass, Color.Lerp(Color.white, Second, 0.3f), 0.18f);
+
+            Color sand = Color.Lerp(Color.Lerp(Accent, Color.white, 0.3f), Second, 0.2f + 0.15f * Mathf.Sin(now * 3f));
+            hourglassHeapA = PlaceHourglassSand(hourglassSandA, centre, turn, hourglassSand, hourglassSlideA, size, sand);
+            hourglassHeapB = PlaceHourglassSand(hourglassSandB, centre, turn * HourglassFlip, 1f - hourglassSand, hourglassSlideB, size, sand);
+
+            // Glints twinkle on the heaps, each one moving somewhere new every time it fades
+            int count = 0;
+            for (int i = 0; i < HourglassGlints; i++)
+            {
+                float time = now * 0.8f + i * 0.37f;
+                int cycle = Mathf.FloorToInt(time);
+                if (hourglassGlintCycle[i] != cycle)
+                {
+                    hourglassGlintCycle[i] = cycle;
+                    hourglassGlintSpot[i] = new Vector3(Random.value, Random.value, Random.value * Mathf.PI * 2f);
+                }
+
+                Vector3 spot = hourglassGlintSpot[i];
+                bool inA = spot.x < hourglassSand;
+                Vector3 heap = inA ? hourglassHeapA : hourglassHeapB;
+                if ((inA ? hourglassSand : 1f - hourglassSand) <= 0.002f)
+                    continue;
+
+                float along = Mathf.Sqrt(spot.y);
+                Vector3 local = new Vector3(Mathf.Cos(spot.z) * heap.z * along, Mathf.Lerp(heap.x, heap.y, along), Mathf.Sin(spot.z) * heap.z * along);
+                float twinkle = Mathf.Sin((time - cycle) * Mathf.PI);
+                AddHourglassSparkle(ref count, centre + (inA ? turn : turn * HourglassFlip) * (local * size), 0.01f * scale * twinkle,
+                    WithAlpha(Color.Lerp(Color.white, i % 2 == 0 ? Accent : Second, 0.3f), twinkle));
+            }
+
+            // Grains of star-sand pour through the neck onto the heap below
+            if (flowing)
+            {
+                Vector3 down = aOnTop ? -axis : axis;
+                float landing = (aOnTop ? hourglassHeapB : hourglassHeapA).x * size;
+                for (int i = 0; i < HourglassGrains; i++)
+                {
+                    float fall = (now * 2.2f + i / (float)HourglassGrains) % 1f;
+                    float twinkle = 0.5f + 0.5f * Mathf.Sin(now * 9f + i * 2.1f);
+                    AddHourglassSparkle(ref count, centre + down * (fall * fall * landing), 0.006f * scale * (0.7f + 0.3f * twinkle),
+                        WithAlpha(Color.Lerp(sand, Color.white, 0.5f * twinkle), 0.9f));
+                }
+            }
+
+            hourglassGlitter.transform.position = centre;
+            hourglassGlitter.SetParticles(hourglassSparkles, count);
+        }
+
+        private static void PlaceHourglassCap(Piece cap, Vector3 at, Quaternion turn, float size, Color color)
+        {
+            cap.Object.transform.SetPositionAndRotation(at, turn);
+            cap.Object.transform.localScale = new Vector3(1.3f, 0.05f, 1.3f) * size;
+            SetColor(cap, color);
+        }
+
+        // Lays one bulb's sand out as a cone pointing at the neck: standing on the far cap while that bulb is at the bottom,
+        // or as a funnel draining into the neck while it is at the top. Returns the heap's tip, flat side and width.
+        private static Vector3 PlaceHourglassSand(Piece sand, Vector3 centre, Quaternion bulb, float amount, float slide, float size, Color color)
+        {
+            float heap = Mathf.Pow(Mathf.Clamp01(amount), 0.6f);
+            float level = HourglassNeck + 0.78f * heap;
+            float tip = Mathf.Lerp(HourglassEnd - 0.6f * heap, HourglassNeck, slide);
+            float top = Mathf.Lerp(HourglassEnd, level, slide);
+            float radius = Mathf.Lerp(0.34f * Mathf.Sqrt(Mathf.Clamp01(amount * 4f)), 0.9f * ProfileRadius(HourglassProfile, level), slide);
+
+            bool shown = amount > 0.002f;
+            ShowPiece(sand, shown);
+            if (shown)
+            {
+                sand.Object.transform.SetPositionAndRotation(centre + bulb * new Vector3(0f, tip * size, 0f), bulb);
+                sand.Object.transform.localScale = new Vector3(radius, Mathf.Max(top - tip, 0.001f), radius) * size;
+                SetAlpha(sand, color, 0.95f);
+            }
+
+            return new Vector3(tip, top, radius);
+        }
+
+        private static void AddHourglassSparkle(ref int count, Vector3 at, float size, Color color)
+        {
+            ParticleSystem.Particle sparkle = hourglassSparkles[count];
+            sparkle.position = at;
+            sparkle.startSize = size;
+            sparkle.startColor = color;
+            sparkle.startLifetime = sparkle.remainingLifetime = 100f;
+            hourglassSparkles[count++] = sparkle;
+        }
+
+        /// <summary>Takes away the star hourglass and its sand.</summary>
+        public static void DisableStarHourglass()
+        {
+            DiscardPiece(ref hourglassGlass);
+            DiscardPiece(ref hourglassCapA);
+            DiscardPiece(ref hourglassCapB);
+            DiscardPiece(ref hourglassSandA);
+            DiscardPiece(ref hourglassSandB);
+            for (int i = 0; i < hourglassPosts.Length; i++)
+                DiscardPiece(ref hourglassPosts[i]);
+            DestroyParticles(ref hourglassGlitter);
+
+            hourglassSand = hourglassSlideA = 1f;
+            hourglassTurn = hourglassSlideB = 0f;
+            hourglassUpsideDown = false;
+        }
+
+        // Patterns that close up neatly: how big the fixed ring is, how big the rolling wheel is, and how far out on the wheel the pen sits
+        private static readonly Vector3Int[] SpiroPatterns =
+        {
+            new Vector3Int(10, 3, 6), new Vector3Int(8, 5, 3), new Vector3Int(12, 7, 5), new Vector3Int(9, 2, 4), new Vector3Int(11, 6, 6),
+            new Vector3Int(7, 3, 4), new Vector3Int(13, 5, 7), new Vector3Int(10, 7, 4), new Vector3Int(9, 4, 7), new Vector3Int(12, 5, 3)
+        };
+
+        private const int SpiroPoints = 720;
+        private const float SpiroReach = 0.2f;
+        private static readonly Vector3[] spiroBuffer = new Vector3[SpiroPoints];
+        private static Piece spiroBoard, spiroPen;
+        private static LineRenderer spiroLine, spiroRing, spiroWheel, spiroArm;
+        private static Vector3 spiroAt, spiroFacing;
+        private static float spiroStarted, spiroDuration, spiroFinished = -1f, spiroHue, spiroScale;
+        private static int spiroPattern = -1;
+
+        /// <summary>A floating round board beside you where a glowing pen keeps drawing spirograph patterns, each fading away for a new one in different colours.</summary>
+        public static void Spirograph()
+        {
+            float now = Time.time;
+            float dt = Time.deltaTime;
+            float scale = Scale;
+            Vector3 ahead = LookFlat();
+            Vector3 side = Vector3.Cross(Vector3.up, ahead);
+            Vector3 target = Head.position + (ahead * 0.55f + side * 0.45f + Vector3.down * 0.15f) * scale;
+
+            if (spiroLine == null)
+            {
+                spiroLine = MakeLine("Eclipse_Spirograph", 0.003f);
+                spiroLine.useWorldSpace = false;
+                spiroAt = target;
+                spiroFacing = ahead;
+                StartSpiroPattern(now, scale);
+            }
+
+            Ensure(ref spiroBoard, PrimitiveType.Cylinder, Color.white);
+            Ensure(ref spiroPen, PrimitiveType.Sphere, Color.white);
+            if (spiroRing == null)
+                spiroRing = MakeRing("Eclipse_SpirographRing");
+            if (spiroWheel == null)
+                spiroWheel = MakeRing("Eclipse_SpirographWheel");
+            if (spiroArm == null)
+                spiroArm = MakeLine("Eclipse_SpirographArm", 0.002f);
+
+            // Floats along beside you, bobbing gently, and turns to face you
+            if ((spiroAt - target).sqrMagnitude > 9f * scale * scale)
+                spiroAt = target;
+            spiroAt = Vector3.Lerp(spiroAt, target, 1f - Mathf.Exp(-2.5f * dt));
+            Vector3 centre = spiroAt + Vector3.up * (Mathf.Sin(now * 1.1f) * 0.01f * scale);
+
+            Vector3 away = centre - Head.position;
+            if (away.sqrMagnitude > 0.0001f)
+                spiroFacing = Vector3.Slerp(spiroFacing, away.normalized, 1f - Mathf.Exp(-4f * dt));
+            if (spiroFacing.sqrMagnitude < 0.0001f)
+                spiroFacing = ahead;
+            Quaternion facing = Quaternion.LookRotation(spiroFacing, Vector3.up);
+
+            if (!Mathf.Approximately(spiroScale, scale))
+                FillSpiroBuffer(scale);
+
+            // Draws, rests a moment once the pattern closes, then fades and starts another
+            float drawn = Mathf.Clamp01((now - spiroStarted) / spiroDuration);
+            float fade = spiroFinished < 0f ? 1f : 1f - (now - spiroFinished - 2.5f) / 1.2f;
+            if (fade <= 0f)
+            {
+                StartSpiroPattern(now, scale);
+                drawn = 0f;
+                fade = 1f;
+            }
+            fade = Mathf.Clamp01(fade);
+
+            spiroBoard.Object.transform.SetPositionAndRotation(centre, facing * Quaternion.Euler(90f, 0f, 0f));
+            spiroBoard.Object.transform.localScale = new Vector3(0.5f, 0.004f, 0.5f) * scale;
+            SetAlpha(spiroBoard, Color.Lerp(new Color(0.06f, 0.05f, 0.1f), Second, 0.15f), 0.6f);
+
+            int count = Mathf.Clamp(Mathf.CeilToInt(drawn * (SpiroPoints - 1)) + 1, 2, SpiroPoints);
+            Transform paper = spiroLine.transform;
+            paper.SetPositionAndRotation(centre - spiroFacing * (0.004f * scale), facing);
+            spiroLine.positionCount = count;
+            spiroLine.SetPositions(spiroBuffer);
+            spiroLine.startWidth = spiroLine.endWidth = 0.003f * scale;
+            spiroLine.startColor = WithAlpha(Color.Lerp(Accent, Color.HSVToRGB(spiroHue, 0.7f, 1f), 0.45f), fade);
+            spiroLine.endColor = WithAlpha(Color.Lerp(Second, Color.HSVToRGB((spiroHue + 0.35f) % 1f, 0.7f, 1f), 0.45f), fade);
+
+            Vector3Int pattern = SpiroPatterns[spiroPattern];
+            float unit = SpiroUnit(pattern, scale);
+            PlaceRing(spiroRing, paper.position, spiroFacing, pattern.x * unit, 0.002f * scale, WithAlpha(Second, 0.35f * fade));
+
+            Vector3 pen = paper.TransformPoint(spiroBuffer[count - 1]);
+            if (drawn >= 1f && spiroFinished < 0f)
+            {
+                spiroFinished = now;
+                Burst(pen, 14, 0.8f, false);
+            }
+
+            // The rolling wheel and its arm show how the pen is being moved, until the pattern is finished
+            bool drawing = spiroFinished < 0f;
+            spiroWheel.enabled = spiroArm.enabled = drawing;
+            if (drawing)
+            {
+                float t = drawn * SpiroTurns(pattern) * Mathf.PI * 2f;
+                Vector3 hub = paper.TransformPoint(new Vector3(Mathf.Cos(t), Mathf.Sin(t), 0f) * ((pattern.x - pattern.y) * unit));
+                PlaceRing(spiroWheel, hub, spiroFacing, pattern.y * unit, 0.002f * scale, WithAlpha(Accent, 0.4f));
+                spiroArm.SetPosition(0, hub);
+                spiroArm.SetPosition(1, pen);
+                spiroArm.startWidth = spiroArm.endWidth = 0.0015f * scale;
+                spiroArm.startColor = spiroArm.endColor = WithAlpha(Color.white, 0.35f);
+            }
+
+            spiroPen.Object.transform.position = pen;
+            spiroPen.Object.transform.localScale = Vector3.one * (0.012f * scale * (1f + 0.15f * Mathf.Sin(now * 8f)));
+            SetAlpha(spiroPen, Color.Lerp(Color.white, Accent, 0.3f), fade);
+        }
+
+        private static void StartSpiroPattern(float now, float scale)
+        {
+            // Never the same pattern twice in a row
+            int pattern = Random.Range(0, SpiroPatterns.Length);
+            if (pattern == spiroPattern)
+                pattern = (pattern + 1 + Random.Range(0, SpiroPatterns.Length - 1)) % SpiroPatterns.Length;
+
+            spiroPattern = pattern;
+            spiroHue = Random.value;
+            spiroStarted = now;
+            spiroFinished = -1f;
+            spiroDuration = 6f + SpiroTurns(SpiroPatterns[pattern]) * 1.5f;
+            FillSpiroBuffer(scale);
+        }
+
+        // Works out the whole pattern once, flat on the board, so the pen only has to reveal it
+        private static void FillSpiroBuffer(float scale)
+        {
+            Vector3Int pattern = SpiroPatterns[spiroPattern];
+            float ring = pattern.x, wheel = pattern.y, pen = pattern.z;
+            float unit = SpiroUnit(pattern, scale);
+            float end = SpiroTurns(pattern) * Mathf.PI * 2f;
+
+            for (int i = 0; i < SpiroPoints; i++)
+            {
+                float t = i / (float)(SpiroPoints - 1) * end;
+                float roll = (ring - wheel) / wheel * t;
+                spiroBuffer[i] = new Vector3((ring - wheel) * Mathf.Cos(t) + pen * Mathf.Cos(roll), (ring - wheel) * Mathf.Sin(t) - pen * Mathf.Sin(roll), 0f) * unit;
+            }
+
+            spiroScale = scale;
+        }
+
+        // How long one unit of a pattern is, so the whole thing fits on the board
+        private static float SpiroUnit(Vector3Int pattern, float scale) =>
+            SpiroReach * scale / Mathf.Max(pattern.x, pattern.x - pattern.y + pattern.z);
+
+        // How many times the wheel goes round the ring before the pattern closes up
+        private static int SpiroTurns(Vector3Int pattern)
+        {
+            int a = pattern.x, b = pattern.y;
+            while (b != 0)
+                (a, b) = (b, a % b);
+            return pattern.y / a;
+        }
+
+        /// <summary>Takes away the spirograph and its drawing.</summary>
+        public static void DisableSpirograph()
+        {
+            DiscardPiece(ref spiroBoard);
+            DiscardPiece(ref spiroPen);
+            DestroyLine(ref spiroLine);
+            DestroyLine(ref spiroRing);
+            DestroyLine(ref spiroWheel);
+            DestroyLine(ref spiroArm);
+            spiroPattern = -1;
+        }
+
+        // Where each puff of the storm cloud sits, and in w how big it is
+        private static readonly Vector4[] StormPuffs =
+        {
+            new Vector4(0f, 0f, 0f, 0.1f), new Vector4(-0.065f, -0.012f, 0.01f, 0.075f), new Vector4(0.068f, -0.008f, -0.012f, 0.08f),
+            new Vector4(0.02f, 0.04f, 0.005f, 0.075f), new Vector4(-0.03f, 0.028f, -0.025f, 0.065f), new Vector4(0.005f, -0.018f, 0.04f, 0.065f)
+        };
+
+        private const int StormBoltPoints = 7;
+        private const float StormFlashTime = 0.25f;
+        private static readonly Piece[] stormPuffs = new Piece[6];
+        private static readonly Vector3[] stormBoltShape = new Vector3[StormBoltPoints];
+        private static readonly Vector3[] stormBoltBuffer = new Vector3[StormBoltPoints];
+        private static LineRenderer stormBolt;
+        private static ParticleSystem stormRain;
+        private static Light stormLight;
+        private static Vector3 stormAt;
+        private static float stormNextFlash, stormFlashed = -10f;
+
+        /// <summary>A tiny dark thundercloud floating above your right hand, raining little drops, with a flash of lightning every few seconds.</summary>
+        public static void PocketStorm()
+        {
+            float now = Time.time;
+            float dt = Time.deltaTime;
+            float scale = Scale;
+            Vector3 target = RightHand + Vector3.up * (0.2f * scale);
+
+            if (stormRain == null)
+            {
+                stormRain = MakeParticles("Eclipse_PocketStorm", null, particles =>
+                {
+                    var main = particles.main;
+                    main.loop = true;
+                    main.startLifetime = 0.32f;
+                    main.startSpeed = 1.3f;
+                    main.startSize = 0.006f;
+                    // Particle speed and size grow with you through the transform, gravity doesn't
+                    main.gravityModifier = 0.4f * Scale;
+                    main.maxParticles = 60;
+
+                    var emission = particles.emission;
+                    emission.rateOverTime = 45f;
+
+                    // Straight down from a little disc under the cloud
+                    var shape = particles.shape;
+                    shape.shapeType = ParticleSystemShapeType.Cone;
+                    shape.angle = 0f;
+                    shape.radius = 0.05f;
+                    shape.rotation = new Vector3(90f, 0f, 0f);
+
+                    var look = particles.GetComponent<ParticleSystemRenderer>();
+                    look.renderMode = ParticleSystemRenderMode.Stretch;
+                    look.velocityScale = 0.02f;
+                    look.lengthScale = 2f;
+                });
+
+                stormAt = target;
+                stormNextFlash = now + Random.Range(1.5f, 3f);
+            }
+
+            // Drifts along over your hand, lagging a little
+            if ((stormAt - target).sqrMagnitude > 4f * scale * scale)
+                stormAt = target;
+            stormAt = Vector3.Lerp(stormAt, target, 1f - Mathf.Exp(-10f * dt));
+
+            if (now >= stormNextFlash)
+                StrikeStormBolt(now);
+
+            // A lightning flash flickers twice and the cloud lights up from inside
+            float since = now - stormFlashed;
+            float flash = Mathf.Clamp01(1f - since / StormFlashTime);
+            float flicker = flash * (0.6f + 0.4f * Mathf.Cos(since * 60f));
+
+            Color cloud = Color.Lerp(new Color(0.16f, 0.15f, 0.22f), Second, 0.15f);
+            Color lit = Color.Lerp(Color.white, Accent, 0.25f);
+            Quaternion drift = Quaternion.Euler(0f, now * 10f, 0f);
+            for (int i = 0; i < stormPuffs.Length; i++)
+            {
+                Vector4 puff = StormPuffs[i];
+                Piece piece = Ensure(ref stormPuffs[i], PrimitiveType.Sphere, Color.white);
+                float swell = 1f + 0.06f * Mathf.Sin(now * 1.4f + i * 1.7f);
+                piece.Object.transform.position = stormAt + drift * new Vector3(puff.x, puff.y, puff.z) * scale;
+                piece.Object.transform.localScale = Vector3.one * (puff.w * swell * scale);
+                SetAlpha(piece, Color.Lerp(cloud, lit, flicker * 0.7f), 0.9f);
+            }
+
+            Follow(stormRain, stormAt + Vector3.down * (0.03f * scale));
+            var rain = stormRain.main;
+            rain.startColor = WithAlpha(Color.Lerp(Second, Color.white, 0.55f), 0.8f);
+
+            if (stormBolt == null)
+            {
+                stormBolt = MakeLine("Eclipse_PocketStormBolt", 0.006f);
+                stormBolt.positionCount = StormBoltPoints;
+            }
+
+            stormBolt.enabled = flash > 0f;
+            if (flash > 0f)
+            {
+                for (int i = 0; i < StormBoltPoints; i++)
+                    stormBoltBuffer[i] = stormAt + stormBoltShape[i] * scale;
+                stormBolt.SetPositions(stormBoltBuffer);
+                stormBolt.startWidth = 0.007f * scale * flicker;
+                stormBolt.endWidth = 0.003f * scale * flicker;
+                stormBolt.startColor = WithAlpha(Color.white, flicker);
+                stormBolt.endColor = WithAlpha(Color.Lerp(Accent, Color.white, 0.4f), flicker);
+            }
+
+            // One small light, only on for the moment of the flash
+            if (stormLight != null)
+            {
+                stormLight.enabled = flash > 0f;
+                if (flash > 0f)
+                {
+                    stormLight.transform.position = stormAt + Vector3.down * (0.12f * scale);
+                    stormLight.color = Color.Lerp(Color.white, Second, 0.3f);
+                    stormLight.range = 1.5f * scale;
+                    stormLight.intensity = 4f * flicker;
+                }
+            }
+        }
+
+        private static void StrikeStormBolt(float now)
+        {
+            stormFlashed = now;
+            stormNextFlash = now + Random.Range(2.5f, 6f);
+
+            // A fresh jagged bolt every time, leaning off a little to one side
+            Vector2 slant = Random.insideUnitCircle * 0.06f;
+            for (int i = 0; i < StormBoltPoints; i++)
+            {
+                float k = i / (float)(StormBoltPoints - 1);
+                Vector2 jag = i == 0 ? Vector2.zero : Random.insideUnitCircle * 0.03f;
+                stormBoltShape[i] = new Vector3(jag.x + slant.x * k, -0.04f - k * 0.28f, jag.y + slant.y * k);
+            }
+
+            if (stormLight == null)
+            {
+                stormLight = new GameObject("Eclipse_PocketStormLight").AddComponent<Light>();
+                stormLight.type = LightType.Point;
+                stormLight.enabled = false;
+            }
+
+            // A soft rumble in your hand
+            GorillaTagger.Instance.StartVibration(false, GorillaTagger.Instance.tapHapticStrength / 3f, 0.08f);
+        }
+
+        /// <summary>Takes away the pocket storm, its rain and its lightning.</summary>
+        public static void DisablePocketStorm()
+        {
+            for (int i = 0; i < stormPuffs.Length; i++)
+                DiscardPiece(ref stormPuffs[i]);
+            DestroyLine(ref stormBolt);
+            DestroyParticles(ref stormRain);
+
+            if (stormLight != null)
+                Object.Destroy(stormLight.gameObject);
+            stormLight = null;
+            stormFlashed = -10f;
+        }
+
+        // The cradle in metres: ball size and spacing, how far each ball hangs below the rails, and how far apart the two rails are
+        private const int CradleBalls = 5;
+        private const float CradleBallRadius = 0.02f;
+        private const float CradleSpacing = CradleBallRadius * 2f;
+        private const float CradleDrop = 0.11f;
+        private const float CradleRail = 0.03f;
+        private const int CradleStringPoints = CradleBalls * 3;
+
+        private static readonly Piece[] cradleBalls = new Piece[CradleBalls];
+
+        // Two rails, four posts and the base
+        private static readonly Piece[] cradleFrame = new Piece[7];
+        private static readonly Vector3[] cradleStringBuffer = new Vector3[CradleStringPoints];
+        private static LineRenderer cradleStrings;
+        private static Vector3 cradleAt, cradleAhead, cradleLastLeft, cradleLastRight;
+        private static float cradleSwing, cradlePhase, cradleClicked = -10f;
+
+        /// <summary>A little Newton's cradle floating in front of your chest; tap a ball at either end and the balls click back and forth, slowly running down.</summary>
+        public static void NewtonsCradle()
+        {
+            float now = Time.time;
+            float dt = Mathf.Max(Time.deltaTime, 0.001f);
+            float scale = Scale;
+            Vector3 flat = LookFlat();
+            Vector3 target = Head.position + (flat * 0.42f + Vector3.down * 0.3f) * scale;
+
+            // Measured against your body, so only your hands' own movement taps the balls
+            Vector3 leftRelative = LeftHand - BodyPosition;
+            Vector3 rightRelative = RightHand - BodyPosition;
+            if (cradleStrings == null)
+            {
+                cradleStrings = MakeLine("Eclipse_CradleStrings", 0.0012f);
+                cradleStrings.positionCount = CradleStringPoints;
+                cradleAt = target;
+                cradleAhead = flat;
+                cradleLastLeft = leftRelative;
+                cradleLastRight = rightRelative;
+                cradleSwing = 0f;
+            }
+
+            // Drifts after you, and turns slowly to stay square in front of you
+            if ((cradleAt - target).sqrMagnitude > 4f * scale * scale)
+                cradleAt = target;
+            cradleAt = Vector3.Lerp(cradleAt, target, 1f - Mathf.Exp(-5f * dt));
+            cradleAhead = Vector3.Slerp(cradleAhead, flat, 1f - Mathf.Exp(-3f * dt));
+            if (cradleAhead.sqrMagnitude < 0.0001f)
+                cradleAhead = flat;
+            Quaternion turn = Quaternion.LookRotation(cradleAhead, Vector3.up);
+
+            Vector3 leftVelocity = (leftRelative - cradleLastLeft) / dt;
+            Vector3 rightVelocity = (rightRelative - cradleLastRight) / dt;
+            cradleLastLeft = leftRelative;
+            cradleLastRight = rightRelative;
+
+            // While it is nearly still, a tap on an end ball sets it going
+            if (cradleSwing < 8f)
+            {
+                Vector3 row = turn * Vector3.right;
+                Vector3 leftEnd = cradleAt + turn * new Vector3(-2f * CradleSpacing, -CradleDrop, 0f) * scale;
+                Vector3 rightEnd = cradleAt + turn * new Vector3(2f * CradleSpacing, -CradleDrop, 0f) * scale;
+                float reach = (CradleBallRadius + 0.04f) * scale;
+                if (!TapCradle(LeftHand, leftVelocity, row, leftEnd, rightEnd, reach, scale, true))
+                    TapCradle(RightHand, rightVelocity, row, leftEnd, rightEnd, reach, scale, false);
+            }
+
+            // One end ball swings at a time: while the sine of the phase is above nought it is the right-hand one, below nought the left
+            if (cradleSwing > 0f)
+            {
+                bool wasRight = Mathf.Sin(cradlePhase) > 0f;
+                cradlePhase = (cradlePhase + dt * 9f / Mathf.Sqrt(scale)) % (Mathf.PI * 2f);
+
+                // Each click passes the swing through the row, losing a little every time
+                if ((Mathf.Sin(cradlePhase) > 0f) != wasRight)
+                {
+                    cradleSwing *= 0.96f;
+                    cradleClicked = now;
+                }
+
+                cradleSwing *= Mathf.Exp(-0.12f * dt);
+                if (cradleSwing < 0.6f)
+                    cradleSwing = 0f;
+            }
+
+            Color metal = Color.Lerp(new Color(0.75f, 0.78f, 0.85f), Accent, 0.3f);
+            for (int i = 0; i < cradleFrame.Length; i++)
+            {
+                Piece part = Ensure(ref cradleFrame[i], i == 6 ? PrimitiveType.Cube : PrimitiveType.Cylinder, Color.white);
+                Vector3 at, size;
+                Quaternion lay = Quaternion.identity;
+                if (i < 2)
+                {
+                    at = new Vector3(0f, 0f, i == 0 ? CradleRail : -CradleRail);
+                    size = new Vector3(0.006f, 0.12f, 0.006f);
+                    lay = Quaternion.Euler(0f, 0f, 90f);
+                }
+                else if (i < 6)
+                {
+                    at = new Vector3(i % 2 == 0 ? -0.12f : 0.12f, -0.08f, i < 4 ? CradleRail : -CradleRail);
+                    size = new Vector3(0.006f, 0.08f, 0.006f);
+                }
+                else
+                {
+                    at = new Vector3(0f, -0.165f, 0f);
+                    size = new Vector3(0.27f, 0.01f, 0.1f);
+                }
+
+                part.Object.transform.SetPositionAndRotation(cradleAt + turn * at * scale, turn * lay);
+                part.Object.transform.localScale = size * scale;
+                SetColor(part, i == 6 ? Color.Lerp(new Color(0.1f, 0.08f, 0.16f), Second, 0.25f) : metal);
+            }
+
+            float swing = cradleSwing * Mathf.Sin(cradlePhase);
+            float click = Mathf.Exp(-(now - cradleClicked) * 14f) * Mathf.Clamp01(cradleSwing / 10f);
+            for (int i = 0; i < CradleBalls; i++)
+            {
+                Piece ball = Ensure(ref cradleBalls[i], PrimitiveType.Sphere, Color.white);
+                float angle = (i == CradleBalls - 1 ? Mathf.Max(swing, 0f) : i == 0 ? Mathf.Min(swing, 0f) : 0f) * Mathf.Deg2Rad;
+                Vector3 pivot = new Vector3((i - 2) * CradleSpacing, 0f, 0f);
+                Vector3 hang = new Vector3(Mathf.Sin(angle), -Mathf.Cos(angle), 0f);
+
+                ball.Object.transform.position = cradleAt + turn * (pivot + hang * CradleDrop) * scale;
+                ball.Object.transform.localScale = Vector3.one * (CradleBallRadius * 2f * scale);
+
+                // The balls in the middle flash as each click passes through them
+                Color shine = Color.Lerp(new Color(0.85f, 0.88f, 0.95f), Color.Lerp(Accent, Second, i / (float)(CradleBalls - 1)), 0.45f);
+                SetColor(ball, Color.Lerp(shine, Color.white, i > 0 && i < CradleBalls - 1 ? click * 0.6f : click * 0.2f));
+
+                // Each ball hangs from both rails, the two strings meeting at its top
+                Vector3 hook = cradleAt + turn * (pivot + hang * (CradleDrop - CradleBallRadius)) * scale;
+                Vector3 front = cradleAt + turn * (pivot + Vector3.forward * CradleRail) * scale;
+                Vector3 back = cradleAt + turn * (pivot + Vector3.back * CradleRail) * scale;
+                bool frontFirst = i % 2 == 0;
+                cradleStringBuffer[i * 3] = frontFirst ? front : back;
+                cradleStringBuffer[i * 3 + 1] = hook;
+                cradleStringBuffer[i * 3 + 2] = frontFirst ? back : front;
+            }
+
+            cradleStrings.SetPositions(cradleStringBuffer);
+            cradleStrings.startWidth = cradleStrings.endWidth = 0.0012f * scale;
+            cradleStrings.startColor = cradleStrings.endColor = new Color(1f, 1f, 1f, 0.55f);
+        }
+
+        // Starts the cradle swinging if a hand pushes on one of its end balls; the hand's push decides which ball swings out first
+        private static bool TapCradle(Vector3 hand, Vector3 velocity, Vector3 row, Vector3 leftEnd, Vector3 rightEnd, float reach, float scale, bool left)
+        {
+            if ((hand - leftEnd).sqrMagnitude > reach * reach && (hand - rightEnd).sqrMagnitude > reach * reach)
+                return false;
+
+            float push = Vector3.Dot(velocity, row) / scale;
+            if (Mathf.Abs(push) < 0.25f)
+                return false;
+
+            cradleSwing = Mathf.Clamp(Mathf.Abs(push) * 25f, 12f, 45f);
+            cradlePhase = push > 0f ? 0f : Mathf.PI;
+            cradleClicked = Time.time;
+            GorillaTagger.Instance.StartVibration(left, GorillaTagger.Instance.tapHapticStrength / 2f, 0.04f);
+            return true;
+        }
+
+        /// <summary>Takes away the Newton's cradle.</summary>
+        public static void DisableNewtonsCradle()
+        {
+            for (int i = 0; i < cradleBalls.Length; i++)
+                DiscardPiece(ref cradleBalls[i]);
+            for (int i = 0; i < cradleFrame.Length; i++)
+                DiscardPiece(ref cradleFrame[i]);
+            DestroyLine(ref cradleStrings);
+            cradleSwing = 0f;
+        }
+
+        private const float KeepyRadius = 0.07f;
+        private const float KeepyHandRadius = 0.06f;
+        private static Piece keepyBall, keepyGlow;
+        private static TextMeshPro keepyText;
+        private static Vector3 keepyVelocity, keepyLastLeft, keepyLastRight;
+        private static int keepyHits, keepyBest, keepyShownHits = -1;
+        private static float keepyDropped = -1f, keepyLastHit = -10f;
+
+        /// <summary>A light glowing ball drops in front of you; bat it up with your hands to keep it in the air, with your hits in a row and your best floating above it.</summary>
+        public static void KeepyUppy()
+        {
+            float now = Time.time;
+            float dt = Mathf.Max(Time.deltaTime, 0.001f);
+            float scale = Scale;
+            float radius = KeepyRadius * scale;
+            Vector3 left = LeftHand;
+            Vector3 right = RightHand;
+
+            if (keepyBall == null || !keepyBall.Alive)
+            {
+                keepyBall = MakePiece(PrimitiveType.Sphere, Color.white, Vector3.one);
+                keepyLastLeft = left;
+                keepyLastRight = right;
+                ServeKeepyBall(scale);
+            }
+
+            Ensure(ref keepyGlow, PrimitiveType.Sphere, Color.white);
+            if (keepyText == null)
+            {
+                keepyText = MakeWristText("Eclipse_KeepyUppy", Color.white);
+                keepyShownHits = -1;
+            }
+
+            Vector3 leftVelocity = Vector3.ClampMagnitude((left - keepyLastLeft) / dt, 12f * scale);
+            Vector3 rightVelocity = Vector3.ClampMagnitude((right - keepyLastRight) / dt, 12f * scale);
+            keepyLastLeft = left;
+            keepyLastRight = right;
+
+            Transform ball = keepyBall.Object.transform;
+            Vector3 serve = ServeKeepyPoint(scale);
+            if (keepyDropped >= 0f)
+            {
+                // A new ball comes along a moment after a miss
+                if (now - keepyDropped > 1.2f)
+                    ServeKeepyBall(scale);
+            }
+            else
+            {
+                // Light and floaty: it falls slowly, and the air takes the edge off its speed
+                keepyVelocity += Vector3.down * (3.2f * scale * dt);
+                keepyVelocity *= Mathf.Exp(-0.25f * dt);
+                ball.position += keepyVelocity * dt;
+
+                BatKeepyBall(ball, left, leftVelocity, true, now, radius, scale);
+                BatKeepyBall(ball, right, rightVelocity, false, now, radius, scale);
+
+                // Missed: it fell below your feet or got away from you
+                if (ball.position.y < Feet.y - 0.1f * scale || (ball.position - BodyPosition).sqrMagnitude > 25f * scale * scale)
+                    DropKeepyBall(now, ball.position);
+            }
+
+            bool playing = keepyDropped < 0f;
+            ShowPiece(keepyBall, playing);
+            ShowPiece(keepyGlow, playing);
+
+            if (playing)
+            {
+                float flash = Mathf.Exp(-(now - keepyLastHit) * 8f);
+                ball.localScale = Vector3.one * (radius * 2f * (1f + 0.15f * flash));
+                SetColor(keepyBall, Color.Lerp(Color.Lerp(Accent, Color.white, 0.35f), Color.white, 0.5f * flash));
+
+                keepyGlow.Object.transform.position = ball.position;
+                keepyGlow.Object.transform.localScale = Vector3.one * (radius * 3.2f * (1f + 0.05f * Mathf.Sin(now * 4f)));
+                SetAlpha(keepyGlow, Second, 0.22f + 0.2f * flash);
+
+                if (keepyShownHits != keepyHits)
+                {
+                    keepyShownHits = keepyHits;
+                    keepyText.SafeSetText($"{keepyHits}\n<size=55%>best {keepyBest}</size>");
+                }
+            }
+
+            // The count floats above the ball, or where the next one will drop from
+            PlaceToyText(keepyText, (playing ? ball.position : serve) + Vector3.up * (radius + 0.1f * scale), 0.07f);
+            keepyText.color = playing ? Color.Lerp(Color.white, Accent, 0.35f) : Accent;
+        }
+
+        // Bounces the ball off one hand, taking on that hand's speed
+        private static void BatKeepyBall(Transform ball, Vector3 hand, Vector3 handVelocity, bool left, float now, float radius, float scale)
+        {
+            float reach = radius + KeepyHandRadius * scale;
+            Vector3 away = ball.position - hand;
+            float distance = away.magnitude;
+            if (distance >= reach)
+                return;
+
+            Vector3 normal = distance > 0.0001f ? away / distance : Vector3.up;
+            ball.position = hand + normal * reach;
+
+            float closing = Vector3.Dot(keepyVelocity - handVelocity, normal);
+            if (closing >= 0f)
+                return;
+
+            keepyVelocity = Vector3.ClampMagnitude(keepyVelocity - normal * (closing * 1.6f), 8f * scale);
+
+            // Only a real bat upwards counts, not the ball resting on your hand
+            if (keepyVelocity.y < 1f * scale || now - keepyLastHit < 0.2f)
+                return;
+
+            keepyLastHit = now;
+            keepyBest = Mathf.Max(keepyBest, ++keepyHits);
+            if (keepyHits == 25)
+                Eclipse.Menu.Main.EclipseUnlock("Juggler");
+
+            Burst(ball.position, 8, 0.8f, false);
+            GorillaTagger.Instance.StartVibration(left, GorillaTagger.Instance.tapHapticStrength / 2f, 0.04f);
+        }
+
+        private static Vector3 ServeKeepyPoint(float scale) =>
+            Head.position + (LookFlat() * 0.4f + Vector3.up * 0.25f) * scale;
+
+        private static void ServeKeepyBall(float scale)
+        {
+            Vector3 serve = ServeKeepyPoint(scale);
+            keepyBall.Object.transform.position = serve;
+            keepyVelocity = Vector3.zero;
+            keepyDropped = -1f;
+            keepyHits = 0;
+            Burst(serve, 10, 0.6f, false);
+        }
+
+        private static void DropKeepyBall(float now, Vector3 at)
+        {
+            keepyDropped = now;
+            Burst(at, 20, 1.5f, false);
+            keepyText.SafeSetText($"Dropped\n<size=55%>{keepyHits} in a row  ·  best {keepyBest}</size>");
+            keepyShownHits = -1;
+        }
+
+        /// <summary>Takes away the keepy-uppy ball and its count.</summary>
+        public static void DisableKeepyUppy()
+        {
+            DiscardPiece(ref keepyBall);
+            DiscardPiece(ref keepyGlow);
+            DestroyText(ref keepyText);
+            keepyDropped = -1f;
+            keepyHits = 0;
+            keepyShownHits = -1;
+        }
+
         // ── Toy shapes ──────────────────────────────────────────────────────────
 
         // Spots and stripes are drawn just after the pieces they sit on, so they always show on top
@@ -2496,6 +3750,164 @@ namespace Eclipse.Mods
             radius = 0.33f;
         }
 
+        private static Mesh lavaLampMetalMesh, lavaLampGlassMesh, spinningTopMesh, spinningTopStripesMesh, hourglassGlassMesh, hourglassSandMesh;
+
+        // Outlines as radius and height, listed from the bottom up the outside. The lava lamp is one unit tall.
+        private static readonly Vector2[] LavaLampBaseProfile =
+        {
+            new Vector2(0f, 0f), new Vector2(0.2f, 0f), new Vector2(0.21f, 0.03f), new Vector2(0.13f, 0.3f), new Vector2(0f, 0.3f)
+        };
+
+        private static readonly Vector2[] LavaLampCapProfile =
+        {
+            new Vector2(0f, 0.88f), new Vector2(0.09f, 0.88f), new Vector2(0.05f, 1f), new Vector2(0f, 1f)
+        };
+
+        private static readonly Vector2[] LavaLampGlassProfile =
+        {
+            new Vector2(0.13f, 0.3f), new Vector2(0.155f, 0.42f), new Vector2(0.15f, 0.55f), new Vector2(0.12f, 0.72f), new Vector2(0.085f, 0.88f)
+        };
+
+        // The spinning top, from its tip up to the knob on top
+        private static readonly Vector2[] SpinningTopProfile =
+        {
+            new Vector2(0f, 0f), new Vector2(0.45f, 0.35f), new Vector2(0.5f, 0.42f), new Vector2(0.48f, 0.5f), new Vector2(0.42f, 0.54f),
+            new Vector2(0.1f, 0.56f), new Vector2(0.08f, 0.58f), new Vector2(0.08f, 0.84f), new Vector2(0.05f, 0.9f), new Vector2(0f, 0.9f)
+        };
+
+        // The hourglass's glass, two units from end to end and narrowest in the middle
+        private static readonly Vector2[] HourglassProfile =
+        {
+            new Vector2(0.36f, -0.96f), new Vector2(0.46f, -0.82f), new Vector2(0.48f, -0.62f), new Vector2(0.4f, -0.38f),
+            new Vector2(0.22f, -0.17f), new Vector2(0.07f, -0.05f), new Vector2(0.07f, 0.05f), new Vector2(0.22f, 0.17f),
+            new Vector2(0.4f, 0.38f), new Vector2(0.48f, 0.62f), new Vector2(0.46f, 0.82f), new Vector2(0.36f, 0.96f)
+        };
+
+        /// <summary>The lava lamp's metal base and cap, with a gap between them for the glass.</summary>
+        private static Mesh LavaLampMetalMesh
+        {
+            get
+            {
+                if (lavaLampMetalMesh != null)
+                    return lavaLampMetalMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                AddLathe(vertices, triangles, LavaLampBaseProfile, 24);
+                AddLathe(vertices, triangles, LavaLampCapProfile, 24);
+                return lavaLampMetalMesh = FinishMesh("EclipseLavaLampMetal", vertices, triangles);
+            }
+        }
+
+        /// <summary>The lava lamp's tapering glass, open at both ends where the base and cap cover it.</summary>
+        private static Mesh LavaLampGlassMesh
+        {
+            get
+            {
+                if (lavaLampGlassMesh != null)
+                    return lavaLampGlassMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                AddLathe(vertices, triangles, LavaLampGlassProfile, 24);
+                return lavaLampGlassMesh = FinishMesh("EclipseLavaLampGlass", vertices, triangles);
+            }
+        }
+
+        /// <summary>A spinning top standing on its tip, just under a unit tall and a unit across.</summary>
+        private static Mesh SpinningTopMesh
+        {
+            get
+            {
+                if (spinningTopMesh != null)
+                    return spinningTopMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                AddLathe(vertices, triangles, SpinningTopProfile, 28);
+                return spinningTopMesh = FinishMesh("EclipseSpinningTop", vertices, triangles);
+            }
+        }
+
+        /// <summary>Four painted stripes on the spinning top, across its top face and down its sides, so you can see it turn.</summary>
+        private static Mesh SpinningTopStripesMesh
+        {
+            get
+            {
+                if (spinningTopStripesMesh != null)
+                    return spinningTopStripesMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+
+                // Just outside the body: the top face, and the cone underneath with the way it faces
+                Vector3 coneFacing = new Vector3(0.35f, -0.45f, 0f).normalized;
+                for (int stripe = 0; stripe < 4; stripe++)
+                {
+                    for (int slice = 0; slice < 5; slice++)
+                    {
+                        float a = stripe * Mathf.PI / 2f + slice * 0.14f;
+                        float b = a + 0.14f;
+                        Vector3 ua = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                        Vector3 ub = new Vector3(Mathf.Cos(b), 0f, Mathf.Sin(b));
+
+                        Vector3 up = Vector3.up * 0.566f;
+                        AddTriangle(vertices, triangles, up + ua * 0.13f, up + ub * 0.13f, up + ub * 0.4f, Vector3.up);
+                        AddTriangle(vertices, triangles, up + ua * 0.13f, up + ub * 0.4f, up + ua * 0.4f, Vector3.up);
+
+                        Vector3 outward = ((ua + ub) * 0.5f * coneFacing.x + Vector3.up * coneFacing.y).normalized;
+                        Vector3 innerA = ua * 0.1f + Vector3.up * 0.0778f + outward * 0.008f;
+                        Vector3 innerB = ub * 0.1f + Vector3.up * 0.0778f + outward * 0.008f;
+                        Vector3 outerA = ua * 0.42f + Vector3.up * 0.3267f + outward * 0.008f;
+                        Vector3 outerB = ub * 0.42f + Vector3.up * 0.3267f + outward * 0.008f;
+                        AddTriangle(vertices, triangles, innerA, innerB, outerB, outward);
+                        AddTriangle(vertices, triangles, innerA, outerB, outerA, outward);
+                    }
+                }
+
+                return spinningTopStripesMesh = FinishMesh("EclipseSpinningTopStripes", vertices, triangles);
+            }
+        }
+
+        /// <summary>The hourglass's two glass bulbs, open at both ends where the caps cover them.</summary>
+        private static Mesh HourglassGlassMesh
+        {
+            get
+            {
+                if (hourglassGlassMesh != null)
+                    return hourglassGlassMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                AddLathe(vertices, triangles, HourglassProfile, 24);
+                return hourglassGlassMesh = FinishMesh("EclipseHourglassGlass", vertices, triangles);
+            }
+        }
+
+        /// <summary>A cone of sand with its tip at the bottom and a flat round top one unit up and one unit out.</summary>
+        private static Mesh HourglassSandMesh
+        {
+            get
+            {
+                if (hourglassSandMesh != null)
+                    return hourglassSandMesh;
+
+                List<Vector3> vertices = new List<Vector3>();
+                List<int> triangles = new List<int>();
+                AddLathe(vertices, triangles, new[] { new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f) }, 20);
+                return hourglassSandMesh = FinishMesh("EclipseHourglassSand", vertices, triangles);
+            }
+        }
+
+        // How wide an outline is at a height, between its points
+        private static float ProfileRadius(Vector2[] profile, float height)
+        {
+            for (int i = 1; i < profile.Length; i++)
+                if (height <= profile[i].y)
+                    return Mathf.Lerp(profile[i - 1].x, profile[i].x, Mathf.InverseLerp(profile[i - 1].y, profile[i].y, height));
+            return profile[profile.Length - 1].x;
+        }
+
         // Adds a triangle facing `outward`
         private static void AddTriangle(List<Vector3> vertices, List<int> triangles, Vector3 a, Vector3 b, Vector3 c, Vector3 outward)
         {
@@ -2532,6 +3944,39 @@ namespace Eclipse.Mods
                     centre + (u * Mathf.Cos(a) + v * Mathf.Sin(a)) * radius,
                     centre + (u * Mathf.Cos(b) + v * Mathf.Sin(b)) * radius,
                     normal);
+            }
+        }
+
+        // Adds a shape turned round Y from an outline of radius and height points, listed from the bottom up the outside
+        private static void AddLathe(List<Vector3> vertices, List<int> triangles, Vector2[] profile, int slices)
+        {
+            for (int p = 1; p < profile.Length; p++)
+            {
+                Vector2 from = profile[p - 1];
+                Vector2 to = profile[p];
+
+                // Square to the outline, pointing away from the middle
+                Vector2 facing = new Vector2(to.y - from.y, from.x - to.x);
+                for (int slice = 0; slice < slices; slice++)
+                {
+                    float a = slice * Mathf.PI * 2f / slices;
+                    float b = (slice + 1) * Mathf.PI * 2f / slices;
+                    float middle = (a + b) * 0.5f;
+                    Vector3 ua = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    Vector3 ub = new Vector3(Mathf.Cos(b), 0f, Mathf.Sin(b));
+                    Vector3 outward = new Vector3(Mathf.Cos(middle) * facing.x, facing.y, Mathf.Sin(middle) * facing.x);
+
+                    Vector3 a0 = ua * from.x + Vector3.up * from.y;
+                    Vector3 b0 = ub * from.x + Vector3.up * from.y;
+                    Vector3 a1 = ua * to.x + Vector3.up * to.y;
+                    Vector3 b1 = ub * to.x + Vector3.up * to.y;
+
+                    // Where the outline touches the middle, only one of each pair of triangles has any size
+                    if (from.x > 0f)
+                        AddTriangle(vertices, triangles, a0, b0, b1, outward);
+                    if (to.x > 0f)
+                        AddTriangle(vertices, triangles, a0, b1, a1, outward);
+                }
             }
         }
 

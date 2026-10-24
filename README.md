@@ -56,10 +56,10 @@ Four more categories on the Eclipse tab. They act on you alone too.
 
 | | |
 |---|---|
-| **Space Toys** | Mini Solar System, Planet Builder (both grips), Kite, Yo-yo (RG), Paper Planes (RT), Magic 8-Ball (shake your left hand), Space Dice (X), Glow Sticks (LG), Echo Ghost, Meteor Defense (B), Star Scope (LT), Snow Globe, Pinwheel, Moon Balloon, Boomerang Star (A), Fidget Spinner |
-| **Space Sky** | Ringed Planet, Twin Moons, Space Station, Satellites, Comet Flyby, Galaxy Band, Rocket Launches, Nebula Sky |
-| **Wrist Tools** | Battery Meter, Coordinates, Hand Speed, Measuring Tape, Mic Meter, Ping Alarm, Break Reminder, Countdown Timer (X), Lap Timer (A), Waypoint (B), Jump Height, Air Time, Room Card, Tap Counter |
-| **Space Movement** | Charge Jump (LT), Zipline (RT, ride with RG), Air Strafe, Orbit Mode (RG), Gravity Well (Y) |
+| **Space Toys** | Mini Solar System, Planet Builder (both grips), Kite, Yo-yo (RG), Paper Planes (RT), Magic 8-Ball (shake your left hand), Space Dice (X), Glow Sticks (LG), Echo Ghost, Meteor Defense (B), Star Scope (LT), Snow Globe, Pinwheel, Moon Balloon, Boomerang Star (A), Fidget Spinner, Slinky, Lava Lamp, Spinning Top (Y), Star Hourglass, Spirograph, Pocket Storm, Newton's Cradle, Keepy-Uppy |
+| **Space Sky** | Ringed Planet, Twin Moons, Space Station, Satellites, Comet Flyby, Galaxy Band, Rocket Launches, Nebula Sky, Binary Stars, Asteroid Belt, Spiral Galaxy, Pulsar Star, Starship Fleet, Black Hole Horizon, Space Whale |
+| **Wrist Tools** | Battery Meter, Coordinates, Hand Speed, Measuring Tape, Mic Meter, Ping Alarm, Break Reminder, Countdown Timer (X), Lap Timer (A), Waypoint (B), Jump Height, Air Time, Room Card, Tap Counter, G-Force Meter, Speed Graph, World Clock, Spirit Level, Head Height, Room Timer |
+| **Space Movement** | Charge Jump (LT), Zipline (RT, ride with RG), Air Strafe, Orbit Mode (RG), Gravity Well (Y), Wall Slide, Moon Zone (X), Comet Jab (B), Star Stroke (A) |
 
 **Surprise Me** turns on something you don't have on yet, and **Mod of the Day** picks a different Eclipse mod every day.
 
@@ -72,7 +72,7 @@ Four more categories on the Eclipse tab. They act on you alone too.
 - **Card notifications** in the menu's colours (Classic Notifications brings back the plain lines).
 - **Pointer styles:** star, ring, comet or the classic orb.
 - **An intro** when the game starts (Disable Intro turns it off).
-- **15 new achievements** and a **What's New** page.
+- **16 new achievements** and a **What's New** page.
 
 ## Credits
 

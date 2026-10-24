@@ -34,7 +34,7 @@ namespace Eclipse.Mods
     /// <remarks>
     /// The left wrist already carries the Eclipse watches up to 0.66 and the right wrist up to 0.42,
     /// so these sit above them. The second set goes higher still, from 1.02 on the left wrist and
-    /// 0.92 on the right. Anything that counts real minutes uses unscaled time, so a mod that
+    /// 0.92 on the right, and the third from 1.38 on both. Anything that counts real minutes uses unscaled time, so a mod that
     /// slows the game down doesn't stretch it.
     /// </remarks>
     public static partial class EclipseMods
@@ -1105,5 +1105,521 @@ namespace Eclipse.Mods
 
         /// <summary>Takes the tap counter off your wrist; your count stays until the game closes.</summary>
         public static void DisableTapCounter() => DestroyText(ref tapCounterText);
+
+        // ── Further Wrist Tools ─────────────────────────────────────────────────
+
+        // One g is the pull of Earth's gravity. A change in speed bigger than this in a single frame
+        // is the game putting you somewhere new, not something you could feel.
+        private const float GForceUnit = 9.81f;
+        private const float GForceJump = 30f;
+        private static TextMeshPro gForceText;
+        private static Vector3 gForceFrom, gForceFelt;
+        private static float gForce = 1f, gForceBest, gForceNext;
+        private static int gForceFrame = -2, gForceShown = int.MinValue, gForceBestShown;
+
+        /// <summary>The g-force you are feeling right now, and the highest this session, on your left wrist.</summary>
+        public static void GForceMeter()
+        {
+            GTPlayer player = GTPlayer.Instance;
+            if (player == null)
+                return;
+
+            // The game's own measure of how fast your body moves, which counts pushing yourself along
+            // with your hands; the rigidbody's speed misses that. Taken at your own size, since the
+            // game pulls a smaller gorilla down more gently.
+            Vector3 velocity = player.AveragedVelocity / Mathf.Max(Scale, 0.01f);
+            float dt = Time.deltaTime;
+
+            if (gForceFrame != Time.frameCount - 1)
+            {
+                // Nothing to measure against yet, so it starts out as if you were standing still
+                gForceFelt = -Physics.gravity;
+            }
+            else if (dt > 0f && (velocity - gForceFrom).sqrMagnitude < GForceJump * GForceJump)
+            {
+                // What you feel is how fast your body speeds up, less the pull of gravity: standing still
+                // the ground holds you up with one g, and falling freely you feel none. It is eased as a
+                // direction before its size is taken, so the frames the physics skips even out.
+                Vector3 felt = (velocity - gForceFrom) / dt - Physics.gravity;
+                gForceFelt = Vector3.Lerp(gForceFelt, felt, 1f - Mathf.Exp(-6f * dt));
+            }
+
+            gForceFrom = velocity;
+            gForceFrame = Time.frameCount;
+            gForce = gForceFelt.magnitude / GForceUnit;
+            gForceBest = Mathf.Max(gForceBest, gForce);
+
+            if (gForceText == null)
+            {
+                gForceText = MakeWristText("Eclipse_GForceMeter", Color.white);
+                gForceShown = int.MinValue;
+            }
+
+            PlaceOnWrist(gForceText, 1.38f);
+            if (Time.time < gForceNext)
+                return;
+            gForceNext = Time.time + 0.1f;
+            gForceText.color = gForce < 0.5f ? Color.Lerp(Color.white, Second, 0.5f) : Color.Lerp(Color.white, Accent, Mathf.Clamp01((gForce - 1f) / 3f));
+
+            // In tenths, so the text is only rebuilt when a shown digit changes
+            int shown = Mathf.RoundToInt(gForce * 10f);
+            int best = Mathf.RoundToInt(gForceBest * 10f);
+            if (shown == gForceShown && best == gForceBestShown)
+                return;
+            gForceShown = shown;
+            gForceBestShown = best;
+
+            gForceText.text = $"{shown / 10f:0.0} g\n<size=55%>{(shown < 3 ? "weightless  ·  " : "")}highest {best / 10f:0.0} g</size>";
+        }
+
+        /// <summary>Takes the g-force meter off your wrist; your highest stays until the game closes.</summary>
+        public static void DisableGForceMeter()
+        {
+            DestroyText(ref gForceText);
+            gForce = 1f;
+            gForceFrame = -2;
+        }
+
+        // Sixty points across the last ten seconds, each your average speed over a sixth of a second
+        private const int SpeedGraphLength = 60;
+        private const float SpeedGraphSeconds = 10f, SpeedGraphWidth = 0.22f, SpeedGraphHeight = 0.07f;
+        private static readonly float[] speedGraphSpeeds = new float[SpeedGraphLength];
+        private static readonly Vector3[] speedGraphPoints = new Vector3[SpeedGraphLength];
+        private static LineRenderer speedGraphLine;
+        private static TextMeshPro speedGraphText;
+        private static float speedGraphSum, speedGraphSpeed, speedGraphPeak, speedGraphRange = 1f, speedGraphSampleAt, speedGraphNext;
+        private static int speedGraphHead, speedGraphCount, speedGraphFrame = -2, speedGraphShown = int.MinValue, speedGraphPeakShown;
+
+        /// <summary>A small live graph above your right wrist of how fast you have been going over the last ten seconds.</summary>
+        public static void SpeedGraph()
+        {
+            GTPlayer player = GTPlayer.Instance;
+            if (player == null)
+                return;
+
+            float now = Time.unscaledTime;
+            float dt = Time.unscaledDeltaTime;
+            float every = SpeedGraphSeconds / SpeedGraphLength;
+
+            // The same measure of your body's speed as G-Force Meter, so running on your hands counts
+            float speed = player.AveragedVelocity.magnitude;
+            bool fresh = speedGraphFrame != Time.frameCount - 1;
+            speedGraphFrame = Time.frameCount;
+            speedGraphSpeed = fresh ? speed : Mathf.Lerp(speedGraphSpeed, speed, 1f - Mathf.Exp(-10f * dt));
+            if (fresh)
+            {
+                speedGraphSum = 0f;
+                speedGraphCount = 0;
+                speedGraphSampleAt = now + every;
+            }
+
+            speedGraphSum += speed;
+            speedGraphCount++;
+            if (now >= speedGraphSampleAt)
+            {
+                // The newest point takes the place of the oldest
+                speedGraphSpeeds[speedGraphHead] = speedGraphSum / speedGraphCount;
+                speedGraphHead = (speedGraphHead + 1) % SpeedGraphLength;
+                speedGraphSum = 0f;
+                speedGraphCount = 0;
+                speedGraphSampleAt += every;
+                if (speedGraphSampleAt < now)
+                    speedGraphSampleAt = now + every;
+
+                speedGraphPeak = 0f;
+                for (int i = 0; i < SpeedGraphLength; i++)
+                    speedGraphPeak = Mathf.Max(speedGraphPeak, speedGraphSpeeds[i]);
+            }
+
+            // Grows at once to fit a new top speed and settles back slowly, never under a metre a second
+            float range = Mathf.Max(speedGraphPeak, 1f);
+            speedGraphRange = range >= speedGraphRange ? range : Mathf.Lerp(speedGraphRange, range, 1f - Mathf.Exp(-1.5f * dt));
+
+            if (speedGraphLine == null)
+            {
+                speedGraphLine = MakeLine("Eclipse_SpeedGraph", 0.005f);
+                speedGraphLine.positionCount = SpeedGraphLength;
+            }
+
+            float scale = Scale;
+            Vector3 origin = RightHand + Vector3.up * (1.38f * scale);
+            Vector3 toHead = Head.position - origin;
+            toHead.y = 0f;
+            Vector3 facing = toHead.sqrMagnitude < 0.0001f ? Vector3.forward : toHead.normalized;
+
+            // Oldest on your left and newest on your right as you look at it
+            Vector3 across = Vector3.Cross(facing, Vector3.up);
+            for (int i = 0; i < SpeedGraphLength; i++)
+            {
+                float height = Mathf.Min(speedGraphSpeeds[(speedGraphHead + i) % SpeedGraphLength] / speedGraphRange, 1f);
+                speedGraphPoints[i] = origin
+                    + across * ((i / (float)(SpeedGraphLength - 1) - 0.5f) * SpeedGraphWidth * scale)
+                    + Vector3.up * (height * SpeedGraphHeight * scale);
+            }
+
+            speedGraphLine.SetPositions(speedGraphPoints);
+            speedGraphLine.startWidth = speedGraphLine.endWidth = 0.005f * scale;
+            speedGraphLine.startColor = WithAlpha(Second, 0.4f);
+            speedGraphLine.endColor = Accent;
+
+            if (speedGraphText == null)
+            {
+                speedGraphText = MakeWristText("Eclipse_SpeedGraphText", Color.white);
+                speedGraphShown = int.MinValue;
+            }
+
+            PlaceOnWrist(speedGraphText, 1.51f, true);
+            if (Time.time < speedGraphNext)
+                return;
+            speedGraphNext = Time.time + 0.1f;
+            speedGraphText.color = Color.Lerp(Color.white, Accent, Mathf.Clamp01(speedGraphSpeed / 12f));
+
+            // In tenths, so the text is only rebuilt when a shown digit changes
+            int shown = Mathf.RoundToInt(speedGraphSpeed * 10f);
+            int peak = Mathf.RoundToInt(speedGraphPeak * 10f);
+            if (shown == speedGraphShown && peak == speedGraphPeakShown)
+                return;
+            speedGraphShown = shown;
+            speedGraphPeakShown = peak;
+
+            speedGraphText.text = $"{shown / 10f:0.0} m/s\n<size=55%>top {peak / 10f:0.0} in the last 10 s</size>";
+        }
+
+        /// <summary>Takes the speed graph off your wrist and clears it.</summary>
+        public static void DisableSpeedGraph()
+        {
+            DestroyLine(ref speedGraphLine);
+            DestroyText(ref speedGraphText);
+            System.Array.Clear(speedGraphSpeeds, 0, SpeedGraphLength);
+            speedGraphHead = speedGraphCount = 0;
+            speedGraphSum = speedGraphSpeed = speedGraphPeak = 0f;
+            speedGraphRange = 1f;
+            speedGraphFrame = -2;
+        }
+
+        // Windows names its time zones one way and Android another, so both names are tried
+        private static readonly string[] WorldClockCities = { "New York", "London", "Tokyo" };
+        private static readonly string[] WorldClockWindowsZones = { "Eastern Standard Time", "GMT Standard Time", "Tokyo Standard Time" };
+        private static readonly string[] WorldClockIanaZones = { "America/New_York", "Europe/London", "Asia/Tokyo" };
+        private static readonly System.TimeZoneInfo[] worldClockZones = new System.TimeZoneInfo[3];
+        private static TextMeshPro worldClockText;
+        private static long worldClockShown = long.MinValue;
+        private static float worldClockNext;
+        private static bool worldClockFound;
+
+        /// <summary>Your local time, UTC, and the time in New York, London and Tokyo, on your left wrist.</summary>
+        public static void WorldClock()
+        {
+            // Looked up once; a place this system doesn't know is left off
+            if (!worldClockFound)
+            {
+                worldClockFound = true;
+                for (int i = 0; i < worldClockZones.Length; i++)
+                    worldClockZones[i] = FindWorldClockZone(WorldClockWindowsZones[i]) ?? FindWorldClockZone(WorldClockIanaZones[i]);
+            }
+
+            if (worldClockText == null)
+            {
+                worldClockText = MakeWristText("Eclipse_WorldClock", Color.white);
+                worldClockShown = long.MinValue;
+                worldClockNext = 0f;
+            }
+
+            PlaceOnWrist(worldClockText, 1.62f);
+            if (Time.unscaledTime < worldClockNext)
+                return;
+            worldClockNext = Time.unscaledTime + 1f;
+            worldClockText.color = Color.Lerp(Color.white, Accent, 0.3f);
+
+            // Every place shown turns over on the minute, so the text is only rebuilt then
+            System.DateTime utc = System.DateTime.UtcNow;
+            long minute = utc.Ticks / System.TimeSpan.TicksPerMinute;
+            if (minute == worldClockShown)
+                return;
+            worldClockShown = minute;
+
+            System.DateTime local = utc.ToLocalTime();
+            System.Text.StringBuilder built = new System.Text.StringBuilder(112);
+            built.Append(WorldClockTime(local)).Append(" <size=55%>here</size>\n<size=55%>");
+
+            int places = 0;
+            AppendWorldClock(built, "UTC", utc, local, ref places);
+            for (int i = 0; i < worldClockZones.Length; i++)
+            {
+                if (worldClockZones[i] == null)
+                    continue;
+
+                System.DateTime there;
+                try
+                {
+                    there = System.TimeZoneInfo.ConvertTimeFromUtc(utc, worldClockZones[i]);
+                }
+                catch (System.Exception)
+                {
+                    continue;
+                }
+
+                AppendWorldClock(built, WorldClockCities[i], there, local, ref places);
+            }
+
+            worldClockText.text = built.Append("</size>").ToString();
+        }
+
+        // Null when this system doesn't know a time zone by that name
+        private static System.TimeZoneInfo FindWorldClockZone(string id)
+        {
+            try
+            {
+                return System.TimeZoneInfo.FindSystemTimeZoneById(id);
+            }
+            catch (System.Exception)
+            {
+                return null;
+            }
+        }
+
+        // Hours and minutes, like 09:05
+        private static string WorldClockTime(System.DateTime time) =>
+            $"{time.Hour:00}:{time.Minute:00}";
+
+        // Two places to a line, each marked +1 or -1 when its day isn't the same as yours
+        private static void AppendWorldClock(System.Text.StringBuilder built, string place, System.DateTime time, System.DateTime local, ref int places)
+        {
+            if (places > 0)
+                built.Append(places % 2 == 0 ? "\n" : "  ·  ");
+
+            built.Append(place).Append(' ').Append(WorldClockTime(time));
+            int days = (time.Date - local.Date).Days;
+            if (days != 0)
+                built.Append(days > 0 ? " +" : " -").Append(Mathf.Abs(days));
+            places++;
+        }
+
+        /// <summary>Takes the world clock off your wrist.</summary>
+        public static void DisableWorldClock()
+        {
+            DestroyText(ref worldClockText);
+            worldClockShown = long.MinValue;
+        }
+
+        // Within this many degrees counts as level, and by this many the bubble has reached the end of the vial
+        private const float SpiritLevelLevel = 2f, SpiritLevelFull = 15f;
+        private const float SpiritLevelLength = 0.1f, SpiritLevelWidth = 0.022f, SpiritLevelBubbleLength = 0.026f;
+        private static readonly Color SpiritLevelGreen = new Color(0.35f, 1f, 0.45f);
+        private static Piece spiritLevelVial, spiritLevelBubble;
+        private static LineRenderer spiritLevelMarkA, spiritLevelMarkB;
+        private static TextMeshPro spiritLevelText;
+        private static float spiritLevelSlide, spiritLevelGlow, spiritLevelNext;
+        private static int spiritLevelFrame = -2, spiritLevelShown = int.MinValue;
+
+        /// <summary>A little glass vial lying on your right hand whose bubble shows how level your hand is, with the tilt in degrees.</summary>
+        public static void SpiritLevel()
+        {
+            float scale = Scale;
+            float dt = Time.unscaledDeltaTime;
+            var hand = Eclipse.Utilities.ControllerUtilities.GetTrueRightHand();
+
+            // The vial runs from your wrist to your fingertips, and the tilt is how far that is off flat
+            Vector3 along = hand.forward;
+            float tilt = Mathf.Asin(Mathf.Clamp(along.y, -1f, 1f)) * Mathf.Rad2Deg;
+            bool level = Mathf.Abs(tilt) <= SpiritLevelLevel;
+
+            // The bubble floats to the high end and drifts there like a real one, and the glass fades
+            // to green rather than flickering as you pass the edge of level
+            float slide = Mathf.Clamp(tilt / SpiritLevelFull, -1f, 1f);
+            bool fresh = spiritLevelFrame != Time.frameCount - 1;
+            spiritLevelFrame = Time.frameCount;
+            spiritLevelSlide = fresh ? slide : Mathf.Lerp(spiritLevelSlide, slide, 1f - Mathf.Exp(-10f * dt));
+            spiritLevelGlow = fresh ? (level ? 1f : 0f) : Mathf.MoveTowards(spiritLevelGlow, level ? 1f : 0f, 6f * dt);
+
+            Ensure(ref spiritLevelVial, PrimitiveType.Capsule, Color.white);
+            if (spiritLevelBubble == null || !spiritLevelBubble.Alive)
+            {
+                // Drawn just after the glass, so it always shows inside it
+                spiritLevelBubble = MakePiece(PrimitiveType.Sphere, Color.white, Vector3.one);
+                spiritLevelBubble.Renderer.sharedMaterial.renderQueue = DecalQueue;
+            }
+
+            if (spiritLevelMarkA == null)
+                spiritLevelMarkA = MakeRing("Eclipse_SpiritLevelMarkA");
+            if (spiritLevelMarkB == null)
+                spiritLevelMarkB = MakeRing("Eclipse_SpiritLevelMarkB");
+
+            Vector3 centre = hand.position + Vector3.up * (0.05f * scale);
+            Quaternion lying = Quaternion.FromToRotation(Vector3.up, along);
+            Color glass = Color.Lerp(Second, SpiritLevelGreen, spiritLevelGlow);
+
+            // A capsule is two units long along its own up
+            spiritLevelVial.Object.transform.SetPositionAndRotation(centre, lying);
+            spiritLevelVial.Object.transform.localScale = new Vector3(SpiritLevelWidth, SpiritLevelLength * 0.5f, SpiritLevelWidth) * scale;
+            SetAlpha(spiritLevelVial, glass, 0.3f + 0.25f * spiritLevelGlow);
+
+            // The bubble rides along the top of the inside of the glass
+            Vector3 above = Vector3.ProjectOnPlane(Vector3.up, along);
+            above = above.sqrMagnitude > 0.0001f ? above.normalized : Vector3.zero;
+            float travel = (SpiritLevelLength - SpiritLevelWidth - SpiritLevelBubbleLength) * 0.5f * scale;
+            Vector3 bubbleAt = centre + along * (spiritLevelSlide * travel) + above * (SpiritLevelWidth * 0.18f * scale);
+            spiritLevelBubble.Object.transform.SetPositionAndRotation(bubbleAt, lying);
+            spiritLevelBubble.Object.transform.localScale = new Vector3(SpiritLevelWidth * 0.6f, SpiritLevelBubbleLength, SpiritLevelWidth * 0.6f) * scale;
+            SetAlpha(spiritLevelBubble, Color.Lerp(Accent, Color.Lerp(SpiritLevelGreen, Color.white, 0.5f), spiritLevelGlow), 0.85f);
+
+            // Two marks around the glass where the bubble's ends sit when the hand is level
+            float mark = (SpiritLevelBubbleLength * 0.5f + 0.003f) * scale;
+            float ring = SpiritLevelWidth * 0.54f * scale;
+            Color marks = WithAlpha(Color.Lerp(Accent, SpiritLevelGreen, spiritLevelGlow), 0.8f);
+            PlaceRing(spiritLevelMarkA, centre + along * mark, along, ring, 0.0025f * scale, marks);
+            PlaceRing(spiritLevelMarkB, centre - along * mark, along, ring, 0.0025f * scale, marks);
+
+            if (spiritLevelText == null)
+            {
+                spiritLevelText = MakeWristText("Eclipse_SpiritLevel", Color.white);
+                spiritLevelShown = int.MinValue;
+            }
+
+            // Just above the vial, so the bubble and the reading are seen together
+            PlaceToyText(spiritLevelText, centre + Vector3.up * (0.055f * scale), 0.05f);
+            if (Time.time < spiritLevelNext)
+                return;
+            spiritLevelNext = Time.time + 0.1f;
+            spiritLevelText.color = level ? SpiritLevelGreen : Color.Lerp(Color.white, Accent, 0.3f);
+
+            // Tenths of a degree close to level and whole degrees from ten on, with which end is high
+            // in front, so the text is only rebuilt when it changes
+            float size = Mathf.Abs(tilt);
+            int tenths = size < 10f ? Mathf.RoundToInt(size * 10f) : Mathf.RoundToInt(size) * 10;
+            int shown = (level ? 0 : tilt > 0f ? 1 : 2) * 10000 + tenths;
+            if (shown == spiritLevelShown)
+                return;
+            spiritLevelShown = shown;
+
+            string degrees = tenths < 100 ? $"{tenths / 10f:0.0}" : $"{tenths / 10}";
+            spiritLevelText.text = $"{(level ? "Level" : tilt > 0f ? "Fingers up" : "Fingers down")}\n<size=55%>{degrees} degrees</size>";
+        }
+
+        /// <summary>Takes the spirit level off your hand.</summary>
+        public static void DisableSpiritLevel()
+        {
+            DiscardPiece(ref spiritLevelVial);
+            DiscardPiece(ref spiritLevelBubble);
+            DestroyLine(ref spiritLevelMarkA);
+            DestroyLine(ref spiritLevelMarkB);
+            DestroyText(ref spiritLevelText);
+            spiritLevelSlide = spiritLevelGlow = 0f;
+            spiritLevelFrame = -2;
+        }
+
+        // Fifty metres is as far down as it looks for the ground
+        private const float HeadHeightReach = 50f;
+        private static TextMeshPro headHeightText;
+        private static float headHeight = -1f, headHeightBest, headHeightNext;
+        private static int headHeightShown = int.MinValue, headHeightBestShown;
+
+        /// <summary>How high your head is above the ground straight below it, and your highest this session, on your left wrist.</summary>
+        public static void HeadHeight()
+        {
+            GTPlayer player = GTPlayer.Instance;
+            if (player == null)
+                return;
+
+            // Straight down to the first thing you could stand on, passing through trigger zones
+            headHeight = Physics.Raycast(Head.position, Vector3.down, out RaycastHit hit, HeadHeightReach, player.locomotionEnabledLayers, QueryTriggerInteraction.Ignore)
+                ? hit.distance
+                : -1f;
+            headHeightBest = Mathf.Max(headHeightBest, headHeight);
+
+            if (headHeightText == null)
+            {
+                headHeightText = MakeWristText("Eclipse_HeadHeight", Color.white);
+                headHeightShown = int.MinValue;
+            }
+
+            PlaceOnWrist(headHeightText, 1.5f);
+            if (Time.time < headHeightNext)
+                return;
+            headHeightNext = Time.time + 0.1f;
+            headHeightText.color = headHeight < 0f ? Color.Lerp(Color.white, Second, 0.35f) : Color.Lerp(Color.white, Accent, Mathf.Clamp01(headHeight / (10f * Mathf.Max(Scale, 0.01f))));
+
+            // In tenths, -1 with no ground below, so the text is only rebuilt when a shown digit changes
+            int shown = headHeight < 0f ? -1 : Mathf.RoundToInt(headHeight * 10f);
+            int best = Mathf.RoundToInt(headHeightBest * 10f);
+            if (shown == headHeightShown && best == headHeightBestShown)
+                return;
+            headHeightShown = shown;
+            headHeightBestShown = best;
+
+            headHeightText.text = shown < 0
+                ? $"--\n<size=55%>no ground below  ·  highest {best / 10f:0.0} m</size>"
+                : $"{shown / 10f:0.0} m\n<size=55%>head above the ground  ·  highest {best / 10f:0.0} m</size>";
+        }
+
+        /// <summary>Takes your head height off your wrist; your highest stays until the game closes.</summary>
+        public static void DisableHeadHeight()
+        {
+            DestroyText(ref headHeightText);
+            headHeight = -1f;
+        }
+
+        private static TextMeshPro roomTimerText;
+        private static Photon.Realtime.Room roomTimerRoom;
+        private static float roomTimerSince, roomTimerSeen, roomTimerBanked, roomTimerNext;
+        private static int roomTimerShown = int.MinValue, roomTimerTotalShown;
+
+        /// <summary>How long you have been in the room you are in, and your total time in rooms this session, on your right wrist.</summary>
+        public static void RoomTimer()
+        {
+            float now = Time.unscaledTime;
+
+            // Only whether you are in a room and which one; nothing about anyone in it. Photon makes a
+            // new room each time you join, so leaving and coming back to the same code starts over.
+            var room = PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom : null;
+            if (!ReferenceEquals(room, roomTimerRoom))
+            {
+                // The room you left counts up to the last time you were seen in it
+                if (roomTimerRoom != null)
+                    roomTimerBanked += roomTimerSeen - roomTimerSince;
+
+                roomTimerRoom = room;
+                roomTimerSince = now;
+            }
+
+            if (room != null)
+                roomTimerSeen = now;
+
+            if (roomTimerText == null)
+            {
+                roomTimerText = MakeWristText("Eclipse_RoomTimer", Color.white);
+                roomTimerShown = int.MinValue;
+            }
+
+            PlaceOnWrist(roomTimerText, 1.64f, true);
+            if (Time.time < roomTimerNext)
+                return;
+            roomTimerNext = Time.time + 0.25f;
+            roomTimerText.color = room == null ? Color.Lerp(Color.white, Second, 0.35f) : Color.Lerp(Color.white, Accent, 0.3f);
+
+            // In whole seconds, -1 while you aren't in a room, so the text is only rebuilt when a shown second changes
+            int here = room == null ? -1 : Mathf.FloorToInt(now - roomTimerSince);
+            int total = Mathf.FloorToInt(roomTimerBanked + (room == null ? 0f : now - roomTimerSince));
+            if (here == roomTimerShown && total == roomTimerTotalShown)
+                return;
+            roomTimerShown = here;
+            roomTimerTotalShown = total;
+
+            if (room == null)
+            {
+                roomTimerText.text = $"Not in a room\n<size=55%>{RoomTimerClock(total)} in rooms this session</size>";
+                return;
+            }
+
+            string name = string.IsNullOrEmpty(room.Name) ? "this room" : room.Name;
+            roomTimerText.text = $"{RoomTimerClock(here)}\n<size=55%>in {name}  ·  {RoomTimerClock(total)} in rooms this session</size>";
+        }
+
+        // Minutes and seconds, like 4:05, with hours in front from an hour on, like 1:04:05
+        private static string RoomTimerClock(int seconds) =>
+            seconds >= 3600 ? $"{seconds / 3600}:{seconds / 60 % 60:00}:{seconds % 60:00}" : $"{seconds / 60}:{seconds % 60:00}";
+
+        /// <summary>Takes the room timer off your wrist; your time in rooms stays, and if you are still in the same room when you turn it back on it carries on counting.</summary>
+        public static void DisableRoomTimer() => DestroyText(ref roomTimerText);
     }
 }

@@ -725,6 +725,710 @@ namespace Eclipse.Mods
             DestroyParticles(ref skyNebula);
         }
 
+        private static Piece binaryWarm, binaryCool, binaryWarmGlow, binaryCoolGlow, binaryWarmHalo, binaryCoolHalo;
+        private static LineRenderer binaryStream;
+        private const int BinaryStreamPoints = 14;
+        private static readonly Vector3[] binaryStreamBuffer = new Vector3[BinaryStreamPoints];
+        private static readonly Color BinaryWarmColor = new Color(1f, 0.6f, 0.26f), BinaryCoolColor = new Color(0.72f, 0.86f, 1f);
+
+        /// <summary>Two suns, one warm orange and one cool blue-white, circling each other far off in your sky.</summary>
+        public static void BinaryStars()
+        {
+            SkyKeepFarClip();
+            const float warmSize = 22f, coolSize = 13f;
+            float now = Time.time;
+            Vector3 direction = SkyDirection(320f, 30f);
+            Vector3 centre = Head.position + direction * 380f;
+            Vector3 right = Vector3.Cross(Vector3.up, direction).normalized;
+            Vector3 skyUp = Vector3.Cross(direction, right);
+
+            // Their orbit is seen nearly edge on and leans to one side, so they swing out across the
+            // sky and pass in front of and behind each other
+            Quaternion lean = Quaternion.AngleAxis(20f, direction);
+            Vector3 across = lean * right;
+            Vector3 deep = lean * (direction * 0.94f + skyUp * 0.34f);
+            float angle = now * (Mathf.PI * 2f / 48f);
+            Vector3 swing = SkyArc(across, deep, angle);
+            Vector3 onward = SkyArc(deep, -across, angle);
+
+            // The heavier blue-white sun keeps near the middle while the big orange one swings wide
+            Vector3 warmAt = centre - swing * 19f;
+            Vector3 coolAt = centre + swing * 11f;
+            float flicker = Mathf.Sin(now * 1.7f) * 0.03f;
+            BinaryPlaceSun(ref binaryWarm, ref binaryWarmGlow, ref binaryWarmHalo, warmAt, warmSize, 1f + flicker, BinaryWarmColor, Accent);
+            BinaryPlaceSun(ref binaryCool, ref binaryCoolGlow, ref binaryCoolHalo, coolAt, coolSize, 1f - flicker, BinaryCoolColor, Second);
+
+            // A thin stream of gas drawn off the swollen orange sun, curling round onto the trailing
+            // side of the blue one
+            Vector3 from = warmAt + (coolAt - warmAt).normalized * (warmSize * 0.45f);
+            Vector3 to = coolAt - onward * (coolSize * 0.45f);
+            Vector3 bend = (from + to) * 0.5f - onward * 7f;
+            for (int i = 0; i < BinaryStreamPoints; i++)
+            {
+                float along = i / (float)(BinaryStreamPoints - 1);
+                binaryStreamBuffer[i] = Vector3.Lerp(Vector3.Lerp(from, bend, along), Vector3.Lerp(bend, to, along), along);
+            }
+
+            if (binaryStream == null)
+            {
+                binaryStream = MakeLine("Eclipse_SkyBinaryStream", 1f);
+                binaryStream.positionCount = BinaryStreamPoints;
+                binaryStream.widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 0.35f);
+            }
+
+            binaryStream.SetPositions(binaryStreamBuffer);
+            binaryStream.widthMultiplier = 3.2f;
+            binaryStream.startColor = WithAlpha(BinaryWarmColor, 0.5f);
+            binaryStream.endColor = WithAlpha(Color.Lerp(BinaryCoolColor, Accent, 0.3f), 0.25f);
+        }
+
+        // A sun is a white-hot ball with a close glow and a wide faint halo round it
+        private static void BinaryPlaceSun(ref Piece sun, ref Piece glow, ref Piece halo, Vector3 at, float size, float pulse, Color color, Color tint)
+        {
+            Piece body = SkyEnsure(ref sun, PrimitiveType.Sphere, SkySolidQueue, true);
+            SkyPlace(body, at, Quaternion.identity, Vector3.one * size);
+            SetColor(body, Color.Lerp(color, Color.white, 0.55f));
+
+            SkyPlaceGlow(SkyEnsureGlow(ref glow), at, size * 2.4f * pulse, color, 0.6f);
+            SkyPlaceGlow(SkyEnsureGlow(ref halo), at, size * 4.5f, Color.Lerp(color, tint, 0.25f), 0.2f);
+        }
+
+        public static void DisableBinaryStars()
+        {
+            SkyReleaseFarClip();
+            DiscardPiece(ref binaryWarm);
+            DiscardPiece(ref binaryCool);
+            DiscardPiece(ref binaryWarmGlow);
+            DiscardPiece(ref binaryCoolGlow);
+            DiscardPiece(ref binaryWarmHalo);
+            DiscardPiece(ref binaryCoolHalo);
+            DestroyLine(ref binaryStream);
+        }
+
+        private sealed class BeltRock
+        {
+            public Piece Body;
+            public Quaternion Start;
+            public Vector3 Axis;
+            public Vector3 Size;
+            public Color Color;
+            public float Angle;
+            public float Out;
+            public float Side;
+            public float Spin;
+        }
+
+        private static readonly BeltRock[] beltRocks = new BeltRock[40];
+        private static ParticleSystem beltDust;
+        private static ParticleSystemRenderer beltDustLook;
+        private const int BeltClouds = 50, BeltGrains = 300;
+        private const float BeltDistance = 250f, BeltSpeed = 0.01f;
+
+        // The rocks only fill the half of the belt above the horizon, from a little under it on one
+        // side to a little under it on the other, then go round again from the start
+        private const float BeltFrom = -0.3f, BeltSpan = Mathf.PI + 0.6f;
+
+        /// <summary>A wide belt of tumbling rocks and dust arcing across your sky, slowly turning.</summary>
+        public static void AsteroidBelt()
+        {
+            SkyKeepFarClip();
+            float now = Time.time;
+            Vector3 head = Head.position;
+
+            // A great circle tipped over the sky, leaning the other way to the galaxy band
+            Vector3 pole = SkyDirection(110f, 28f);
+            Vector3 along = Vector3.Cross(Vector3.up, pole).normalized;
+            Vector3 over = Vector3.Cross(pole, along);
+
+            if (beltDust == null)
+            {
+                beltDust = SkyParticles("Eclipse_SkyBeltDust", BeltClouds + BeltGrains, SkyBackdrop);
+                beltDustLook = beltDust.GetComponent<ParticleSystemRenderer>();
+                BeltFillDust(pole, along, over);
+            }
+
+            // The dust goes all the way round and turns with the rocks
+            beltDust.transform.SetPositionAndRotation(head, Quaternion.AngleAxis(now * BeltSpeed * Mathf.Rad2Deg, pole));
+            SkyTint(beltDustLook, Color.Lerp(Color.white, Second, 0.15f));
+
+            for (int i = 0; i < beltRocks.Length; i++)
+            {
+                BeltRock rock = beltRocks[i];
+                if (rock == null)
+                    rock = beltRocks[i] = BeltMakeRock(i);
+
+                float angle = BeltFrom + Mathf.Repeat(rock.Angle + now * BeltSpeed, BeltSpan);
+
+                // Shrinks away as it sinks under the horizon at either end, so none pops into view
+                float fade = SkySmooth(BeltFrom, BeltFrom + 0.2f, angle) * SkySmooth(BeltFrom + BeltSpan, BeltFrom + BeltSpan - 0.2f, angle);
+
+                bool fresh = rock.Body == null || !rock.Body.Alive;
+                Piece body = SkyEnsureShape(ref rock.Body, BeltRockMesh, SkyFacetShade, SkySolidQueue, true);
+                if (fresh)
+                    SetColor(body, rock.Color);
+
+                SkyPlace(body, head + SkyArc(along, over, angle) * (BeltDistance + rock.Out) + pole * rock.Side,
+                    Quaternion.AngleAxis(now * rock.Spin, rock.Axis) * rock.Start, rock.Size * fade);
+            }
+        }
+
+        private static BeltRock BeltMakeRock(int index)
+        {
+            // Mostly small rocks, with now and then a big one, in dusty greys and browns
+            float size = Random.value < 0.12f ? Random.Range(9f, 13f) : Random.Range(2.5f, 6.5f);
+            Color color = Color.Lerp(new Color(0.4f, 0.37f, 0.34f), new Color(0.66f, 0.59f, 0.5f), Random.value);
+            if (Random.value < 0.2f)
+                color = Color.Lerp(color, Random.value < 0.5f ? new Color(0.62f, 0.42f, 0.32f) : new Color(0.46f, 0.5f, 0.58f), 0.6f);
+
+            return new BeltRock
+            {
+                // Spread evenly along the belt, give or take, and scattered across its width
+                Angle = (index + Random.value * 0.8f) / beltRocks.Length * BeltSpan,
+                Out = SkySpread() * 24f,
+                Side = SkySpread() * 34f,
+                Start = Random.rotationUniform,
+                Axis = Random.onUnitSphere,
+
+                // The big ones tumble more slowly
+                Spin = Random.Range(10f, 28f) * (size > 8f ? 0.4f : 1f) * (Random.value < 0.5f ? 1f : -1f),
+                Size = new Vector3(Random.Range(0.75f, 1.25f), Random.Range(0.7f, 1.1f), Random.Range(0.8f, 1.3f)) * size,
+                Color = color
+            };
+        }
+
+        // The dust is laid down once all the way round the belt: faint wide clouds and fine grains
+        private static void BeltFillDust(Vector3 pole, Vector3 along, Vector3 over)
+        {
+            ParticleSystem.EmitParams dot = new ParticleSystem.EmitParams { velocity = Vector3.zero, startLifetime = 100000f };
+            for (int i = 0; i < BeltClouds + BeltGrains; i++)
+            {
+                bool cloud = i < BeltClouds;
+                Vector3 way = SkyArc(along, over, Random.value * Mathf.PI * 2f);
+                dot.position = way * (BeltDistance + SkySpread() * 26f) + pole * (SkySpread() * (cloud ? 28f : 36f));
+                dot.rotation = Random.Range(0f, 360f);
+                if (cloud)
+                {
+                    dot.startSize = Random.Range(26f, 44f);
+                    dot.startColor = new Color(0.74f, 0.66f, 0.58f, Random.Range(0.06f, 0.1f));
+                }
+                else
+                {
+                    dot.startSize = Random.Range(0.7f, 1.8f);
+                    dot.startColor = WithAlpha(Color.Lerp(new Color(0.7f, 0.66f, 0.6f), new Color(0.9f, 0.86f, 0.8f), Random.value), Random.Range(0.5f, 0.9f));
+                }
+
+                beltDust.Emit(dot, 1);
+            }
+        }
+
+        public static void DisableAsteroidBelt()
+        {
+            SkyReleaseFarClip();
+            for (int i = 0; i < beltRocks.Length; i++)
+            {
+                if (beltRocks[i] != null)
+                    DiscardPiece(ref beltRocks[i].Body);
+                beltRocks[i] = null;
+            }
+
+            DestroyParticles(ref beltDust);
+            beltDustLook = null;
+        }
+
+        private static ParticleSystem galaxySpiral;
+        private static ParticleSystemRenderer galaxySpiralLook;
+        private const int GalaxySpiralHaze = 40, GalaxySpiralClouds = 80, GalaxySpiralCore = 6, GalaxySpiralBulge = 70, GalaxySpiralStars = 220, GalaxySpiralKnots = 24;
+        private const int GalaxySpiralDots = GalaxySpiralHaze + GalaxySpiralClouds + GalaxySpiralCore + GalaxySpiralBulge + GalaxySpiralStars + GalaxySpiralKnots;
+        private const float GalaxySpiralRadius = 78f;
+
+        /// <summary>A large tilted spiral galaxy far off in your sky, with a bright core and glowing arms of stars, turning very slowly.</summary>
+        public static void SpiralGalaxy()
+        {
+            SkyKeepFarClip();
+            if (galaxySpiral == null)
+            {
+                galaxySpiral = SkyParticles("Eclipse_SkySpiralGalaxy", GalaxySpiralDots, SkyBackdrop);
+                galaxySpiralLook = galaxySpiral.GetComponent<ParticleSystemRenderer>();
+                GalaxySpiralFill();
+            }
+
+            Vector3 direction = SkyDirection(150f, 46f);
+            Vector3 right = Vector3.Cross(Vector3.up, direction).normalized;
+            Vector3 skyUp = Vector3.Cross(direction, right);
+
+            // Tipped well away from facing you and turned on the sky, so it shows as a long slanting oval
+            float tip = 62f * Mathf.Deg2Rad;
+            Vector3 pole = Quaternion.AngleAxis(32f, direction) * (skyUp * Mathf.Sin(tip) - direction * Mathf.Cos(tip));
+
+            // Turning the way that leaves its arms trailing behind
+            galaxySpiral.transform.SetPositionAndRotation(Head.position + direction * 350f,
+                Quaternion.FromToRotation(Vector3.up, pole) * Quaternion.Euler(0f, Time.time * 0.8f, 0f));
+            SkyTint(galaxySpiralLook, Color.Lerp(Color.white, Second, 0.2f));
+        }
+
+        // Laid down once, flat in the galaxy's own plane and in the order it is drawn: a faint haze
+        // over the whole disc, clouds along two arms winding out from the middle, a bright core, then
+        // the stars and the pink knots where new ones are forming
+        private static void GalaxySpiralFill()
+        {
+            ParticleSystem.EmitParams dot = new ParticleSystem.EmitParams { velocity = Vector3.zero, startLifetime = 100000f };
+
+            for (int i = 0; i < GalaxySpiralHaze; i++)
+                GalaxySpiralDot(ref dot, GalaxySpiralFlat(Mathf.Sqrt(Random.value) * GalaxySpiralRadius * 0.95f, Random.value * Mathf.PI * 2f, 4f),
+                    Random.Range(30f, 50f), new Color(0.72f, 0.8f, 1f, Random.Range(0.04f, 0.07f)));
+
+            for (int i = 0; i < GalaxySpiralClouds; i++)
+            {
+                float along = Random.value;
+                GalaxySpiralDot(ref dot, GalaxySpiralArm(i % 2, along, 1.4f), Random.Range(12f, 22f),
+                    WithAlpha(Color.Lerp(new Color(0.55f, 0.7f, 1f), new Color(0.85f, 0.75f, 1f), Random.value), Random.Range(0.1f, 0.16f) * (1f - 0.45f * along)));
+            }
+
+            for (int i = 0; i < GalaxySpiralCore; i++)
+                GalaxySpiralDot(ref dot, GalaxySpiralFlat(Random.value * 3f, Random.value * Mathf.PI * 2f, 1.5f), Random.Range(18f, 40f),
+                    new Color(1f, 0.9f, 0.72f, Random.Range(0.2f, 0.3f)));
+
+            for (int i = 0; i < GalaxySpiralBulge; i++)
+            {
+                float radius = Mathf.Abs(SkySpread()) * 14f;
+                GalaxySpiralDot(ref dot, GalaxySpiralFlat(radius, Random.value * Mathf.PI * 2f, 7f * (1f - radius / 16f)), Random.Range(1.2f, 2.4f),
+                    WithAlpha(Color.Lerp(new Color(1f, 0.86f, 0.66f), Color.white, Random.value * 0.5f), Random.Range(0.7f, 1f)));
+            }
+
+            for (int i = 0; i < GalaxySpiralStars; i++)
+            {
+                float along = Mathf.Pow(Random.value, 0.8f);
+                Color tint = Random.value < 0.6f ? new Color(0.8f, 0.88f, 1f) : Color.white;
+                GalaxySpiralDot(ref dot, GalaxySpiralArm(i % 2, along, 1f), Random.Range(1f, 2.2f), WithAlpha(tint, Random.Range(0.6f, 1f) * (1f - 0.3f * along)));
+            }
+
+            for (int i = 0; i < GalaxySpiralKnots; i++)
+                GalaxySpiralDot(ref dot, GalaxySpiralArm(i % 2, Random.Range(0.2f, 0.9f), 0.6f), Random.Range(2.2f, 4f),
+                    new Color(1f, 0.5f, 0.75f, Random.Range(0.6f, 0.85f)));
+        }
+
+        private static void GalaxySpiralDot(ref ParticleSystem.EmitParams dot, Vector3 position, float size, Color color)
+        {
+            dot.position = position;
+            dot.rotation = Random.Range(0f, 360f);
+            dot.startSize = size;
+            dot.startColor = color;
+            galaxySpiral.Emit(dot, 1);
+        }
+
+        // A point `radius` metres out from the middle of the disc, thinning out above and below it
+        private static Vector3 GalaxySpiralFlat(float radius, float angle, float thickness) =>
+            new Vector3(Mathf.Cos(angle) * radius, SkySpread() * thickness, Mathf.Sin(angle) * radius);
+
+        // A point on one of the arms, `along` from the core (0) to its tip (1), scattered more the further out it is
+        private static Vector3 GalaxySpiralArm(int arm, float along, float scatter)
+        {
+            float reach = 7f + (GalaxySpiralRadius - 7f) * along;
+            float angle = arm * Mathf.PI + 1.9f * Mathf.Log(reach / 7f) + SkySpread() * scatter * 0.16f;
+            return GalaxySpiralFlat(reach + SkySpread() * scatter * (2f + 6f * along), angle, 1.5f + 2.5f * (1f - along));
+        }
+
+        public static void DisableSpiralGalaxy()
+        {
+            SkyReleaseFarClip();
+            DestroyParticles(ref galaxySpiral);
+            galaxySpiralLook = null;
+        }
+
+        private static Piece pulsarCore, pulsarGlow;
+        private static readonly LineRenderer[] pulsarBeams = new LineRenderer[4];
+
+        // How far the beams lean off the spin axis in degrees, how long a turn takes, and how far the beams reach
+        private const float PulsarLean = 48f, PulsarTurn = 3.2f, PulsarReach = 115f;
+
+        /// <summary>A small bright star far off in your sky with two beams of light from its poles, sweeping round like a lighthouse.</summary>
+        public static void PulsarStar()
+        {
+            SkyKeepFarClip();
+            float now = Time.time;
+            Vector3 direction = SkyDirection(250f, 28f);
+            Vector3 centre = Head.position + direction * 300f;
+            Vector3 right = Vector3.Cross(Vector3.up, direction).normalized;
+            Vector3 skyUp = Vector3.Cross(direction, right);
+
+            // The spin axis leans towards you a little further than the beams lean off it, so once a
+            // turn the beams sweep just past you and the star flashes
+            float tilt = (PulsarLean + 6f) * Mathf.Deg2Rad;
+            Vector3 axis = Quaternion.AngleAxis(-24f, direction) * (skyUp * Mathf.Sin(tilt) - direction * Mathf.Cos(tilt));
+            Vector3 first = Vector3.Cross(axis, direction).normalized;
+            Vector3 second = Vector3.Cross(axis, first);
+            float lean = PulsarLean * Mathf.Deg2Rad;
+            Vector3 beam = axis * Mathf.Cos(lean) + SkyArc(first, second, now * (Mathf.PI * 2f / PulsarTurn)) * Mathf.Sin(lean);
+            float flash = Mathf.Pow(Mathf.Abs(Vector3.Dot(beam, direction)), 24f);
+
+            Piece core = SkyEnsure(ref pulsarCore, PrimitiveType.Sphere, SkySolidQueue, true);
+            SkyPlace(core, centre, Quaternion.identity, Vector3.one * 4.5f);
+            SetColor(core, Color.Lerp(Color.white, new Color(0.75f, 0.88f, 1f), 0.35f));
+
+            SkyPlaceGlow(SkyEnsureGlow(ref pulsarGlow), centre, 16f + 34f * flash, Color.Lerp(new Color(0.7f, 0.85f, 1f), Accent, 0.3f), 0.45f + 0.5f * flash);
+
+            // Each beam is a bright narrow core inside a wider soft haze, spreading and fading as it goes
+            for (int i = 0; i < pulsarBeams.Length; i++)
+            {
+                if (pulsarBeams[i] == null)
+                {
+                    pulsarBeams[i] = MakeLine("Eclipse_SkyPulsarBeam", 1f);
+                    pulsarBeams[i].widthCurve = AnimationCurve.Linear(0f, 0.15f, 1f, 1f);
+                }
+
+                bool haze = i >= 2;
+                LineRenderer line = pulsarBeams[i];
+                line.SetPosition(0, centre);
+                line.SetPosition(1, centre + beam * (i % 2 == 0 ? PulsarReach : -PulsarReach));
+                line.widthMultiplier = haze ? 24f : 7f;
+                line.startColor = haze
+                    ? WithAlpha(Color.Lerp(new Color(0.6f, 0.8f, 1f), Second, 0.5f), 0.28f)
+                    : WithAlpha(Color.Lerp(Color.white, Accent, 0.3f), 0.85f);
+                line.endColor = WithAlpha(line.startColor, 0f);
+            }
+        }
+
+        public static void DisablePulsarStar()
+        {
+            SkyReleaseFarClip();
+            DiscardPiece(ref pulsarCore);
+            DiscardPiece(ref pulsarGlow);
+            for (int i = 0; i < pulsarBeams.Length; i++)
+                DestroyLine(ref pulsarBeams[i]);
+        }
+
+        private const int FleetShips = 5;
+        private static readonly Piece[] fleetHulls = new Piece[FleetShips];
+        private static readonly Piece[] fleetEngines = new Piece[FleetShips];
+        private static readonly LineRenderer[] fleetTrails = new LineRenderer[FleetShips];
+        private static Vector3 fleetRise, fleetOver;
+        private static float fleetStart = -100f, fleetNext = -1f, fleetDistance;
+        private const float FleetCrossing = 24f;
+
+        // Where each ship flies in the V, in metres across from the leader and ahead of it
+        private static readonly Vector2[] FleetSlots =
+        {
+            new Vector2(0f, 0f), new Vector2(-15f, -13f), new Vector2(15f, -13f), new Vector2(-30f, -26f), new Vector2(30f, -26f)
+        };
+
+        /// <summary>Every 50 to 80 seconds a small V of sleek ships with glowing engines flies across your sky.</summary>
+        public static void StarshipFleet()
+        {
+            SkyKeepFarClip();
+            float now = Time.time;
+
+            // The first one comes along soon after turning it on
+            if (fleetNext < 0f)
+                fleetNext = now + 3f;
+
+            if (now >= fleetNext)
+            {
+                // Up over one horizon, across and down the other, cresting up to 50 degrees off overhead
+                fleetRise = SkyDirection(Random.Range(0f, 360f), 0f);
+                fleetOver = Quaternion.AngleAxis(Random.Range(-50f, 50f), fleetRise) * Vector3.up;
+                fleetDistance = Random.Range(210f, 240f);
+                fleetStart = now;
+                fleetNext = now + Random.Range(50f, 80f);
+            }
+
+            float progress = (now - fleetStart) / FleetCrossing;
+            bool flying = progress < 1f;
+            for (int i = 0; i < FleetShips; i++)
+            {
+                SkyShow(fleetHulls[i], flying);
+                SkyShow(fleetEngines[i], flying);
+                if (fleetTrails[i] != null)
+                    fleetTrails[i].enabled = flying;
+            }
+
+            if (!flying)
+                return;
+
+            float angle = Mathf.Lerp(-0.1f, Mathf.PI + 0.1f, progress);
+            Vector3 direction = SkyArc(fleetRise, fleetOver, angle);
+            Vector3 heading = SkyArc(fleetOver, -fleetRise, angle);
+            Vector3 across = Vector3.Cross(direction, heading);
+            Vector3 centre = Head.position + direction * fleetDistance;
+
+            // Their tops turned towards you, and shrinking away low in the sky at either end
+            Quaternion facing = Quaternion.LookRotation(heading, -direction);
+            float fade = Mathf.Clamp01(Mathf.Min(progress, 1f - progress) * 10f);
+            Color hull = Color.Lerp(new Color(0.82f, 0.85f, 0.92f), Second, 0.15f);
+            Color engine = Color.Lerp(Color.white, Accent, 0.6f);
+
+            for (int i = 0; i < FleetShips; i++)
+            {
+                // Each bobs a little in its place
+                Vector3 at = centre + across * FleetSlots[i].x + heading * FleetSlots[i].y + direction * (Mathf.Sin(now * 1.3f + i * 1.9f) * 0.8f);
+                Piece ship = SkyEnsureShape(ref fleetHulls[i], FleetShipMesh, SkyFacetShade, SkySolidQueue, true);
+                SkyPlace(ship, at, facing, Vector3.one * (11f * fade));
+                SetColor(ship, hull);
+
+                Vector3 exhaust = at - heading * (5.4f * fade);
+                SkyPlaceGlow(SkyEnsureGlow(ref fleetEngines[i]), exhaust, (6f + Mathf.Sin(now * 9f + i) * 0.6f) * fade, engine, 0.9f);
+
+                if (fleetTrails[i] == null)
+                {
+                    fleetTrails[i] = MakeLine("Eclipse_SkyFleetTrail", 1f);
+                    fleetTrails[i].widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
+                }
+
+                LineRenderer trail = fleetTrails[i];
+                trail.SetPosition(0, exhaust);
+                trail.SetPosition(1, exhaust - heading * (34f * fade));
+                trail.widthMultiplier = 2.6f * fade;
+                trail.startColor = WithAlpha(engine, 0.75f);
+                trail.endColor = WithAlpha(Accent, 0f);
+            }
+        }
+
+        public static void DisableStarshipFleet()
+        {
+            SkyReleaseFarClip();
+            for (int i = 0; i < FleetShips; i++)
+            {
+                DiscardPiece(ref fleetHulls[i]);
+                DiscardPiece(ref fleetEngines[i]);
+                DestroyLine(ref fleetTrails[i]);
+            }
+
+            fleetStart = -100f;
+            fleetNext = -1f;
+        }
+
+        // One bit of the matter round the black hole: its own orbit, and where it started on it
+        private struct HorizonMote
+        {
+            public float Radius;
+            public float Phase;
+            public float Speed;
+            public float Lift;
+            public float Heat;
+            public float Alpha;
+        }
+
+        private static Piece horizonShadow, horizonAura;
+        private static LineRenderer horizonPhoton, horizonLensed, horizonInner, horizonOuter;
+        private static ParticleSystem horizonDisk;
+        private const int HorizonClouds = 40, HorizonSparks = 180;
+        private static readonly ParticleSystem.Particle[] horizonMatter = new ParticleSystem.Particle[HorizonClouds + HorizonSparks];
+        private static readonly HorizonMote[] horizonMotes = new HorizonMote[HorizonClouds + HorizonSparks];
+
+        // The size of the dark shadow, and the inner and outer edges of the disc of matter round it, in metres
+        private const float HorizonRadius = 15f, HorizonInner = 22f, HorizonOuter = 57f;
+
+        /// <summary>A distant black hole hanging in your sky: a dark disc edged with a thin ring of light, with a bright tilted disc of matter swirling round it.</summary>
+        public static void BlackHoleHorizon()
+        {
+            SkyKeepFarClip();
+            float now = Time.time;
+            Vector3 direction = SkyDirection(15f, 36f);
+            Vector3 centre = Head.position + direction * 340f;
+            Vector3 right = Vector3.Cross(Vector3.up, direction).normalized;
+            Vector3 skyUp = Vector3.Cross(direction, right);
+
+            // The disc is seen almost edge on from a little above, leaning to one side
+            float open = 13f * Mathf.Deg2Rad;
+            Vector3 pole = Quaternion.AngleAxis(-16f, direction) * (skyUp * Mathf.Cos(open) - direction * Mathf.Sin(open));
+            Quaternion tilt = Quaternion.FromToRotation(Vector3.up, pole);
+
+            // The shadow hides the far side of the disc, and the near side passes in front of it
+            Piece shadow = SkyEnsure(ref horizonShadow, PrimitiveType.Sphere, SkySolidQueue, true);
+            SkyPlace(shadow, centre, Quaternion.identity, Vector3.one * (HorizonRadius * 2f));
+            SetColor(shadow, new Color(0.005f, 0f, 0.012f));
+
+            Color hot = Color.Lerp(new Color(1f, 0.95f, 0.85f), Accent, 0.15f);
+            Color warm = Color.Lerp(new Color(1f, 0.45f, 0.15f), Accent, 0.5f);
+            SkyPlaceGlow(SkyEnsureGlow(ref horizonAura), centre, HorizonRadius * 7f, warm, 0.16f);
+
+            // A thin bright ring of light bent right round the edge, and the far side of the disc
+            // bent up over the top and under the bottom into a wider, softer one
+            if (horizonPhoton == null)
+                horizonPhoton = MakeRing("Eclipse_SkyHorizonPhoton");
+            PlaceRing(horizonPhoton, centre, direction, HorizonRadius * 1.07f, HorizonRadius * 0.1f, WithAlpha(Color.Lerp(Color.white, Accent, 0.3f), 0.95f));
+
+            if (horizonLensed == null)
+                horizonLensed = MakeRing("Eclipse_SkyHorizonLensed");
+            PlaceRing(horizonLensed, centre, direction, HorizonRadius * 1.35f, HorizonRadius * 0.45f, WithAlpha(Color.Lerp(warm, hot, 0.4f), 0.3f));
+
+            // A smooth glow under the swirling matter, laid flat in the disc
+            HorizonPlaceBand(ref horizonInner, "Eclipse_SkyHorizonInner", centre, pole, 31f, 13f, WithAlpha(Color.Lerp(hot, warm, 0.4f), 0.45f));
+            HorizonPlaceBand(ref horizonOuter, "Eclipse_SkyHorizonOuter", centre, pole, 45f, 22f, WithAlpha(warm, 0.18f));
+
+            if (horizonDisk == null)
+            {
+                horizonDisk = SkyParticles("Eclipse_SkyHorizonDisk", horizonMatter.Length, SkySoft);
+                HorizonFillDisk();
+            }
+
+            horizonDisk.transform.SetPositionAndRotation(centre, tilt);
+
+            // Matter near the middle goes round far faster than further out, and the side swinging
+            // towards you looks brighter, as it does round a real black hole
+            Vector3 toYou = Quaternion.Inverse(tilt) * -direction;
+            for (int i = 0; i < horizonMotes.Length; i++)
+            {
+                HorizonMote mote = horizonMotes[i];
+                float angle = mote.Phase + now * mote.Speed;
+                float cos = Mathf.Cos(angle), sin = Mathf.Sin(angle);
+                Color color = Color.Lerp(hot, warm, mote.Heat) * (1f + 0.5f * (cos * toYou.z - sin * toYou.x));
+                color.a = mote.Alpha;
+
+                horizonMatter[i].position = new Vector3(cos * mote.Radius, mote.Lift, sin * mote.Radius);
+                horizonMatter[i].startColor = color;
+            }
+
+            horizonDisk.SetParticles(horizonMatter, horizonMatter.Length);
+        }
+
+        // Each bit keeps its own orbit for as long as the mod is on; only where it is round it changes
+        private static void HorizonFillDisk()
+        {
+            for (int i = 0; i < horizonMotes.Length; i++)
+            {
+                // Soft clouds spread right across the disc, and sparks bunched up towards its hot inner edge
+                bool cloud = i < HorizonClouds;
+                float reach = cloud ? Random.Range(0.1f, 1f) : Mathf.Pow(Random.value, 1.7f);
+                float radius = Mathf.Lerp(HorizonInner, HorizonOuter, reach);
+                horizonMotes[i] = new HorizonMote
+                {
+                    Radius = radius,
+                    Phase = Random.value * Mathf.PI * 2f,
+
+                    // Once round in 7 seconds at the inner edge, slowing further out as Kepler's laws say
+                    Speed = Mathf.PI * 2f / 7f * Mathf.Pow(HorizonInner / radius, 1.5f),
+                    Lift = SkySpread() * (cloud ? 1.5f : 0.6f),
+                    Heat = reach,
+                    Alpha = cloud ? Random.Range(0.12f, 0.2f) : Mathf.Lerp(0.85f, 0.4f, reach)
+                };
+
+                horizonMatter[i] = new ParticleSystem.Particle
+                {
+                    velocity = Vector3.zero,
+                    rotation = Random.Range(0f, 360f),
+                    startSize = cloud ? Random.Range(9f, 16f) : Mathf.Lerp(1.6f, 3.4f, reach) * Random.Range(0.8f, 1.2f),
+                    startLifetime = 100000f,
+                    remainingLifetime = 100000f
+                };
+            }
+        }
+
+        private static void HorizonPlaceBand(ref LineRenderer band, string name, Vector3 centre, Vector3 pole, float radius, float width, Color color)
+        {
+            // Laid flat in the disc rather than turned to face you
+            if (band == null)
+            {
+                band = MakeRing(name);
+                band.alignment = LineAlignment.TransformZ;
+            }
+
+            band.transform.rotation = Quaternion.LookRotation(pole);
+            PlaceRing(band, centre, pole, radius, width, color);
+        }
+
+        public static void DisableBlackHoleHorizon()
+        {
+            SkyReleaseFarClip();
+            DiscardPiece(ref horizonShadow);
+            DiscardPiece(ref horizonAura);
+            DestroyLine(ref horizonPhoton);
+            DestroyLine(ref horizonLensed);
+            DestroyLine(ref horizonInner);
+            DestroyLine(ref horizonOuter);
+            DestroyParticles(ref horizonDisk);
+        }
+
+        private static Piece whaleBody, whaleAura;
+        private static ParticleSystem whaleSparkles;
+        private static float whaleShed;
+        private const float WhaleLength = 64f, WhaleLap = 260f;
+
+        // Where its sparkles come off, as a share of its length: the tips of its flukes and of its long front fins
+        private static readonly Vector3[] WhaleSparkleSpots =
+        {
+            new Vector3(-0.19f, 0f, -0.56f), new Vector3(0.19f, 0f, -0.56f), new Vector3(-0.32f, -0.13f, -0.03f), new Vector3(0.32f, -0.13f, -0.03f)
+        };
+
+        /// <summary>A huge glowing see-through whale swimming slowly round your sky in a long loop, gently beating its tail.</summary>
+        public static void SpaceWhale()
+        {
+            SkyKeepFarClip();
+            float now = Time.time;
+            float lap = now * (Mathf.PI * 2f / WhaleLap);
+            Vector3 local = WhaleCourse(lap);
+            Vector3 heading = (WhaleCourse(lap + 0.01f) - local).normalized;
+            Vector3 at = Head.position + local;
+
+            // Upright, leaning a little into the long turn
+            Quaternion facing = Quaternion.LookRotation(heading, Vector3.up);
+            float lean = Vector3.Dot(Vector3.ProjectOnPlane(-local, Vector3.up), facing * Vector3.right) > 0f ? -9f : 9f;
+            facing *= Quaternion.Euler(0f, 0f, lean);
+
+            WhaleSwim(now);
+            Piece body = SkyEnsureShape(ref whaleBody, WhaleMesh, WhaleTexture, SkySeeThroughQueue, true);
+            SkyPlace(body, at, facing, Vector3.one * WhaleLength);
+            Color glow = Color.Lerp(Second, new Color(0.65f, 0.9f, 1f), 0.4f);
+            SetAlpha(body, glow, 0.55f);
+
+            // A soft glow round it, stretched along its length
+            Piece aura = SkyEnsureGlow(ref whaleAura);
+            SkyPlace(aura, at, Quaternion.LookRotation(at - Head.position, heading), new Vector3(WhaleLength * 0.5f, WhaleLength * 1.25f, 1f));
+            SetAlpha(aura, glow, 0.16f);
+
+            if (whaleSparkles == null)
+                whaleSparkles = SkyParticles("Eclipse_SkyWhaleSparkles", 80, SkySoft, particles =>
+                {
+                    var fade = particles.colorOverLifetime;
+                    fade.enabled = true;
+                    fade.color = new ParticleSystem.MinMaxGradient(FadeInOut());
+                });
+
+            // Glittering dust trailing off its fins and flukes, in its own space that moves with you
+            whaleSparkles.transform.position = Head.position;
+            whaleShed += 10f * Time.deltaTime;
+            for (; whaleShed >= 1f; whaleShed -= 1f)
+                whaleSparkles.Emit(new ParticleSystem.EmitParams
+                {
+                    position = local + facing * (WhaleSparkleSpots[Random.Range(0, WhaleSparkleSpots.Length)] * WhaleLength) + Random.insideUnitSphere * 1.5f,
+                    velocity = -heading * Random.Range(1f, 3f) + Random.insideUnitSphere * 0.8f,
+                    startSize = Random.Range(1.2f, 2.8f),
+                    startLifetime = Random.Range(3f, 5f),
+                    startColor = WithAlpha(Color.Lerp(Accent, Second, Random.value), 0.7f)
+                }, 1);
+        }
+
+        // The loop it swims round you: tipped so it climbs high on one side and dips low on the
+        // other, with a slow rise and fall along the way
+        private static Vector3 WhaleCourse(float angle) =>
+            SkyDirection(30f, 0f) * (Mathf.Cos(angle) * 225f) + SkyDirection(120f, 18f) * (Mathf.Sin(angle) * 225f)
+            + Vector3.up * (125f + Mathf.Sin(angle * 3f) * 10f);
+
+        // Bends the body in a slow wave that runs back to the flukes, with the front fins rising and
+        // falling gently
+        private static void WhaleSwim(float now)
+        {
+            Mesh mesh = WhaleMesh;
+            float stroke = now * (Mathf.PI * 2f / 5.5f);
+            float fins = Mathf.Sin(now * 0.9f);
+            for (int i = 0; i < whaleRest.Length; i++)
+            {
+                Vector3 point = whaleRest[i];
+                point.y += whaleSway[i] * Mathf.Sin(stroke - whaleWave[i]) + whaleFin[i] * fins;
+                whaleSwum[i] = point;
+            }
+
+            mesh.vertices = whaleSwum;
+        }
+
+        public static void DisableSpaceWhale()
+        {
+            SkyReleaseFarClip();
+            DiscardPiece(ref whaleBody);
+            DiscardPiece(ref whaleAura);
+            DestroyParticles(ref whaleSparkles);
+            whaleShed = 0f;
+        }
+
         // ── Sky helpers ─────────────────────────────────────────────────────────
 
         // Solid things write depth and draw just before everything see-through, so a planet hides
@@ -796,6 +1500,38 @@ namespace Eclipse.Mods
             }
 
             return piece;
+        }
+
+        /// <summary>A piece wearing one of the sky's own shapes and textures.</summary>
+        private static Piece SkyEnsureShape(ref Piece piece, Mesh mesh, Texture2D texture, int queue, bool depth)
+        {
+            if (piece == null || !piece.Alive)
+            {
+                SkyEnsure(ref piece, PrimitiveType.Sphere, queue, depth);
+                piece.Object.GetComponent<MeshFilter>().sharedMesh = mesh;
+                piece.Renderer.sharedMaterial.mainTexture = texture;
+            }
+
+            return piece;
+        }
+
+        /// <summary>A flat round glow that fades out to its edge, for halos and engines.</summary>
+        private static Piece SkyEnsureGlow(ref Piece piece)
+        {
+            if (piece == null || !piece.Alive)
+            {
+                SkyEnsure(ref piece, PrimitiveType.Quad);
+                piece.Renderer.sharedMaterial.mainTexture = SkyDot(ref skySoftDot, false);
+            }
+
+            return piece;
+        }
+
+        /// <summary>Puts a glow `size` metres across at a point in the sky, turned to face you.</summary>
+        private static void SkyPlaceGlow(Piece glow, Vector3 at, float size, Color color, float alpha)
+        {
+            SkyPlace(glow, at, Quaternion.LookRotation(at - Head.position), Vector3.one * size);
+            SetAlpha(glow, color, alpha);
         }
 
         private static void SkyShow(Piece piece, bool shown)
@@ -1024,6 +1760,317 @@ namespace Eclipse.Mods
             float albedo = 0.9f - SkySmooth(0.48f, 0.62f, seas) * 0.28f - speckle * 0.08f;
             float shade = albedo * (0.6f + 0.4f * Mathf.Sqrt(Mathf.Max(point.x, 0f)));
             return new Color(shade, shade, shade, SkySmooth(-0.03f, 0.12f, point.x));
+        }
+
+        private static Texture2D skyFacetShade;
+
+        /// <summary>A strip of grey from shadow on the left to full light on the right, that SkyFacetMesh shades its faces from.</summary>
+        private static Texture2D SkyFacetShade
+        {
+            get
+            {
+                if (skyFacetShade != null)
+                    return skyFacetShade;
+
+                const int size = 32;
+                Color[] pixels = new Color[size * 2];
+                for (int x = 0; x < size; x++)
+                {
+                    float shade = Mathf.Lerp(0.32f, 1f, x / (size - 1f));
+                    pixels[x] = pixels[x + size] = new Color(shade, shade, shade, 1f);
+                }
+
+                skyFacetShade = new Texture2D(size, 2, TextureFormat.RGBA32, false) { name = "EclipseSkyFacetShade", wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontUnloadUnusedAsset };
+                skyFacetShade.SetPixels(pixels);
+                skyFacetShade.Apply(false, true);
+                return skyFacetShade;
+            }
+        }
+
+        /// <summary>
+        /// A mesh with every triangle a flat face of its own, turned to look away from `inside`. Each
+        /// face takes a shade from SkyFacetShade by how squarely it faces `light`, give or take
+        /// `speckle`, so it reads as a solid shape in any colour without needing lights in the scene.
+        /// </summary>
+        private static Mesh SkyFacetMesh(string name, Vector3[] corners, int[] triangles, Vector3 inside, Vector3 light, float speckle)
+        {
+            Vector3[] vertices = new Vector3[triangles.Length];
+            Vector2[] uvs = new Vector2[triangles.Length];
+            int[] order = new int[triangles.Length];
+            for (int i = 0; i < triangles.Length; i += 3)
+            {
+                Vector3 a = corners[triangles[i]], b = corners[triangles[i + 1]], c = corners[triangles[i + 2]];
+                Vector3 normal = Vector3.Cross(b - a, c - a);
+                if (Vector3.Dot(normal, a - inside) < 0f)
+                {
+                    Vector3 swap = b;
+                    b = c;
+                    c = swap;
+                    normal = -normal;
+                }
+
+                // A little fixed variety from face to face, so neighbouring faces don't run together
+                float shade = 0.5f + 0.5f * Vector3.Dot(normal.normalized, light) + (Mathf.Repeat(i * 0.618034f, 1f) - 0.5f) * speckle;
+                Vector2 uv = new Vector2(Mathf.Clamp01(shade), 0.5f);
+
+                vertices[i] = a;
+                vertices[i + 1] = b;
+                vertices[i + 2] = c;
+                uvs[i] = uvs[i + 1] = uvs[i + 2] = uv;
+                order[i] = i;
+                order[i + 1] = i + 1;
+                order[i + 2] = i + 2;
+            }
+
+            Mesh mesh = new Mesh { name = name, vertices = vertices, uv = uvs, triangles = order, hideFlags = HideFlags.DontUnloadUnusedAsset };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static Mesh beltRockMesh, fleetShipMesh;
+
+        // Where the rock broke off something bigger: flat faces cut across it these ways
+        private static readonly Vector3[] BeltRockCuts = { new Vector3(0.6f, 0.7f, 0.2f), new Vector3(-0.5f, -0.3f, 0.8f), new Vector3(0.1f, -0.9f, -0.4f) };
+
+        /// <summary>A lumpy low-poly rock about a unit across, with a few flat broken faces.</summary>
+        private static Mesh BeltRockMesh
+        {
+            get
+            {
+                if (beltRockMesh != null)
+                    return beltRockMesh;
+
+                // An icosahedron with each face split in four, then pushed in and out. Every corner is
+                // worked out from its own direction, so faces that share a corner still meet.
+                float g = (1f + Mathf.Sqrt(5f)) / 2f;
+                Vector3[] ico =
+                {
+                    new Vector3(-1f, g, 0f), new Vector3(1f, g, 0f), new Vector3(-1f, -g, 0f), new Vector3(1f, -g, 0f),
+                    new Vector3(0f, -1f, g), new Vector3(0f, 1f, g), new Vector3(0f, -1f, -g), new Vector3(0f, 1f, -g),
+                    new Vector3(g, 0f, -1f), new Vector3(g, 0f, 1f), new Vector3(-g, 0f, -1f), new Vector3(-g, 0f, 1f)
+                };
+                int[] faces =
+                {
+                    0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11, 1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
+                    3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9, 4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1
+                };
+
+                Vector3[] corners = new Vector3[faces.Length * 4];
+                for (int i = 0; i < faces.Length; i += 3)
+                {
+                    Vector3 a = ico[faces[i]], b = ico[faces[i + 1]], c = ico[faces[i + 2]];
+                    Vector3 ab = a + b, bc = b + c, ca = c + a;
+                    Vector3[] split = { a, ab, ca, b, bc, ab, c, ca, bc, ab, bc, ca };
+                    for (int k = 0; k < split.Length; k++)
+                        corners[i * 4 + k] = BeltRockCorner(split[k]);
+                }
+
+                int[] triangles = new int[corners.Length];
+                for (int i = 0; i < triangles.Length; i++)
+                    triangles[i] = i;
+
+                beltRockMesh = SkyFacetMesh("EclipseSkyRock", corners, triangles, Vector3.zero, new Vector3(0.45f, 0.8f, 0.4f).normalized, 0.25f);
+                return beltRockMesh;
+            }
+        }
+
+        private static Vector3 BeltRockCorner(Vector3 way)
+        {
+            way.Normalize();
+            float radius = 1f + (Mathf.PerlinNoise(way.x * 1.4f + 5.3f, way.y * 1.4f + 2.1f) - 0.5f) * 0.45f
+                + (Mathf.PerlinNoise(way.z * 2.6f + 8.7f, way.x * 2.6f + 1.4f) - 0.5f) * 0.2f;
+
+            foreach (Vector3 cut in BeltRockCuts)
+            {
+                float facing = Vector3.Dot(way, cut.normalized);
+                if (facing * radius > 0.8f)
+                    radius = 0.8f / facing;
+            }
+
+            return way * (radius * 0.5f);
+        }
+
+        /// <summary>A sleek dart-shaped starship one unit long with its nose at +Z, a raised spine and swept-back wings.</summary>
+        private static Mesh FleetShipMesh
+        {
+            get
+            {
+                if (fleetShipMesh != null)
+                    return fleetShipMesh;
+
+                // The nose, the top of the spine, the keel, the two wingtips and the three corners of the tail
+                Vector3[] corners =
+                {
+                    new Vector3(0f, 0f, 0.5f), new Vector3(0f, 0.075f, -0.2f), new Vector3(0f, -0.05f, -0.2f),
+                    new Vector3(-0.36f, -0.01f, -0.48f), new Vector3(0.36f, -0.01f, -0.48f),
+                    new Vector3(-0.1f, 0f, -0.44f), new Vector3(0f, 0.03f, -0.46f), new Vector3(0.1f, 0f, -0.44f)
+                };
+
+                // A face up to the spine and one down to the keel from every edge of its outline
+                int[] outline = { 0, 3, 5, 6, 7, 4 };
+                int[] triangles = new int[outline.Length * 6];
+                for (int i = 0; i < outline.Length; i++)
+                {
+                    int from = outline[i], to = outline[(i + 1) % outline.Length];
+                    triangles[i * 6] = 1;
+                    triangles[i * 6 + 1] = from;
+                    triangles[i * 6 + 2] = to;
+                    triangles[i * 6 + 3] = 2;
+                    triangles[i * 6 + 4] = to;
+                    triangles[i * 6 + 5] = from;
+                }
+
+                fleetShipMesh = SkyFacetMesh("EclipseSkyShip", corners, triangles, new Vector3(0f, 0.01f, -0.2f), new Vector3(0.35f, 0.8f, 0.45f).normalized, 0.1f);
+                return fleetShipMesh;
+            }
+        }
+
+        private static Mesh whaleMesh;
+        private static Texture2D whaleTexture;
+        private static Vector3[] whaleRest, whaleSwum;
+        private static float[] whaleSway, whaleWave, whaleFin;
+        private const int WhaleRings = 22, WhaleAround = 14;
+
+        // The flat parts, drawn for the right-hand side and mirrored for the left, each a fan from
+        // its first corner: a long front fin, one of the flukes and the small fin on its back
+        private static readonly Vector3[] WhaleFrontFin =
+        {
+            new Vector3(0.1f, -0.045f, 0.2f), new Vector3(0.21f, -0.09f, 0.12f), new Vector3(0.32f, -0.13f, -0.03f), new Vector3(0.2f, -0.09f, 0.05f), new Vector3(0.1f, -0.05f, 0.12f)
+        };
+        private static readonly Vector3[] WhaleFluke =
+        {
+            new Vector3(0f, 0f, -0.44f), new Vector3(0.1f, 0f, -0.47f), new Vector3(0.19f, 0f, -0.56f), new Vector3(0.09f, 0f, -0.535f), new Vector3(0f, 0f, -0.515f)
+        };
+        private static readonly Vector3[] WhaleBackFin = { new Vector3(0f, 0.055f, -0.17f), new Vector3(0f, 0.088f, -0.22f), new Vector3(0f, 0.05f, -0.25f) };
+
+        /// <summary>
+        /// The space whale, one unit long with its snout at +Z: a smooth body drawn through a row of
+        /// rings, two long front fins, a small fin on its back and broad flukes. It is made once, and
+        /// kept with its resting shape so it can bend as it swims.
+        /// </summary>
+        private static Mesh WhaleMesh
+        {
+            get
+            {
+                if (whaleMesh != null)
+                    return whaleMesh;
+
+                int body = WhaleRings * (WhaleAround + 1);
+                int flat = WhaleFrontFin.Length * 2 + WhaleFluke.Length * 2 + WhaleBackFin.Length;
+                Vector3[] points = new Vector3[body + flat];
+                Vector2[] uvs = new Vector2[points.Length];
+                int[] triangles = new int[((WhaleRings - 1) * WhaleAround * 2 + ((WhaleFrontFin.Length - 2) * 2 + (WhaleFluke.Length - 2) * 2 + WhaleBackFin.Length - 2) * 2) * 3];
+
+                // Its texture runs round the body one way and from snout to tail the other
+                for (int ring = 0; ring < WhaleRings; ring++)
+                {
+                    float t = ring / (float)(WhaleRings - 1);
+
+                    // A broad head and belly narrowing to a slim tail stock, taller there than it is wide
+                    float radius = 0.118f * Mathf.Pow(Mathf.Max(0f, Mathf.Sin(Mathf.PI * Mathf.Pow(t, 0.62f))), 0.85f);
+                    float wide = Mathf.Lerp(1.05f, 0.55f, SkySmooth(0.7f, 0.95f, t));
+                    for (int step = 0; step <= WhaleAround; step++)
+                    {
+                        float around = step / (float)WhaleAround * Mathf.PI * 2f;
+                        float rise = Mathf.Sin(around);
+                        int index = ring * (WhaleAround + 1) + step;
+                        points[index] = new Vector3(Mathf.Cos(around) * radius * wide, rise * radius * (rise > 0f ? 0.8f : 1f), 0.5f - t);
+                        uvs[index] = new Vector2(step / (float)WhaleAround, t);
+                    }
+                }
+
+                // Wound so every face of the body looks outwards
+                int next = 0;
+                for (int ring = 0; ring < WhaleRings - 1; ring++)
+                    for (int step = 0; step < WhaleAround; step++)
+                    {
+                        int a = ring * (WhaleAround + 1) + step, b = a + 1, c = a + WhaleAround + 1, d = c + 1;
+                        triangles[next++] = a;
+                        triangles[next++] = c;
+                        triangles[next++] = b;
+                        triangles[next++] = b;
+                        triangles[next++] = c;
+                        triangles[next++] = d;
+                    }
+
+                int corner = body;
+                WhaleAddFlat(points, uvs, triangles, ref corner, ref next, WhaleFrontFin, 1f);
+                WhaleAddFlat(points, uvs, triangles, ref corner, ref next, WhaleFrontFin, -1f);
+                WhaleAddFlat(points, uvs, triangles, ref corner, ref next, WhaleFluke, 1f);
+                WhaleAddFlat(points, uvs, triangles, ref corner, ref next, WhaleFluke, -1f);
+                WhaleAddFlat(points, uvs, triangles, ref corner, ref next, WhaleBackFin, 1f);
+
+                // The front half hardly moves; the beat grows towards the flukes and runs back along
+                // the body, and the front fins rise and fall more towards their tips
+                whaleRest = points;
+                whaleSwum = new Vector3[points.Length];
+                whaleSway = new float[points.Length];
+                whaleWave = new float[points.Length];
+                whaleFin = new float[points.Length];
+                for (int i = 0; i < points.Length; i++)
+                {
+                    float t = 0.5f - points[i].z;
+                    whaleSway[i] = 0.055f * SkySmooth(0.3f, 1.05f, t);
+                    whaleWave[i] = 2.4f * t;
+                    if (i >= body && points[i].z > -0.1f)
+                        whaleFin[i] = 0.025f * Mathf.Clamp01((Mathf.Abs(points[i].x) - 0.1f) / 0.22f);
+                }
+
+                whaleMesh = new Mesh { name = "EclipseSkyWhale", vertices = points, uv = uvs, triangles = triangles, hideFlags = HideFlags.DontUnloadUnusedAsset };
+                whaleMesh.MarkDynamic();
+                whaleMesh.RecalculateBounds();
+
+                // Room for the tail to beat without it ever being culled
+                Bounds room = whaleMesh.bounds;
+                room.Expand(0.2f);
+                whaleMesh.bounds = room;
+                return whaleMesh;
+            }
+        }
+
+        // The flat parts are drawn from both sides, in the same pale shade as the belly
+        private static void WhaleAddFlat(Vector3[] points, Vector2[] uvs, int[] triangles, ref int corner, ref int next, Vector3[] shape, float side)
+        {
+            int first = corner;
+            foreach (Vector3 point in shape)
+            {
+                points[corner] = new Vector3(point.x * side, point.y, point.z);
+                uvs[corner++] = new Vector2(0.75f, 0.5f - point.z);
+            }
+
+            for (int k = 1; k < shape.Length - 1; k++)
+            {
+                triangles[next++] = first;
+                triangles[next++] = first + k;
+                triangles[next++] = first + k + 1;
+                triangles[next++] = first;
+                triangles[next++] = first + k + 1;
+                triangles[next++] = first + k;
+            }
+        }
+
+        private static Texture2D WhaleTexture =>
+            whaleTexture != null ? whaleTexture : whaleTexture = SkyPaintGlobe("EclipseSkyWhale", 128, 128, SkyPaintWhale);
+
+        // Brightest along the belly, with grooves running back from the throat and a row of glowing
+        // spots down each side. Round the body runs across the texture and snout to tail up it.
+        private static Color SkyPaintWhale(float around, float latitude)
+        {
+            float along = latitude / Mathf.PI + 0.5f;
+            float rise = Mathf.Sin(around);
+            float belly = SkySmooth(-0.2f, -0.8f, rise);
+            float shade = 0.55f + 0.3f * belly - 0.12f * SkySmooth(0.3f, 0.9f, rise);
+            shade += 0.22f * SkySmooth(0.55f, 0.95f, Mathf.Sin(around * 30f)) * belly * SkySmooth(0.02f, 0.1f, along) * SkySmooth(0.5f, 0.4f, along);
+
+            // The spots run from a fifth to three quarters of the way back, just above the middle of each side
+            float gap = (Mathf.Repeat(along * 14f, 1f) - 0.5f) / 14f;
+            float degrees = around * Mathf.Rad2Deg;
+            float off = Mathf.Min(Mathf.Abs(Mathf.DeltaAngle(degrees, 15f)), Mathf.Abs(Mathf.DeltaAngle(degrees, 165f))) * Mathf.Deg2Rad * 0.1f;
+            float spot = SkySmooth(0.02f, 0.008f, Mathf.Sqrt(gap * gap + off * off)) * SkySmooth(0.15f, 0.2f, along) * SkySmooth(0.75f, 0.7f, along);
+
+            shade = Mathf.Lerp(shade, 1f, spot);
+            return new Color(shade, shade, shade, 0.8f + 0.2f * spot);
         }
     }
 }

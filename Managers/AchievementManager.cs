@@ -104,7 +104,8 @@ namespace Eclipse.Managers
             new Achievement { name = "Toy Box", description = "Play with every Space Toy.", icon = "Images/Achievements/eclipse-toybox.png" },
             new Achievement { name = "Sky Watcher", description = "Turn on every Space Sky mod.", icon = "Images/Achievements/eclipse-skywatcher.png" },
             new Achievement { name = "Speedster", description = "Swing a hand at 10 m/s with Hand Speed on.", icon = "Images/Achievements/eclipse-speedster.png" },
-            new Achievement { name = "Lap Legend", description = "Finish 10 laps with Lap Timer.", icon = "Images/Achievements/eclipse-laplegend.png" }
+            new Achievement { name = "Lap Legend", description = "Finish 10 laps with Lap Timer.", icon = "Images/Achievements/eclipse-laplegend.png" },
+            new Achievement { name = "Juggler", description = "Keep the Keepy-Uppy ball up for 25 hits in a row.", icon = "Images/Achievements/eclipse-juggler.png" }
         };
 
         public static void EnterAchievementTab()

@@ -36,7 +36,7 @@ namespace Eclipse.Mods
         /// <summary>Forgets held buttons for the Space Movement mods, run whenever one of them is turned on.</summary>
         /// <remarks>A button already held while turning a mod on would otherwise count as a press.</remarks>
         public static void ResetMotion() =>
-            chargeJumpHeld = zipHeld = orbitHeld = wellHeld = true;
+            chargeJumpHeld = zipHeld = orbitHeld = wellHeld = moonZoneHeld = jabHeld = strokeHeld = true;
 
         private const float FullCharge = 2.5f;
         private static bool chargeJumpHeld = true, jumpCharging;
@@ -467,5 +467,338 @@ namespace Eclipse.Mods
         }
 
         public static void DisableGravityWell() => RemoveGravityWell();
+
+        private const float WallSlideSpeed = 1.5f;
+
+        // How flat a surface can be and still count as a wall: the up part of its normal stays under this
+        private const float WallSlideSteep = 0.45f;
+        private static float wallSlideSparks;
+
+        /// <summary>Falling with a hand on or just against a wall slows you to a gentle slide down it, with sparks at your hand.</summary>
+        public static void WallSlide()
+        {
+            Vector3 velocity = Extras.Body.linearVelocity;
+            if (velocity.y > -WallSlideSpeed || Extras.Grounded())
+                return;
+
+            bool left = WallSlideTouch(true, out Vector3 leftPoint);
+            bool right = WallSlideTouch(false, out Vector3 rightPoint);
+            if (!left && !right)
+                return;
+
+            // Brakes hard but not all at once, so catching a wall mid-fall feels like friction rather than glue
+            velocity.y = Mathf.MoveTowards(velocity.y, -WallSlideSpeed, 30f * Time.deltaTime);
+            Extras.Body.linearVelocity = velocity;
+
+            if (Time.time < wallSlideSparks)
+                return;
+
+            wallSlideSparks = Time.time + 0.06f;
+            if (left)
+                Burst(leftPoint, 2, 1.2f, true, Vector3.up);
+            if (right)
+                Burst(rightPoint, 2, 1.2f, true, Vector3.up);
+        }
+
+        private static bool WallSlideTouch(bool left, out Vector3 point)
+        {
+            GTPlayer player = GTPlayer.Instance;
+
+            // The game already knows the surface a touching hand is on
+            if (player.IsHandTouching(left))
+            {
+                RaycastHit touched = left ? player.LeftHandRef.lastHitInfo : player.RightHandRef.lastHitInfo;
+                point = touched.point;
+                return Mathf.Abs(touched.normal.y) < WallSlideSteep;
+            }
+
+            // A hand held just off the wall never counts as touching, so a short sweep from your side of
+            // the hand out through it looks for one. The hand here is where the game keeps it, never inside a wall.
+            float scale = Scale;
+            Vector3 hand = player.GetHandPosition(left);
+            Vector3 outward = hand - BodyPosition;
+            outward.y = 0f;
+            point = hand;
+            if (outward.sqrMagnitude < 0.01f * scale * scale)
+                return false;
+
+            outward.Normalize();
+            if (!Physics.SphereCast(hand - outward * (0.1f * scale), 0.05f * scale, outward, out RaycastHit hit, 0.18f * scale, player.locomotionEnabledLayers, QueryTriggerInteraction.Ignore))
+                return false;
+
+            point = hit.point;
+            return Mathf.Abs(hit.normal.y) < WallSlideSteep && Vector3.Dot(hit.normal, outward) < -0.3f;
+        }
+
+        /// <summary>Forgets when Wall Slide last threw sparks.</summary>
+        public static void DisableWallSlide() => wallSlideSparks = 0f;
+
+        private const float MoonZoneRadius = 6f;
+        private const int MoonZoneArcPoints = 25;
+        private static bool moonZoneHeld = true;
+        private static Vector3? moonZonePoint;
+        private static float moonZoneSize;
+        private static LineRenderer moonZoneEdge;
+        private static readonly LineRenderer[] moonZoneRings = new LineRenderer[3];
+        private static readonly LineRenderer[] moonZoneArcs = new LineRenderer[3];
+        private static readonly Vector3[] moonZoneArcBuffer = new Vector3[MoonZoneArcPoints];
+
+        /// <summary>X drops a big see-through dome where you stand with Moon gravity inside it; X again inside it picks it up, and outside it brings it to you.</summary>
+        public static void MoonZone()
+        {
+            float scale = Scale;
+            if (Pressed(leftPrimary, ref moonZoneHeld))
+            {
+                if (moonZonePoint != null && MoonZoneInside(scale, out _))
+                {
+                    Burst(moonZonePoint.Value, 30, 2f, false, Vector3.up);
+                    RemoveMoonZone();
+                }
+                else
+                    DropMoonZone(scale);
+            }
+
+            if (moonZonePoint == null)
+                return;
+
+            bool inside = MoonZoneInside(scale, out float depth);
+            DrawMoonZone(moonZonePoint.Value, inside, scale);
+            if (!inside || Extras.Grounded())
+                return;
+
+            // The same pull as Moon Gravity, faded in over the last half metre inside the edge so crossing it is no jolt
+            float strength = Mathf.Clamp01(depth / (0.5f * scale));
+            Extras.Body.linearVelocity -= Physics.gravity * (5f / 6f * strength * Time.deltaTime);
+        }
+
+        /// <summary>Whether you are inside the dome, and how far in from its edge.</summary>
+        private static bool MoonZoneInside(float scale, out float depth)
+        {
+            Vector3 offset = BodyPosition - moonZonePoint.Value;
+            depth = moonZoneSize - offset.magnitude;
+
+            // A little below its floor still counts, for domes dropped on a slope
+            return depth > 0f && offset.y > -scale;
+        }
+
+        private static void DropMoonZone(float scale)
+        {
+            // Rests on the ground under you; in mid-air it is centred on your feet
+            moonZonePoint = Physics.Raycast(BodyPosition, Vector3.down, out RaycastHit hit, 3f * scale, GTPlayer.Instance.locomotionEnabledLayers, QueryTriggerInteraction.Ignore)
+                ? hit.point
+                : Feet;
+            moonZoneSize = MoonZoneRadius * scale;
+            Burst(moonZonePoint.Value, 40, 3f, false, Vector3.up);
+        }
+
+        private static void DrawMoonZone(Vector3 centre, bool inside, float scale)
+        {
+            float t = Time.time;
+            float radius = moonZoneSize;
+
+            if (moonZoneEdge == null)
+                moonZoneEdge = MakeRing("Eclipse_MoonZoneEdge");
+            PlaceRing(moonZoneEdge, centre + Vector3.up * (0.03f * scale), Vector3.up, radius, 0.06f * scale, WithAlpha(Accent, inside ? 0.7f : 0.4f));
+
+            // Faint rings up the dome and arcs over the top, so you can see where it is and still see through it
+            for (int i = 0; i < moonZoneRings.Length; i++)
+            {
+                if (moonZoneRings[i] == null)
+                    moonZoneRings[i] = MakeRing("Eclipse_MoonZoneRing");
+
+                float rise = (i + 1) * 22.5f * Mathf.Deg2Rad;
+                float shimmer = 0.8f + Mathf.Sin(t * 1.5f + i * 1.3f) * 0.2f;
+                PlaceRing(moonZoneRings[i], centre + Vector3.up * (Mathf.Sin(rise) * radius), Vector3.up, Mathf.Cos(rise) * radius, 0.03f * scale, WithAlpha(Second, 0.2f * shimmer));
+            }
+
+            for (int i = 0; i < moonZoneArcs.Length; i++)
+            {
+                if (moonZoneArcs[i] == null)
+                {
+                    moonZoneArcs[i] = MakeLine("Eclipse_MoonZoneArc", 0.025f);
+                    moonZoneArcs[i].positionCount = MoonZoneArcPoints;
+                }
+
+                // Each arc runs from one side of the floor ring over the top to the other, turning slowly
+                Vector3 across = Quaternion.Euler(0f, i * 60f + t * 4f, 0f) * Vector3.right;
+                for (int p = 0; p < MoonZoneArcPoints; p++)
+                {
+                    float angle = p * Mathf.PI / (MoonZoneArcPoints - 1);
+                    moonZoneArcBuffer[p] = centre + (across * Mathf.Cos(angle) + Vector3.up * Mathf.Sin(angle)) * radius;
+                }
+
+                LineRenderer arc = moonZoneArcs[i];
+                arc.SetPositions(moonZoneArcBuffer);
+                arc.startWidth = arc.endWidth = 0.025f * scale;
+                arc.startColor = arc.endColor = WithAlpha(Accent, inside ? 0.22f : 0.14f);
+            }
+        }
+
+        private static void RemoveMoonZone()
+        {
+            moonZonePoint = null;
+            DestroyLine(ref moonZoneEdge);
+            for (int i = 0; i < moonZoneRings.Length; i++)
+                DestroyLine(ref moonZoneRings[i]);
+            for (int i = 0; i < moonZoneArcs.Length; i++)
+                DestroyLine(ref moonZoneArcs[i]);
+        }
+
+        /// <summary>Takes the Moon Zone dome away.</summary>
+        public static void DisableMoonZone() => RemoveMoonZone();
+
+        /// <summary>Follows how fast a hand is moving next to your body, smoothed a little, for Comet Jab and Star Stroke.</summary>
+        /// <remarks>Measured against your body, so flying along doesn't count as moving your hand.</remarks>
+        private static void TrackSwing(Vector3 hand, ref Vector3 last, ref Vector3 velocity, bool fresh, float scale)
+        {
+            Vector3 offset = hand - BodyPosition;
+            if (fresh)
+                velocity = Vector3.zero;
+            else
+            {
+                Vector3 moved = (offset - last) / Mathf.Max(Time.deltaTime, 0.001f);
+
+                // Further in one frame than any arm can swing is a snap turn or a teleport, so that frame is left out
+                float most = 15f * scale;
+                if (moved.sqrMagnitude < most * most)
+                    velocity = Vector3.Lerp(velocity, moved, Mathf.Clamp01(Time.deltaTime * 30f));
+            }
+
+            last = offset;
+        }
+
+        /// <summary>Adds speed along a heading without taking it past a top speed, and turns round any speed the other way first.</summary>
+        private static void PushAlong(Vector3 heading, float boost, float topSpeed)
+        {
+            Vector3 velocity = Extras.Body.linearVelocity;
+            float along = Vector3.Dot(velocity, heading);
+            float target = Mathf.Max(along, Mathf.Min(Mathf.Max(along, 0f) + boost, topSpeed));
+            Extras.Body.linearVelocity = velocity + heading * (target - along);
+        }
+
+        private const float JabPunch = 3f, JabBoost = 9f, JabTopSpeed = 16f;
+        private static bool jabHeld = true, jabTracking;
+        private static Vector3 jabLastHand, jabHandVelocity;
+        private static float jabReady, jabTrailUntil;
+        private static TrailRenderer jabTrail;
+
+        /// <summary>Hold B and punch your right hand forward fast to launch yourself the way you punched, trailing a short comet tail.</summary>
+        public static void CometJab()
+        {
+            float scale = Scale;
+            TrackSwing(RightHand, ref jabLastHand, ref jabHandVelocity, !jabTracking, scale);
+            jabTracking = true;
+
+            // B already held when the mod was turned on has to be let go of first
+            if (!rightSecondary)
+                jabHeld = false;
+            else if (!jabHeld && Time.time >= jabReady)
+            {
+                // A fast punch roughly the way you are looking; it carries you a little more towards your view than the punch itself
+                Vector3 punch = jabHandVelocity;
+                float speed = punch.magnitude;
+                if (speed > JabPunch * scale && Vector3.Dot(punch, Head.forward) > speed * 0.6f)
+                {
+                    Vector3 heading = Vector3.Slerp(punch / speed, Head.forward, 0.35f).normalized;
+
+                    // The cap stops a string of jabs stacking up for ever, and the wait between them stops one punch counting twice
+                    PushAlong(heading, JabBoost, JabTopSpeed);
+                    jabReady = Time.time + 0.6f;
+                    jabTrailUntil = Time.time + 0.4f;
+                    Burst(RightHand, 25, 3f, false, -heading);
+                }
+            }
+
+            DrawJabTrail(scale);
+        }
+
+        private static void DrawJabTrail(float scale)
+        {
+            bool burning = Time.time < jabTrailUntil;
+            if (jabTrail == null)
+            {
+                if (!burning)
+                    return;
+
+                jabTrail = new GameObject("Eclipse_JabTrail").AddComponent<TrailRenderer>();
+                jabTrail.material = VertexColored;
+                jabTrail.time = 0.35f;
+                jabTrail.minVertexDistance = 0.05f;
+                jabTrail.widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
+                jabTrail.transform.position = BodyPosition;
+                jabTrail.Clear();
+            }
+
+            // Follows you all the time but only draws just after a jab, so the old tail fades out on its own
+            jabTrail.transform.position = BodyPosition;
+            jabTrail.emitting = burning;
+            jabTrail.widthMultiplier = 0.25f * scale;
+            jabTrail.startColor = WithAlpha(Accent, 0.85f);
+            jabTrail.endColor = WithAlpha(Second, 0f);
+
+            if (burning && Random.value < 0.5f)
+                Burst(BodyPosition, 1, 0.6f, false);
+        }
+
+        /// <summary>Takes away Comet Jab's tail and forgets how your hand was moving.</summary>
+        public static void DisableCometJab()
+        {
+            jabTracking = false;
+            jabTrailUntil = 0f;
+            if (jabTrail != null)
+                Object.Destroy(jabTrail.gameObject);
+            jabTrail = null;
+        }
+
+        private const float StrokePull = 1.8f, StrokeTopSpeed = 9f;
+        private static bool strokeHeld = true, strokeTracking, strokeSweeping;
+        private static Vector3 strokeLastLeft, strokeLastRight, strokeLeftVelocity, strokeRightVelocity;
+        private static float strokeReady;
+
+        /// <summary>Hold A in the air and sweep both hands back together like a breaststroke to push yourself forward a little with each stroke.</summary>
+        public static void StarStroke()
+        {
+            float scale = Scale;
+            TrackSwing(LeftHand, ref strokeLastLeft, ref strokeLeftVelocity, !strokeTracking, scale);
+            TrackSwing(RightHand, ref strokeLastRight, ref strokeRightVelocity, !strokeTracking, scale);
+            strokeTracking = true;
+
+            // A already held when the mod was turned on has to be let go of first
+            if (!rightPrimary)
+                strokeHeld = false;
+
+            GTPlayer player = GTPlayer.Instance;
+            Vector3 together = strokeLeftVelocity + strokeRightVelocity;
+            if (!rightPrimary || strokeHeld || Extras.Grounded() || player.IsHandTouching(true) || player.IsHandTouching(false) || together.sqrMagnitude < 0.01f)
+            {
+                strokeSweeping = false;
+                return;
+            }
+
+            // The arms spreading apart cancel out, leaving the way both hands sweep together. The
+            // weaker hand's speed that way is the stroke's strength, so one hand alone does nothing.
+            Vector3 sweep = together.normalized;
+            float weaker = Mathf.Min(Vector3.Dot(strokeLeftVelocity, sweep), Vector3.Dot(strokeRightVelocity, sweep));
+            bool backward = Vector3.Dot(sweep, Head.forward) < -0.3f;
+
+            // One push per stroke: the hands have to ease off before the next one counts
+            if (!backward || weaker < StrokePull * scale * 0.5f)
+            {
+                strokeSweeping = false;
+                return;
+            }
+
+            if (strokeSweeping || weaker < StrokePull * scale || Time.time < strokeReady)
+                return;
+
+            strokeSweeping = true;
+            strokeReady = Time.time + 0.3f;
+            PushAlong(-sweep, Mathf.Lerp(2.5f, 4f, Mathf.Clamp01((weaker - StrokePull * scale) / (2f * scale))), StrokeTopSpeed);
+            Burst(LeftHand, 6, 1.2f, false, sweep);
+            Burst(RightHand, 6, 1.2f, false, sweep);
+        }
+
+        /// <summary>Forgets how your hands were moving for Star Stroke.</summary>
+        public static void DisableStarStroke() => strokeTracking = strokeSweeping = false;
     }
 }
