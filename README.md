@@ -4,6 +4,8 @@
 
 A brand-new mod menu for Gorilla Tag, remade from [Nova Menu](https://github.com/HZMGTX/Nova) with its own 3D menu, layouts, themes, sounds and mods.
 
+**Website:** [menu.management/eclipse](https://www.menu.management/eclipse): download it, browse every mod, see the themes and try a preview of the menu.
+
 <p align="center"><img src="Resources/GitHub/eclipse-panel-render.png" alt="A render of the Eclipse Panel layout" width="800"><br><sub>A render of the Eclipse Panel layout</sub></p>
 
 ## Install
@@ -51,12 +53,13 @@ Every one acts on you alone: how you move, or things only you can see. None of t
 
 **Eclipse Mods Colour** changes the colours they draw in: corona, moonlight, nebula, aurora, yours or rainbow.
 
-### Space Toys, Space Sky, Wrist Tools and Space Movement
-Four more categories on the Eclipse tab. They act on you alone too.
+### Space Toys, Space Games, Space Sky, Wrist Tools and Space Movement
+Five more categories on the Eclipse tab. They act on you alone too.
 
 | | |
 |---|---|
 | **Space Toys** | Mini Solar System, Planet Builder (both grips), Kite, Yo-yo (RG), Paper Planes (RT), Magic 8-Ball (shake your left hand), Space Dice (X), Glow Sticks (LG), Echo Ghost, Meteor Defense (B), Star Scope (LT), Snow Globe, Pinwheel, Moon Balloon, Boomerang Star (A), Fidget Spinner, Slinky, Lava Lamp, Spinning Top (Y), Star Hourglass, Spirograph, Pocket Storm, Newton's Cradle, Keepy-Uppy |
+| **Space Games** | Ring Run (A), Asteroid Dodge, Comet Squash, Simon Stars, Target Pop, Gravity Golf, Constellation Connect, Star Bowling (B). Each keeps your best score |
 | **Space Sky** | Ringed Planet, Twin Moons, Space Station, Satellites, Comet Flyby, Galaxy Band, Rocket Launches, Nebula Sky, Binary Stars, Asteroid Belt, Spiral Galaxy, Pulsar Star, Starship Fleet, Black Hole Horizon, Space Whale |
 | **Wrist Tools** | Battery Meter, Coordinates, Hand Speed, Measuring Tape, Mic Meter, Ping Alarm, Break Reminder, Countdown Timer (X), Lap Timer (A), Waypoint (B), Jump Height, Air Time, Room Card, Tap Counter, G-Force Meter, Speed Graph, World Clock, Spirit Level, Head Height, Room Timer |
 | **Space Movement** | Charge Jump (LT), Zipline (RT, ride with RG), Air Strafe, Orbit Mode (RG), Gravity Well (Y), Wall Slide, Moon Zone (X), Comet Jab (B), Star Stroke (A) |
@@ -72,7 +75,7 @@ Four more categories on the Eclipse tab. They act on you alone too.
 - **Card notifications** in the menu's colours (Classic Notifications brings back the plain lines).
 - **Pointer styles:** star, ring, comet or the classic orb.
 - **An intro** when the game starts (Disable Intro turns it off).
-- **16 new achievements** and a **What's New** page.
+- **21 new achievements** and a **What's New** page.
 
 ## Credits
 

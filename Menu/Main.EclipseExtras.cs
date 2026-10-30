@@ -134,7 +134,7 @@ namespace Eclipse.Menu
             if (modOfTheDay == null || modOfTheDayDate != today)
             {
                 List<ButtonInfo> pool = new List<ButtonInfo>();
-                foreach (string name in new[] { EclipseMods.Category, EclipseMods.ToysCategory, EclipseMods.SkyCategory, EclipseMods.ToolsCategory })
+                foreach (string name in new[] { EclipseMods.Category, EclipseMods.ToysCategory, EclipseMods.GamesCategory, EclipseMods.SkyCategory, EclipseMods.ToolsCategory })
                 {
                     int category = Buttons.GetCategory(name);
                     if (category >= 0)

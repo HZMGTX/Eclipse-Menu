@@ -105,7 +105,12 @@ namespace Eclipse.Managers
             new Achievement { name = "Sky Watcher", description = "Turn on every Space Sky mod.", icon = "Images/Achievements/eclipse-skywatcher.png" },
             new Achievement { name = "Speedster", description = "Swing a hand at 10 m/s with Hand Speed on.", icon = "Images/Achievements/eclipse-speedster.png" },
             new Achievement { name = "Lap Legend", description = "Finish 10 laps with Lap Timer.", icon = "Images/Achievements/eclipse-laplegend.png" },
-            new Achievement { name = "Juggler", description = "Keep the Keepy-Uppy ball up for 25 hits in a row.", icon = "Images/Achievements/eclipse-juggler.png" }
+            new Achievement { name = "Juggler", description = "Keep the Keepy-Uppy ball up for 25 hits in a row.", icon = "Images/Achievements/eclipse-juggler.png" },
+            new Achievement { name = "Ring Racer", description = "Finish a Ring Run course in under 40 seconds.", icon = "Images/Achievements/eclipse-ringracer.png" },
+            new Achievement { name = "Survivor", description = "Last 60 seconds in Asteroid Dodge.", icon = "Images/Achievements/eclipse-survivor.png" },
+            new Achievement { name = "Starry Memory", description = "Reach round 10 in Simon Stars.", icon = "Images/Achievements/eclipse-starrymemory.png" },
+            new Achievement { name = "Hole in One", description = "Sink a Gravity Golf hole with your first stroke.", icon = "Images/Achievements/eclipse-holeinone.png" },
+            new Achievement { name = "Strike!", description = "Knock down all ten pins with one ball in Star Bowling.", icon = "Images/Achievements/eclipse-strike.png" }
         };
 
         public static void EnterAchievementTab()

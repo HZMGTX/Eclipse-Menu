@@ -73,7 +73,7 @@ namespace Eclipse.Menu
         private static readonly EclipseGroup[] EclipseGroups =
         {
             new EclipseGroup { Name = "Home", Entries = new[] { DashboardCategory, "Main", "Favorite Mods", "Enabled Mods", RecentCategory, "Players", "Friends", "Achievements", "What's New", "Credits" } },
-            new EclipseGroup { Name = "Eclipse", Entries = new[] { EclipseMods.Category, EclipseMods.ToysCategory, EclipseMods.SkyCategory, EclipseMods.MotionCategory, EclipseMods.ToolsCategory } },
+            new EclipseGroup { Name = "Eclipse", Entries = new[] { EclipseMods.Category, EclipseMods.ToysCategory, EclipseMods.GamesCategory, EclipseMods.SkyCategory, EclipseMods.MotionCategory, EclipseMods.ToolsCategory } },
             new EclipseGroup { Name = "Movement", Entries = new[] { "Movement Mods", "Macros" } },
             new EclipseGroup { Name = "Visuals", Entries = new[] { "Visual Mods" } },
             new EclipseGroup { Name = "Fun", Entries = new[] { "Fun Mods", "Custom Mods", "Sound Mods", "Soundboard", "Voice Changers", "Custom Map Mods" } },
@@ -95,6 +95,7 @@ namespace Eclipse.Menu
             { EclipseMods.MotionCategory, "Motion" },
             { EclipseMods.ToolsCategory, "Tools" },
             { EclipseMods.SkyCategory, "Sky" },
+            { EclipseMods.GamesCategory, "Games" },
             { "Room Mod Checker", "Mod Checker" },
             { "Custom Map Mods", "Maps" },
             { "Voice Changers", "Voices" },

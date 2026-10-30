@@ -48,6 +48,17 @@ namespace Eclipse.Mods
         public const string ToysCategory = "Space Toys";
         public const string ToolsCategory = "Wrist Tools";
         public const string MotionCategory = "Space Movement";
+        public const string GamesCategory = "Space Games";
+
+        /// <summary>Where the Eclipse website lives: downloads, every mod, themes and a preview of the menu.</summary>
+        public const string Website = "https://www.menu.management/eclipse";
+
+        /// <summary>Opens the Eclipse website in your browser.</summary>
+        public static void OpenWebsite()
+        {
+            Application.OpenURL(Website);
+            NotificationManager.SendNotification("Opening the Eclipse website in your browser.", 3000);
+        }
 
         // ── Colour ──────────────────────────────────────────────────────────────
 

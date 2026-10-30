@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.0 — 2026-10-30
+
+- **Space Games, a new category:** eight mini-games to play on your own, each with a scoreboard and a best score that's kept between sessions.
+  - **Ring Run (A):** lay out a course of glowing rings and race through them.
+  - **Asteroid Dodge:** rocks fly at your head, faster and faster. How long can you last?
+  - **Comet Squash:** hit a glowing ball against a wall and keep the rally going.
+  - **Simon Stars:** four stars light up in a pattern; touch them in the same order.
+  - **Target Pop:** a 60-second round of popping targets around you.
+  - **Gravity Golf:** hit a ball into a hole a few metres away, in as few strokes as you can.
+  - **Constellation Connect:** join the stars of real constellations in order, against the clock.
+  - **Star Bowling (B):** throw a glowing ball at ten pins.
+- **5 new achievements:** Ring Racer, Survivor, Starry Memory, Hole in One and Strike!
+- **Eclipse Website** button on the main page opens [menu.management/eclipse](https://www.menu.management/eclipse) in your browser.
+- Surprise Me, Turn Off All and Mod of the Day work with Space Games too.
+
+As always, every game acts on you alone and sends nothing over the network.
+
 ## 1.2.0 — 2026-10-23
 
 - **Space Sky (15), a new category:** Ringed Planet, Twin Moons, Space Station, Satellites, Comet Flyby, Galaxy Band, Rocket Launches, Nebula Sky, Binary Stars, Asteroid Belt, Spiral Galaxy, Pulsar Star, Starship Fleet, Black Hole Horizon and Space Whale. Big things in your sky that only you can see.

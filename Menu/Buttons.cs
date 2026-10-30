@@ -57,6 +57,7 @@ namespace Eclipse.Menu
         {
             new[] { // Main [0]
 
+                new ButtonInfo { buttonText = "Eclipse Website", method = EclipseMods.OpenWebsite, isTogglable = false, toolTip = "Opens the Eclipse website in your browser: downloads, every mod, the themes and a preview of the menu.", legal = true},
                 new ButtonInfo { buttonText = "Join Discord", method = Important.JoinDiscord, isTogglable = false, toolTip = "Invites you to join the <b>Eclipse</b> community Discord server.", legal = true},
 
                 new ButtonInfo { buttonText = "Eclipse Dashboard", method = OpenEclipseDashboard, isTogglable = false, toolTip = "Opens the dashboard: your FPS, ping, room, the time and how many mods you have on.", legal = true},
@@ -72,6 +73,7 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Space Movement", method =() => CurrentCategoryName = "Space Movement", isTogglable = false, toolTip = "Opens Space Movement: new ways to get around."},
                 new ButtonInfo { buttonText = "Wrist Tools", method =() => CurrentCategoryName = "Wrist Tools", isTogglable = false, toolTip = "Opens the Wrist Tools: handy readouts and timers on your wrist.", legal = true},
                 new ButtonInfo { buttonText = "Space Sky", method =() => CurrentCategoryName = "Space Sky", isTogglable = false, toolTip = "Opens Space Sky: planets, moons and comets in your sky that only you can see.", legal = true},
+                new ButtonInfo { buttonText = "Space Games", method =() => CurrentCategoryName = "Space Games", isTogglable = false, toolTip = "Opens Space Games: mini-games to play on your own, with scores and best scores that only you can see.", legal = true},
 
                 new ButtonInfo { buttonText = "Movement Mods", method =() => CurrentCategoryName = "Movement Mods", isTogglable = false, toolTip = "Opens the movement mods."},
                 new ButtonInfo { buttonText = "Visual Mods", method =() => CurrentCategoryName = "Visual Mods", isTogglable = false, toolTip = "Opens the visual mods.", legal = true},
@@ -3053,6 +3055,9 @@ namespace Eclipse.Menu
             {
                 new ButtonInfo { buttonText = "Exit What's New", method = OpenEclipseDashboard, isTogglable = false, toolTip = "Returns you back to the dashboard.", legal = true},
                 new ButtonInfo { buttonText = "EclipseNewVersion", overlapText = $"Eclipse Menu {PluginInfo.Version}", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewGames", overlapText = "Space Games: 8 games with best scores", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewGameAwards", overlapText = "5 new achievements to win", label = true, legal = true},
+                new ButtonInfo { buttonText = "EclipseNewWebsite", overlapText = "The website: menu.management/eclipse", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewSky", overlapText = "15 Space Sky mods for your sky", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewMoreToys", overlapText = "14 more Space Toys, 12 more Wrist Tools", label = true, legal = true},
                 new ButtonInfo { buttonText = "EclipseNewMoreMotion", overlapText = "4 more Space Movement mods", label = true, legal = true},
@@ -3169,6 +3174,13 @@ namespace Eclipse.Menu
                 new ButtonInfo { buttonText = "Starship Fleet", method = EclipseMods.StarshipFleet, disableMethod = EclipseMods.DisableStarshipFleet, toolTip = "Every 50 to 80 seconds a small V of sleek ships with glowing engines flies across your sky. Only you can see them.", legal = true},
                 new ButtonInfo { buttonText = "Black Hole Horizon", method = EclipseMods.BlackHoleHorizon, disableMethod = EclipseMods.DisableBlackHoleHorizon, toolTip = "A distant black hole hangs in your sky: a dark disc edged with a thin ring of light, with a bright tilted disc of matter swirling round it. Only you can see it.", legal = true},
                 new ButtonInfo { buttonText = "Space Whale", method = EclipseMods.SpaceWhale, disableMethod = EclipseMods.DisableSpaceWhale, toolTip = "A huge glowing see-through whale swims slowly round your sky in a long loop, gently beating its tail. Only you can see it.", legal = true}
+            },
+
+            new[] // Space Games [67]
+            {
+                new ButtonInfo { buttonText = "Exit Space Games", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+                new ButtonInfo { buttonText = "Games Surprise Me", overlapText = "Surprise Me", method =() => EclipseMods.SurpriseMe(EclipseMods.GamesCategory), isTogglable = false, toolTip = "Turns on a random Space Game you don't have on yet.", legal = true},
+                new ButtonInfo { buttonText = "Turn Off All Space Games", method =() => EclipseMods.TurnOffAllIn(EclipseMods.GamesCategory, "Every Space Game is off."), isTogglable = false, toolTip = "Turns off every Space Game that is on.", legal = true}
             }
         };
 
@@ -3239,7 +3251,8 @@ namespace Eclipse.Menu
             "Space Toys",
             "Wrist Tools",
             "Recent Mods",
-            "Space Sky"
+            "Space Sky",
+            "Space Games"
         };
 
         public static int _currentCategoryIndex;
