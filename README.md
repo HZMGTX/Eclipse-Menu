@@ -5,6 +5,7 @@
 A brand-new mod menu for Gorilla Tag, remade from [Nova Menu](https://github.com/HZMGTX/Nova) with its own 3D menu, layouts, themes, sounds and mods.
 
 **Website:** [menu.management/eclipse](https://www.menu.management/eclipse): download it, browse every mod, see the themes and try a preview of the menu.
+**Discord:** [discord.gg/3TyyfEfNjE](https://discord.gg/3TyyfEfNjE)
 
 <p align="center"><img src="Resources/GitHub/eclipse-panel-render.png" alt="A render of the Eclipse Panel layout" width="800"><br><sub>A render of the Eclipse Panel layout</sub></p>
 

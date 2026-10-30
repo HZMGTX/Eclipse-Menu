@@ -410,7 +410,9 @@ namespace Eclipse.Classes.Menu
 
                 JObject data = JObject.Parse(json);
 
-                Main.serverLink = (string)data["discord-invite"];
+                // The built-in invite stays if the server has none
+                if (!string.IsNullOrEmpty((string)data["discord-invite"]))
+                    Main.serverLink = (string)data["discord-invite"];
 
                 // menu.management is shared with Nova and ii's menu, so its "motd", "min-version" and
                 // "menu-version" describe those menus, not Eclipse. Eclipse keeps its own MOTD and checks

@@ -13,6 +13,7 @@
   - **Star Bowling (B):** throw a glowing ball at ten pins.
 - **5 new achievements:** Ring Racer, Survivor, Starry Memory, Hole in One and Strike!
 - **Eclipse Website** button on the main page opens [menu.management/eclipse](https://www.menu.management/eclipse) in your browser.
+- **Join Discord** now opens the Eclipse Menu server.
 - Surprise Me, Turn Off All and Mod of the Day work with Space Games too.
 
 As always, every game acts on you alone and sends nothing over the network.
